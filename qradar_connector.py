@@ -30,8 +30,6 @@ from datetime import timedelta
 from pytz import timezone
 import pytz
 
-requests.packages.urllib3.disable_warnings()
-
 
 class QradarConnector(BaseConnector):
 
