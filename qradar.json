@@ -1,7 +1,7 @@
 {
     "appid"     : "6cf34589-6947-409f-b776-e8fa62e01509",
     "name"    : "QRadar",
-    "description" : "This app supports investigative actions like 'get events' and 'get flows' on an IBM QRadar device. It also supports ingesting Incidents and Events into Phantom containers and artifacts",
+    "description" : "This app supports investigative actions on an IBM QRadar device. It also supports ingesting Incidents and Events into Phantom containers and artifacts",
     "type": "siem",
     "publisher": "Phantom",
     "main_module" : "qradar_connector.pyc",
