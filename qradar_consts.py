@@ -67,7 +67,7 @@ QRADAR_MSG_QUERYING_FOR_MAX_N_EVENTS = "Querying for max {count} number of event
 
 # This is what a event query looks like
 # The select clause with all the required data
-QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, AccountDomain, destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid)'  # noqa
+QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, AccountDomain, destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid), UTF8(payload) as Payload' # noqa
 # From clause
 QRADAR_AQL_EVENT_FROM = " from events"
 QRADAR_AQL_EVENT_WHERE = " where hasoffense='true' "

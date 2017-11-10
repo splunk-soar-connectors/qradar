@@ -72,7 +72,8 @@ class QradarConnector(BaseConnector):
                 'sourceMacAddress': 'sourcemac',
                 'sourcePort': 'sourceport',
                 'sourceAddress': 'sourceaddress',
-                'startTime': 'starttime'}
+                'startTime': 'starttime',
+                'payload': 'Payload'}
 
     def _create_authorization_header(self, config):
 
