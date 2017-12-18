@@ -39,6 +39,8 @@ class QradarConnector(BaseConnector):
     ACTION_ID_GET_FLOWS = "get_flows"
     ACTION_ID_RUN_QUERY = "run_query"
     ACTION_ID_OFFENSE_DETAILS = "offense_details"
+    ACTION_ID_CLOSE_OFFENSE = "close_offense"
+    ACTION_ID_ADD_TO_REF_SET = "add_to_reference_set"
 
     def __init__(self):
 
@@ -149,6 +151,9 @@ class QradarConnector(BaseConnector):
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
+        # self._ingest_duplicates = config[QRADAR_JSON_INGESTDUPES]
+        self._artifact_max = config[QRADAR_JSON_ARTIFACT_MAX_DEF]
+        self._add_to_resolved = config[QRADAR_JSON_ADD_TO_RESOLVED]
 
         # Auth details
         if (phantom.is_fail(self._set_auth(config))):
@@ -225,10 +230,15 @@ class QradarConnector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
         offenses = list()
 
+        # ingest_duplicates = self._ingest_duplicates
+        artifact_max = self._artifact_max
+        add_to_resolved = self._add_to_resolved
+
         # Call _list_offenses with a local action result,
         # this one need not be added to the connector run
         # result. It will be used to contain the offenses data
         offenses_action_result = ActionResult(dict(param))
+        param['artifact_count'] = artifact_max
 
         if (phantom.is_fail(self._list_offenses(param, offenses_action_result))):
             # Copy the status and message into our action result
@@ -279,6 +289,16 @@ class QradarConnector(BaseConnector):
 
             if (not container_id):
                 continue
+
+            if (message == 'Duplicate container found'):
+                self.debug_print("Duplicate container found:", container_id)
+                # get status of the duplicate container
+                this_container = self.get_container_info(container_id)
+                statusOfContainer = this_container[1]['status']
+                self.debug_print("Add_to_resolved: {0}, status: {1}, container_id: {2}".format(add_to_resolved, statusOfContainer, container_id))
+                if (not add_to_resolved and (statusOfContainer == "resolved" or statusOfContainer == "closed")):
+                    self.debug_print("Skipping artifact ingest to closed container.")
+                    continue
 
             # set the event params same as that of the input poll params
             # since the time range should be the same
@@ -723,7 +743,9 @@ class QradarConnector(BaseConnector):
 
         if (count == 0):
             # set it to the max number we can use in the query, so that we get all of them
-            count = QRADAR_QUERY_HIGH_RANGE
+            # count = QRADAR_QUERY_HIGH_RANGE
+            count = 1000
+            # using QRADAR_QUERY_HIGH_RANGE is way too high for usability ***
 
         if (count > QRADAR_QUERY_HIGH_RANGE):
             # Should not set more than the HIGH RANGE, else qradar throws an error
@@ -977,6 +999,126 @@ class QradarConnector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
+    def _post_add_to_reference_set(self, param):
+
+        # Get the list of offense ids
+        reference_set_name = param[QRADAR_JSON_REFSET_NAME]
+        reference_set_value = param[QRADAR_JSON_REFSET_VALUE]
+
+        # Create a action result
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        # Update the parameter
+        # action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
+        params = dict()
+        # params[QRADAR_JSON_REFSET_VALUE] = reference_set_value
+
+        # value to insert into ref set
+        params['value'] = reference_set_value
+
+        response = self._call_api('reference_data/sets/{0}'.format(reference_set_name), 'post', action_result, params=params)
+
+        if (phantom.is_fail(action_result.get_status())):
+            self.debug_print("call_api failed: ", action_result.get_status())
+            return action_result.get_status()
+
+        self.debug_print("Response Code", response.status_code)
+
+        if (response.status_code != 200):
+            # Error condition
+            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
+            # Add the response that we got from the device, it contains additional info
+            action_result.append_to_message(json.dumps(response.json()))
+            return action_result.get_status()
+
+        self.debug_print("content-type", response.headers['content-type'])
+
+        # Parse the output, which is details of an offense
+        try:
+            response_json = response.json()
+        except Exception as e:
+            self.debug_print("Unable to parse response as a valid JSON", e)
+            return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
+
+        action_result.add_data(response_json)
+
+        # time_str = lambda x: datetime.fromtimestamp(int(x) / 1000.0).strftime('%Y-%m-%d %H:%M:%S UTC')
+
+        try:
+            # Create a summary
+            action_result.update_summary({
+                'element_type': response_json['element_type'].strip('\n'),
+                'name': response_json['name'],
+                'number_of_elements': response_json['number_of_elements'] })
+        except:
+            # No reason to halt and throw an error since only summary creation has failed.
+            pass
+
+        return action_result.get_status()
+
+        return phantom.APP_SUCCESS
+
+    def _post_close_offense(self, param):
+
+        # Get the list of offense ids
+        offense_id = param[QRADAR_JSON_OFFENSE_ID]
+        closing_reason_id = param[QRADAR_JSON_CLOSING_REASON_ID]
+
+        # Create a action result
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        # Update the parameter
+        action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
+        params = dict()
+        params[QRADAR_JSON_CLOSING_REASON_ID] = closing_reason_id
+
+        params['status'] = "CLOSED"
+
+        response = self._call_api('siem/offenses/{0}'.format(offense_id), 'post', action_result, params=params)
+
+        if (phantom.is_fail(action_result.get_status())):
+            self.debug_print("call_api failed: ", action_result.get_status())
+            return action_result.get_status()
+
+        self.debug_print("Response Code", response.status_code)
+
+        if (response.status_code != 200):
+            # Error condition
+            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
+            # Add the response that we got from the device, it contains additional info
+            action_result.append_to_message(json.dumps(response.json()))
+            return action_result.get_status()
+
+        self.debug_print("content-type", response.headers['content-type'])
+
+        # Parse the output, which is details of an offense
+        try:
+            response_json = response.json()
+        except Exception as e:
+            self.debug_print("Unable to parse response as a valid JSON", e)
+            return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
+
+        action_result.add_data(response_json)
+
+        time_str = lambda x: datetime.fromtimestamp(int(x) / 1000.0).strftime('%Y-%m-%d %H:%M:%S UTC')
+
+        try:
+            # Create a summary
+            action_result.update_summary({
+                QRADAR_JSON_NAME: response_json['description'].strip('\n'),
+                QRADAR_JSON_OFFENSE_SOURCE: response_json['offense_source'],
+                QRADAR_JSON_FLOW_COUNT: response_json['flow_count'],
+                QRADAR_JSON_STATUS: response_json['status'],
+                QRADAR_JSON_STARTTIME: time_str(response_json['start_time']),
+                QRADAR_JSON_UPDATETIME: time_str(response_json['last_updated_time'])})
+        except:
+            # No reason to halt and throw an error since only summary creation has failed.
+            pass
+
+        return action_result.get_status()
+
+        return phantom.APP_SUCCESS
+
     def handle_action(self, param):
         """Function that handles all the actions
 
@@ -999,6 +1141,10 @@ class QradarConnector(BaseConnector):
             result = self._run_query(param)
         elif (action == self.ACTION_ID_OFFENSE_DETAILS):
             result = self._get_offense_details(param)
+        elif (action == self.ACTION_ID_CLOSE_OFFENSE):
+            result = self._post_close_offense(param)
+        elif (action == self.ACTION_ID_ADD_TO_REF_SET):
+            result = self._post_add_to_reference_set(param)
         elif (action == phantom.ACTION_ID_INGEST_ON_POLL):
             start_time = time.time()
             result = self._on_poll(param)

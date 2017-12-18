@@ -23,6 +23,12 @@ QRADAR_JSON_FIELDS_FILTER = "fields_filter"
 QRADAR_JSON_COUNT = "count"
 QRADAR_JSON_IP = "ip"
 QRADAR_JSON_TIMEZONE = "timezone"
+QRADAR_JSON_CLOSING_REASON_ID = "closing_reason_id"
+QRADAR_JSON_REFSET_NAME = "reference_set_name"
+QRADAR_JSON_REFSET_VALUE = "reference_set_value"
+# QRADAR_JSON_INGESTDUPES = "ingestdupes"
+QRADAR_JSON_ARTIFACT_MAX_DEF = "artifact_max"
+QRADAR_JSON_ADD_TO_RESOLVED = "add_to_resolved"
 
 QRADAR_JSON_NAME = "name"
 QRADAR_JSON_OFFENSE_SOURCE = "source"
@@ -89,3 +95,6 @@ QRADAR_MAX_ALLOWED_RUNS_TO_GET_LATEST_OFFENSES = 50
 
 # This value is set by trial and error by quering qradar
 QRADAR_QUERY_HIGH_RANGE = 2147483646
+
+# Useful baseline number of artifacts to ingest per offense
+QRADAR_ARTIFACT_MAX_POLL = 102

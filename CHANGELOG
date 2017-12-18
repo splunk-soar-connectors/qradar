@@ -1,0 +1,13 @@
+December 14 2017
+Adam Hulcoop (adam.hulcoop@sunlife.com)
+
+* exposed artifact count limiter to the user configuration pane; this variable was being hard set to (2*QRADAR_QUERY_HIGH_RANGE)+3 which is far too large for normal use.
+
+* exposed a new configuration param to the user configuration pane to allow user to decide whether or not to ingest additional artifacts/events (during poll) into a 
+container when that container is resolved/closed.  Defaults to FALSE.  
+
+* Added action: add_to_referenceset to allow addition of IPs/strings/etc  to Qradar reference sets. 
+
+* Added action: close_offense to allow the closure of a Qradar offense from within a playbook.
+
+

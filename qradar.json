@@ -5,8 +5,8 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.39",
-    "utctime_updated": "2017-11-14T22:23:17.000000Z",
+    "app_version": "1.2.38",
+    "utctime_updated": "2017-09-19T23:29:17.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
@@ -52,6 +52,20 @@
             "order": 5,
             "description": "Timezone",
             "required": true
+        },
+		"add_to_resolved": {
+            "data_type": "boolean",
+            "order": 6,
+            "description": "Ingest artifacts into closed/resolved containers?",
+            "required": true,
+            "default": false
+        },
+        "artifact_max": {
+            "data_type": "numeric",
+            "order": 7,
+            "description": "Maximum number of artifacts to ingest on poll",
+            "required": true,
+            "default": "1000"
         }
     },
     "app_config": {
@@ -1377,6 +1391,289 @@
                     "contains": [
                         "qradar ariel query"
                     ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+				{
+            "action": "add to referenceset",
+            "description": "Add an item to a reference set.",
+            "type": "investigate",
+            "identifier": "add_to_reference_set",
+            "read_only": true,
+            "parameters": {
+                "reference_set_name": {
+                    "data_type": "string",
+                    "order": 0,
+                    "description": "Name of reference set to add to",
+                    "required": true,
+                    "primary": true
+                },
+                "reference_set_value": {
+                    "data_type": "string",
+                    "order": 1,
+                    "description": "Value to add to the reference set",
+                    "verbose": "Value to add",
+					"required": true
+                }				
+            },
+            "render": {
+                "type": "table",
+                "width": 12,
+                "height": 5,
+                "title": "Offenses Details"
+            },
+            "output": [
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "numeric",
+                    "contains": [
+                        "qradar offense id"
+                    ],
+                    "column_name": "Offense Id",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.status",
+                    "data_type": "string",
+                    "column_name": "Status",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+		{
+            "action": "close an offense",
+            "description": "Close an active offense, marking status=CLOSED.",
+            "type": "investigate",
+            "identifier": "close_offense",
+            "read_only": true,
+            "parameters": {
+                "offense_id": {
+                    "data_type": "numeric",
+                    "order": 0,
+                    "description": "Offense ID to close",
+                    "contains": [
+                        "qradar offense id"
+                    ],
+                    "required": true,
+                    "primary": true
+                },
+                "closing_reason_id": {
+                    "data_type": "numeric",
+                    "order": 1,
+                    "description": "Reason for closing offense",
+                    "verbose": "1 = Non Issue, 2 = False-Positive, Tuned, 3 = Policy Violation, 205 = Malware, 204 = Ransomware, 154 = Resolved, 54 = Subsequent Tuning Required",
+					"required": true
+                }				
+            },
+            "render": {
+                "type": "table",
+                "width": 12,
+                "height": 5,
+                "title": "Offenses Details"
+            },
+            "output": [
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.offense_id",
+                    "data_type": "numeric",
+                    "contains": [
+                        "qradar offense id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "numeric",
+                    "contains": [
+                        "qradar offense id"
+                    ],
+                    "column_name": "Offense Id",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.offense_source",
+                    "data_type": "string",
+                    "column_name": "Offense Source",
+                    "contains": [
+                        "ip"
+                    ],
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.status",
+                    "data_type": "string",
+                    "column_name": "Status",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.source_network",
+                    "data_type": "string",
+                    "column_name": "Source Network",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.data.*.description",
+                    "data_type": "string",
+                    "column_name": "Description",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.inactive",
+                    "data_type": "boolean",
+                    "column_name": "Inactive",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.event_count",
+                    "data_type": "numeric",
+                    "column_name": "Event Count",
+                    "column_order": 6
+                },
+                {
+                    "data_path": "action_result.data.*.flow_count",
+                    "data_type": "numeric",
+                    "column_name": "Flow Count",
+                    "column_order": 7
+                },
+                {
+                    "data_path": "action_result.data.*.start_time",
+                    "data_type": "numeric",
+                    "column_name": "Start Time",
+                    "column_order": 8
+                },
+                {
+                    "data_path": "action_result.data.*.close_time",
+                    "data_type": "numeric",
+                    "column_name": "Close Time",
+                    "column_order": 9
+                },
+                {
+                    "data_path": "action_result.data.*.closing_user",
+                    "data_type": "string",
+                    "column_name": "Closing User",
+                    "column_order": 10
+                },
+                {
+                    "data_path": "action_result.data.*.closing_reason_id",
+                    "data_type": "numeric",
+                    "column_name": "Closing Reason Id",
+                    "column_order": 11
+                },
+                {
+                    "data_path": "action_result.data.*.severity",
+                    "data_type": "numeric",
+                    "column_name": "Severity",
+                    "column_order": 12
+                },
+                {
+                    "data_path": "action_result.data.*.last_updated_time",
+                    "data_type": "numeric",
+                    "column_name": "Last Updated Time",
+                    "column_order": 13
+                },
+                {
+                    "data_path": "action_result.data.*.follow_up",
+                    "data_type": "boolean",
+                    "column_name": "Follow Up",
+                    "column_order": 14
+                },
+                {
+                    "data_path": "action_result.data.*.magnitude",
+                    "data_type": "numeric",
+                    "column_name": "Magnitude",
+                    "column_order": 15
+                },
+                {
+                    "data_path": "action_result.data.*.offense_type",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.categories",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.category_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.credibility",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.destination_networks",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.device_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.local_destination_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.policy_category_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.protected",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.relevance",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.remote_destination_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.security_category_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.source_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.username_count",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": " action_result.data.*.assigned_to",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "summary.total_objects",
