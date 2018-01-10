@@ -151,7 +151,6 @@ class QradarConnector(BaseConnector):
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
-        # self._ingest_duplicates = config[QRADAR_JSON_INGESTDUPES]
         self._artifact_max = config[QRADAR_JSON_ARTIFACT_MAX_DEF]
         self._add_to_resolved = config[QRADAR_JSON_ADD_TO_RESOLVED]
 
@@ -164,7 +163,6 @@ class QradarConnector(BaseConnector):
 
         # Don't specify the version, so the latest api installed on the device will be usedl.
         # There seems to be _no_ change in the contents or endpoints of the API only the version!!
-        # self._headers['Version'] = '3'
         self._headers.update(self._auth)
 
         return phantom.APP_SUCCESS
@@ -229,8 +227,6 @@ class QradarConnector(BaseConnector):
         # Create a action result to represent this action
         action_result = self.add_action_result(ActionResult(dict(param)))
         offenses = list()
-
-        # ingest_duplicates = self._ingest_duplicates
         artifact_max = self._artifact_max
         add_to_resolved = self._add_to_resolved
 
@@ -323,8 +319,6 @@ class QradarConnector(BaseConnector):
 
                 # strip \r, \n and space from the values, qradar does that for the description field atleast
                 event = dict([(k, v_strip(v)) for k, v in event.iteritems()])
-
-                # self.debug_print('Event', phantom.remove_none_values(event))
 
                 artifact = self._get_artifact(event, container_id)
 
@@ -508,7 +502,6 @@ class QradarConnector(BaseConnector):
         params = dict()
 
         self.debug_print("Executing ariel query: {0}".format(ariel_query))
-        # self.save_progress("Query: {0}".format(ariel_query))
 
         # First create a search
         params['query_expression'] = ariel_query
@@ -541,8 +534,6 @@ class QradarConnector(BaseConnector):
 
         if (not search_id):
             return action_result.get_status(phantom.APP_ERROR, "Response does not contain the 'search_id' key")
-
-        # self.save_progress(QRADAR_PROG_GOT_SEARCH_ID, search_id=search_id)
 
         # Init the response json
         response_json['status'] = 'EXECUTE'
@@ -743,8 +734,7 @@ class QradarConnector(BaseConnector):
 
         if (count == 0):
             # set it to the max number we can use in the query, so that we get all of them
-            # count = QRADAR_QUERY_HIGH_RANGE
-            count = 1000
+            count = QRADAR_QUERY_HIGH_RANGE
             # using QRADAR_QUERY_HIGH_RANGE is way too high for usability ***
 
         if (count > QRADAR_QUERY_HIGH_RANGE):
@@ -757,8 +747,6 @@ class QradarConnector(BaseConnector):
         # From testing queries, it was noticed that the START and STOP are required else the default
         # result returned by the REST api is of 60 seconds or so. Also the time format needs to be in
         # the device's timezone.
-        # where_clause += " START '{0}'".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(start_time_msecs/1000)))
-        # where_clause += " STOP '{0}'".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(end_time_msecs/1000)))
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch(start_time_msecs))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch(end_time_msecs))
 
@@ -839,7 +827,6 @@ class QradarConnector(BaseConnector):
 
         try:
             event_columns_json = response.json()
-        # except JSONDecodeError:
         except:
             # Many times when QRadar crashes, it gives back the status code as 200, but the reponse
             # in an html saying that an application error occurred. Bail out when this happens
@@ -925,8 +912,6 @@ class QradarConnector(BaseConnector):
         # From testing queries, it was noticed that the START and STOP are required else the default
         # result returned by the REST api is of 60 seconds or so. Also the time format needs to be in
         # the device's timezone.
-        # where_clause += " START '{0}'".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(start_time_msecs/1000)))
-        # where_clause += " STOP '{0}'".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(end_time_msecs/1000)))
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch(start_time_msecs))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch(end_time_msecs))
 
@@ -934,11 +919,8 @@ class QradarConnector(BaseConnector):
 
         ariel_query += " where {0}".format(where_clause)
 
-        # self.debug_print('ariel_query', ariel_query)
-
         self._handle_ariel_query(ariel_query, action_result, 'flows', offense_id)
 
-        # Set the summary
         action_result.update_summary({QRADAR_JSON_TOTAL_FLOWS: action_result.get_data_size()})
 
         return action_result.get_status()
@@ -1009,9 +991,7 @@ class QradarConnector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         # Update the parameter
-        # action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
         params = dict()
-        # params[QRADAR_JSON_REFSET_VALUE] = reference_set_value
 
         # value to insert into ref set
         params['value'] = reference_set_value
@@ -1041,8 +1021,6 @@ class QradarConnector(BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
 
         action_result.add_data(response_json)
-
-        # time_str = lambda x: datetime.fromtimestamp(int(x) / 1000.0).strftime('%Y-%m-%d %H:%M:%S UTC')
 
         try:
             # Create a summary
@@ -1120,13 +1098,6 @@ class QradarConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
     def handle_action(self, param):
-        """Function that handles all the actions
-
-        Args:
-
-        Return:
-            A status code
-        """
 
         result = None
         action = self.get_action_identifier()

@@ -1,7 +1,7 @@
 {
     "appid": "6cf34589-6947-409f-b776-e8fa62e01509",
     "name": "QRadar",
-    "description": "This app supports investigative actions on an IBM QRadar device. It also supports ingesting Incidents and Events into Phantom containers and artifacts",
+    "description": "This app supports investigative and ingestion actions on an IBM QRadar device",
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
@@ -11,9 +11,9 @@
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "3.0.247",
+    "min_phantom_version": "3.0.251",
     "logo": "qradar.png",
-    "license": "Copyright (c) Phantom Cyber Corporation 2015-2017",
+    "license": "Copyright (c) Phantom Cyber Corporation 2015-2018",
     "app_config_render": "default",
     "configuration": {
         "device": {
@@ -1404,8 +1404,8 @@
             "versions": "EQ(*)"
         },
 				{
-            "action": "add to referenceset",
-            "description": "Add an item to a reference set.",
+            "action": "add listitem",
+            "description": "Add an item to a reference set in Qradar",
             "type": "investigate",
             "identifier": "add_to_reference_set",
             "read_only": true,
@@ -1467,7 +1467,7 @@
             "versions": "EQ(*)"
         },
 		{
-            "action": "close an offense",
+            "action": "close offense",
             "description": "Close an active offense, marking status=CLOSED.",
             "type": "investigate",
             "identifier": "close_offense",

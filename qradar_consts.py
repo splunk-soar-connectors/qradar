@@ -94,7 +94,7 @@ QRADAR_DEFAULT_OFFENSE_COUNT = 1
 QRADAR_MAX_ALLOWED_RUNS_TO_GET_LATEST_OFFENSES = 50
 
 # This value is set by trial and error by quering qradar
-QRADAR_QUERY_HIGH_RANGE = 2147483646
+QRADAR_QUERY_HIGH_RANGE = 1000
 
 # Useful baseline number of artifacts to ingest per offense
 QRADAR_ARTIFACT_MAX_POLL = 102
