@@ -152,7 +152,7 @@ class QradarConnector(BaseConnector):
         # Base URL
         self._base_url = 'https://' + config.get(phantom.APP_JSON_DEVICE) + '/api/'
         self._artifact_max = config.get(QRADAR_JSON_ARTIFACT_MAX_DEF, 1000)
-        self._add_to_resolved = config.get(QRADAR_JSON_ADD_TO_RESOLVED, false)
+        self._add_to_resolved = config.get(QRADAR_JSON_ADD_TO_RESOLVED, False)
 
         # Auth details
         if (phantom.is_fail(self._set_auth(config))):
