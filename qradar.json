@@ -57,14 +57,14 @@
             "data_type": "boolean",
             "order": 6,
             "description": "Ingest artifacts into closed/resolved containers?",
-            "required": true,
+            "required": false,
             "default": false
         },
         "artifact_max": {
             "data_type": "numeric",
             "order": 7,
             "description": "Maximum number of artifacts to ingest on poll",
-            "required": true,
+            "required": false,
             "default": "1000"
         }
     },
@@ -1488,6 +1488,7 @@
                     "order": 1,
                     "description": "Reason for closing offense",
                     "verbose": "1 = Non Issue, 2 = False-Positive, Tuned, 3 = Policy Violation, 205 = Malware, 204 = Ransomware, 154 = Resolved, 54 = Subsequent Tuning Required",
+                    "value_list": ["1","2","3","205","204","154","54"],
 					"required": true
                 }				
             },
