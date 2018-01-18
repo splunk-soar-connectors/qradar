@@ -822,7 +822,7 @@ class QradarConnector(BaseConnector):
             # Error condition
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED)
             # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(json.dumps(response.json()))
+            action_result.append_to_message(response.text)
             return action_result.get_status()
 
         try:
@@ -948,7 +948,7 @@ class QradarConnector(BaseConnector):
             # Error condition
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
             # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(json.dumps(response.json()))
+            action_result.append_to_message(response.text)
             return action_result.get_status()
 
         self.debug_print("content-type", response.headers['content-type'])
@@ -1008,7 +1008,7 @@ class QradarConnector(BaseConnector):
             # Error condition
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
             # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(json.dumps(response.json()))
+            action_result.append_to_message(response.text)
             return action_result.get_status()
 
         self.debug_print("content-type", response.headers['content-type'])
@@ -1064,7 +1064,7 @@ class QradarConnector(BaseConnector):
             # Error condition
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
             # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(json.dumps(response.json()))
+            action_result.append_to_message(response.text)
             return action_result.get_status()
 
         self.debug_print("content-type", response.headers['content-type'])
