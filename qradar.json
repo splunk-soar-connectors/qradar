@@ -5,8 +5,8 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.40",
-    "utctime_updated": "2017-12-19T23:44:51.000000Z",
+    "app_version": "1.2.43",
+    "utctime_updated": "2018-01-24T22:35:19.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
@@ -53,7 +53,7 @@
             "description": "Timezone",
             "required": true
         },
-		"add_to_resolved": {
+        "add_to_resolved": {
             "data_type": "boolean",
             "order": 6,
             "description": "Ingest artifacts into closed/resolved containers?",
@@ -1403,7 +1403,7 @@
             ],
             "versions": "EQ(*)"
         },
-				{
+        {
             "action": "add listitem",
             "description": "Add an item to a reference set in Qradar",
             "type": "investigate",
@@ -1422,8 +1422,8 @@
                     "order": 1,
                     "description": "Value to add to the reference set",
                     "verbose": "Value to add",
-					"required": true
-                }				
+                    "required": true
+                }
             },
             "render": {
                 "type": "table",
@@ -1466,7 +1466,7 @@
             ],
             "versions": "EQ(*)"
         },
-		{
+        {
             "action": "close offense",
             "description": "Close an active offense, marking status=CLOSED.",
             "type": "investigate",
@@ -1488,9 +1488,17 @@
                     "order": 1,
                     "description": "Reason for closing offense",
                     "verbose": "1 = Non Issue, 2 = False-Positive, Tuned, 3 = Policy Violation, 205 = Malware, 204 = Ransomware, 154 = Resolved, 54 = Subsequent Tuning Required",
-                    "value_list": ["1","2","3","205","204","154","54"],
-					"required": true
-                }				
+                    "value_list": [
+                        "1",
+                        "2",
+                        "3",
+                        "205",
+                        "204",
+                        "154",
+                        "54"
+                    ],
+                    "required": true
+                }
             },
             "render": {
                 "type": "table",
