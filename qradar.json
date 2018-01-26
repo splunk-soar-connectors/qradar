@@ -6,7 +6,7 @@
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
     "app_version": "1.2.44",
-    "utctime_updated": "2018-01-25T03:06:41.000000Z",
+    "utctime_updated": "2018-01-26T00:50:19.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
