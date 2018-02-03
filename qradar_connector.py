@@ -41,6 +41,7 @@ class QradarConnector(BaseConnector):
     ACTION_ID_OFFENSE_DETAILS = "offense_details"
     ACTION_ID_CLOSE_OFFENSE = "close_offense"
     ACTION_ID_ADD_TO_REF_SET = "add_to_reference_set"
+    ACTION_ID_ADD_NOTE = "add_note"
 
     def __init__(self):
 
@@ -925,6 +926,33 @@ class QradarConnector(BaseConnector):
 
         return action_result.get_status()
 
+    def _handle_add_note(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        offense_id = param[QRADAR_JSON_OFFENSE_ID]
+        note_text = param[QRADER_JSON_NOTE_TEXT]
+
+        params = {
+            'note_text': note_text,
+        }
+
+        endpoint = 'siem/offenses/{0}/notes'.format(offense_id)
+
+        response = self._call_api(endpoint, 'post', action_result, params=params)
+        if (phantom.is_fail(action_result.get_status())):
+            self.debug_print("call_api failed: ", action_result.get_status())
+            return action_result.get_status()
+
+        if not response:
+            # REST Call Failed
+            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ADD_NOTE_API_FAILED)
+            action_result.append_to_message(response.text)
+            return action_result.get_status()
+
+        # Response JSON just contains note_text and the offense id
+
+        return action_result.set_status(phantom.APP_SUCCESS, "Successfully added note to offense")
+
     def _get_offense_details(self, param):
 
         # Get the list of offense ids
@@ -1116,6 +1144,8 @@ class QradarConnector(BaseConnector):
             result = self._post_close_offense(param)
         elif (action == self.ACTION_ID_ADD_TO_REF_SET):
             result = self._post_add_to_reference_set(param)
+        elif (action == self.ACTION_ID_ADD_NOTE):
+            result = self._handle_add_note(param)
         elif (action == phantom.ACTION_ID_INGEST_ON_POLL):
             start_time = time.time()
             result = self._on_poll(param)

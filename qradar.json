@@ -1696,6 +1696,84 @@
             "versions": "EQ(*)"
         },
         {
+            "action": "add note",
+            "description": "Attach a note to an offense",
+            "type": "generic",
+            "identifier": "add_note",
+            "read_only": false,
+            "parameters": {
+                "offense_id": {
+                    "data_type": "numeric",
+                    "order": 0,
+                    "description": "Offense ID to close",
+                    "contains": [
+                        "qradar offense id"
+                    ],
+                    "required": true,
+                    "primary": true
+                },
+                "note_text": {
+                    "data_type": "string",
+                    "order": 1,
+                    "description": "Text to put into note",
+                    "required": true
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.note_text",
+                    "data_type": "string",
+                    "example_values": [
+                        "Note Added By Phantom"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.offense_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "19"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Successfully added note to offense"
+                    ],
+                    "column_order": 0,
+                    "column_name": "Message"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "versions": "EQ(*)",
+            "render": {
+                "width": 12,
+                "title": "Add Note",
+                "type": "table",
+                "height": 5
+            }
+        },
+        {
             "action": "on poll",
             "description": "Callback action for the on_poll ingest functionality.",
             "type": "ingest",
@@ -1731,8 +1809,7 @@
                     "description": "Maximum number of artifact records to query for."
                 }
             },
-            "output": [
-            ],
+            "output": [],
             "versions": "EQ(*)"
         }
     ]
