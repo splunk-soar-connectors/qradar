@@ -1744,6 +1744,9 @@
                     "data_type": "string",
                     "example_values": [
                         "19"
+                    ],
+                    "contains": [
+                        "qradar offense id"
                     ]
                 },
                 {
