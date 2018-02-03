@@ -440,9 +440,6 @@ class QradarConnector(BaseConnector):
             # Now the range
             headers['Range'] = 'items={0}-{1}'.format(start_index, start_index + count_to_query - 1)
 
-            self.debug_print("params", params)
-            self.debug_print("headers", headers)
-
             response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
 
             if (phantom.is_fail(action_result.get_status())):
@@ -832,7 +829,6 @@ class QradarConnector(BaseConnector):
             # Many times when QRadar crashes, it gives back the status code as 200, but the reponse
             # in an html saying that an application error occurred. Bail out when this happens
             # The debug_print of response should help in debugging this
-            self.debug_print("content-type", response.headers['content-type'])
             self.debug_print("response", response.text)
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GOT_INVALID_RESPONSE)
 
@@ -978,8 +974,6 @@ class QradarConnector(BaseConnector):
             # Add the response that we got from the device, it contains additional info
             action_result.append_to_message(response.text)
             return action_result.get_status()
-
-        self.debug_print("content-type", response.headers['content-type'])
 
         # Parse the output, which is details of an offense
         try:
