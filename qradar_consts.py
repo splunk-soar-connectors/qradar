@@ -1,7 +1,7 @@
 # --
 # File: qradar_consts.py
 #
-# Copyright (c) Phantom Cyber Corporation, 2014-2017
+# Copyright (c) Phantom Cyber Corporation, 2014-2018
 #
 # This unpublished material is proprietary to Phantom Cyber.
 # All rights reserved. The methods and
@@ -29,6 +29,7 @@ QRADAR_JSON_REFSET_VALUE = "reference_set_value"
 # QRADAR_JSON_INGESTDUPES = "ingestdupes"
 QRADAR_JSON_ARTIFACT_MAX_DEF = "artifact_max"
 QRADAR_JSON_ADD_TO_RESOLVED = "add_to_resolved"
+QRADER_JSON_NOTE_TEXT = "note_text"
 
 QRADAR_JSON_NAME = "name"
 QRADAR_JSON_OFFENSE_SOURCE = "source"
