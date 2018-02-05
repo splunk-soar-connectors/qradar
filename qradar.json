@@ -1701,7 +1701,7 @@
             "versions": "EQ(*)"
         },
         {
-            "action": "add note",
+            "action": "update offense",
             "description": "Attach a note to an offense",
             "type": "generic",
             "identifier": "add_note",
