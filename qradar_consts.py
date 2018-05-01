@@ -55,8 +55,8 @@ QRADAR_ERR_GET_EVENTS_COLUMNS_API_FAILED = "Failed to get columns for events fro
 QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED = "Failed to get columns for flows from the device"
 QRADAR_ERR_GET_EVENTS_FAILED = "Failed to get events for offense id {offense_id}"
 QRADAR_ERR_GET_ARIEL_DATABASES = "Failed to get the ariel databases"
-QRADAR_SUCC_CONNECTIVITY_TEST = "Connectivity test passed"
-QRADAR_ERR_CONNECTIVITY_TEST = "Connectivity test failed"
+QRADAR_SUCC_CONNECTIVITY_TEST = "Test Connectivity Passed"
+QRADAR_ERR_CONNECTIVITY_TEST = "Test Connectivity Failed"
 QRADAR_ERR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
 
