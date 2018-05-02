@@ -291,7 +291,7 @@ class QradarConnector(BaseConnector):
                 self.debug_print("Duplicate container found:", container_id)
                 # get status of the duplicate container
                 this_container = self.get_container_info(container_id)
-                statusOfContainer = this_container[1]['status']
+                statusOfContainer = this_container[1]['status']  # pylint: disable=E0001,E1126
                 self.debug_print("Add_to_resolved: {0}, status: {1}, container_id: {2}".format(add_to_resolved, statusOfContainer, container_id))
                 if (not add_to_resolved and (statusOfContainer == "resolved" or statusOfContainer == "closed")):
                     self.debug_print("Skipping artifact ingest to closed container.")
@@ -791,7 +791,7 @@ class QradarConnector(BaseConnector):
                 curr_obj = dict([(x[0], None if x[1] == 'null' else x[1]) for x in curr_obj.items()])
                 items[curr_item][i] = curr_obj
 
-        return action_result.get_status()
+        return action_result.set_status(phantom.APP_SUCCESS, QRADAR_SUCC_RUN_QUERY)
 
     def _get_flows(self, param):
 
@@ -941,9 +941,13 @@ class QradarConnector(BaseConnector):
 
         if not response:
             # REST Call Failed
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ADD_NOTE_API_FAILED)
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+            reason = json.loads(response.text)
+            if reason.get('message'):
+                err_reason = reason.get('message')
+            else:
+                err_reason = QRADAR_ERR_ADD_NOTE_API_FAILED
+            action_result.add_data(json.loads(response.text))
+            return action_result.set_status(phantom.APP_ERROR, err_reason)
 
         # Response JSON just contains note_text and the offense id
 
