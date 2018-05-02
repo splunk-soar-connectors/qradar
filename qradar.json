@@ -43,7 +43,7 @@
             "required": false
         },
         "authorization_token": {
-            "data_type": "string",
+            "data_type": "password",
             "order": 4,
             "description": "Auth Token for QRadar REST API calls",
             "required": false
