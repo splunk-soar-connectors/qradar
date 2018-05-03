@@ -946,8 +946,8 @@ class QradarConnector(BaseConnector):
                 err_reason = reason.get('message')
             else:
                 err_reason = QRADAR_ERR_ADD_NOTE_API_FAILED
-            action_result.add_data(json.loads(response.text))
-            return action_result.set_status(phantom.APP_ERROR, err_reason)
+            action_result.add_data(reason.text)
+            return action_result.set_status(phantom.APP_ERROR, response.text)
 
         # Response JSON just contains note_text and the offense id
 
