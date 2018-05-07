@@ -59,6 +59,8 @@ QRADAR_SUCC_CONNECTIVITY_TEST = "Test Connectivity Passed"
 QRADAR_ERR_CONNECTIVITY_TEST = "Test Connectivity Failed"
 QRADAR_ERR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
+QRADAR_ERR_ADD_NOTE_API_FAILED = "Failed to added note to offense"
+QRADAR_SUCC_RUN_QUERY = "Successfully ran query"
 
 QRADAR_PROG_EXECUTING_ENDPOINT = "Executing {method} on {endpoint}"
 QRADAR_PROG_GOT_SEARCH_ID = "Got search id {search_id}"

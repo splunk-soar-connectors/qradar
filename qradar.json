@@ -5,8 +5,8 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.47",
-    "utctime_updated": "2018-05-01T16:56:12.000000Z",
+    "app_version": "1.2.49",
+    "utctime_updated": "2018-05-07T16:26:50.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
@@ -43,7 +43,7 @@
             "required": false
         },
         "authorization_token": {
-            "data_type": "string",
+            "data_type": "password",
             "order": 4,
             "description": "Auth Token for QRadar REST API calls",
             "required": false
