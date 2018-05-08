@@ -1081,7 +1081,7 @@
         },
         {
             "action": "offense details",
-            "description": "Get details about an offense.",
+            "description": "Get details about an offense",
             "type": "investigate",
             "identifier": "offense_details",
             "read_only": true,
@@ -1290,8 +1290,8 @@
         },
         {
             "action": "run query",
-            "description": "Execute an ariel query on the QRadar device.",
-            "verbose": "Use this action to execute queries using AQL on the QRadar device. AQL is a well documented (on the IBM website) query language with quite a few inbuilt functions.<br>Do note that this action could have a dynamic set of values returned in the data array, since the query can specify the columns to return. This is the main reason for not listing the data paths",
+            "description": "Execute an ariel query on the QRadar device",
+            "verbose": "Use this action to execute queries using AQL on the QRadar device. AQL is a well documented (on the IBM website) query language with quite a few built-in functions.<br>Do note that this action could have a dynamic set of values returned in the data array, since the query can specify the columns to return. This is the main reason for not listing the data paths.",
             "type": "investigate",
             "identifier": "run_query",
             "read_only": true,
@@ -1473,7 +1473,7 @@
         },
         {
             "action": "close offense",
-            "description": "Close an active offense, marking status=CLOSED.",
+            "description": "Close an active offense, marking status=CLOSED",
             "type": "investigate",
             "identifier": "close_offense",
             "read_only": true,
@@ -1783,7 +1783,7 @@
         },
         {
             "action": "on poll",
-            "description": "Callback action for the on_poll ingest functionality.",
+            "description": "Callback action for the on_poll ingest functionality",
             "type": "ingest",
             "identifier": "on_poll",
             "read_only": true,
