@@ -23,6 +23,13 @@ QRADAR_JSON_FIELDS_FILTER = "fields_filter"
 QRADAR_JSON_COUNT = "count"
 QRADAR_JSON_IP = "ip"
 QRADAR_JSON_TIMEZONE = "timezone"
+QRADAR_JSON_CLOSING_REASON_ID = "closing_reason_id"
+QRADAR_JSON_REFSET_NAME = "reference_set_name"
+QRADAR_JSON_REFSET_VALUE = "reference_set_value"
+# QRADAR_JSON_INGESTDUPES = "ingestdupes"
+QRADAR_JSON_ARTIFACT_MAX_DEF = "artifact_max"
+QRADAR_JSON_ADD_TO_RESOLVED = "add_to_resolved"
+QRADER_JSON_NOTE_TEXT = "note_text"
 
 QRADAR_JSON_NAME = "name"
 QRADAR_JSON_OFFENSE_SOURCE = "source"
@@ -48,10 +55,12 @@ QRADAR_ERR_GET_EVENTS_COLUMNS_API_FAILED = "Failed to get columns for events fro
 QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED = "Failed to get columns for flows from the device"
 QRADAR_ERR_GET_EVENTS_FAILED = "Failed to get events for offense id {offense_id}"
 QRADAR_ERR_GET_ARIEL_DATABASES = "Failed to get the ariel databases"
-QRADAR_SUCC_CONNECTIVITY_TEST = "Connectivity test passed"
-QRADAR_ERR_CONNECTIVITY_TEST = "Connectivity test failed"
+QRADAR_SUCC_CONNECTIVITY_TEST = "Test Connectivity Passed"
+QRADAR_ERR_CONNECTIVITY_TEST = "Test Connectivity Failed"
 QRADAR_ERR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
+QRADAR_ERR_ADD_NOTE_API_FAILED = "Failed to added note to offense"
+QRADAR_SUCC_RUN_QUERY = "Successfully ran query"
 
 QRADAR_PROG_EXECUTING_ENDPOINT = "Executing {method} on {endpoint}"
 QRADAR_PROG_GOT_SEARCH_ID = "Got search id {search_id}"
@@ -67,7 +76,7 @@ QRADAR_MSG_QUERYING_FOR_MAX_N_EVENTS = "Querying for max {count} number of event
 
 # This is what a event query looks like
 # The select clause with all the required data
-QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, AccountDomain, destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid)'  # noqa
+QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, AccountDomain, destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid), UTF8(payload) as Payload' # noqa
 # From clause
 QRADAR_AQL_EVENT_FROM = " from events"
 QRADAR_AQL_EVENT_WHERE = " where hasoffense='true' "
@@ -88,4 +97,7 @@ QRADAR_DEFAULT_OFFENSE_COUNT = 1
 QRADAR_MAX_ALLOWED_RUNS_TO_GET_LATEST_OFFENSES = 50
 
 # This value is set by trial and error by quering qradar
-QRADAR_QUERY_HIGH_RANGE = 2147483646
+QRADAR_QUERY_HIGH_RANGE = 1000
+
+# Useful baseline number of artifacts to ingest per offense
+QRADAR_ARTIFACT_MAX_POLL = 102
