@@ -70,7 +70,7 @@
         },
         "ingest_resolved": {
             "data_type": "boolean",
-            "order": 5,
+            "order": 8,
             "description": "Ingest only open"
         }
     },
