@@ -154,6 +154,7 @@ class QradarConnector(BaseConnector):
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
         self._artifact_max = config.get(QRADAR_JSON_ARTIFACT_MAX_DEF, 1000)
         self._add_to_resolved = config.get(QRADAR_JSON_ADD_TO_RESOLVED, False)
+        self._resolved_disabled = config.get(QRADAR_INGEST_RESOLVED, False)
 
         # Auth details
         if (phantom.is_fail(self._set_auth(config))):
@@ -367,6 +368,7 @@ class QradarConnector(BaseConnector):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
+            resolved_disabled = self._resolved_disabled
         else:
             curr_epoch_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             end_time_msecs = curr_epoch_msecs if end_time_msecs is None else int(end_time_msecs)
@@ -380,7 +382,8 @@ class QradarConnector(BaseConnector):
 
         # Create the param dictionary for the range
         filter_string += '(({2} >= {0} and {2} <= {1}) or ({3} >= {0} and {3} <= {1}))'.format(
-                start_time_msecs, end_time_msecs, 'start_time', 'last_updated_time')
+            start_time_msecs, end_time_msecs, 'start_time', 'last_updated_time')
+        self.save_progress('Filter is {0}'.format(filter_string))
 
         # get the list of offenses that we are supposed to query for
         container_source_ids = phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID,
@@ -439,9 +442,10 @@ class QradarConnector(BaseConnector):
             runs += 1
             # Now the range
             headers['Range'] = 'items={0}-{1}'.format(start_index, start_index + count_to_query - 1)
-
-            response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
-
+            if resolved_disabled:
+                response = self._call_api('siem/offenses?filter=status=OPEN', 'get', action_result, params=params, headers=headers)
+            else:
+                response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
             if (phantom.is_fail(action_result.get_status())):
                 self.debug_print("call_api failed: ", action_result.get_status())
                 return action_result.get_status()

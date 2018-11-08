@@ -67,6 +67,11 @@
             "description": "Maximum number of artifacts to ingest on poll",
             "required": false,
             "default": "1000"
+        },
+        "ingest_resolved": {
+            "data_type": "boolean",
+            "order": 8,
+            "description": "Ingest only open"
         }
     },
     "app_config": {
