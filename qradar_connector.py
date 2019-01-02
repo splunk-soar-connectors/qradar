@@ -272,8 +272,14 @@ class QradarConnector(BaseConnector):
 
             offense_id = offense['id']
             container = {}
+            if param.get('tenant_id', None) is not None:
+                container['tenant_id'] = param['tenant_id']
             container['name'] = offense['description']
             container['data'] = offense
+            # Two hard coded lines for testing multi-tenancy adds
+            # container['asset_id'] = 44
+            # container['ingest_app'] = "6cf34589-6947-409f-b776-e8fa62e01509"
+            # End of hard coded lines
             container['start_time'] = self._get_str_from_epoch(offense['start_time'])
             container['severity'] = get_ph_severity(offense['severity'])
             container['source_data_identifier'] = offense_id
@@ -364,7 +370,7 @@ class QradarConnector(BaseConnector):
         # If start_time is not given, then start_time is QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME
         # days behind end_time
         #
-        if (self.is_poll_now()):
+        if (self.is_poll_now() or param.get('ingest_offense', False)):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
@@ -386,8 +392,8 @@ class QradarConnector(BaseConnector):
         self.save_progress('Filter is {0}'.format(filter_string))
 
         # get the list of offenses that we are supposed to query for
-        container_source_ids = phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID,
-                phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, None))
+        container_source_ids = str(phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID,
+                phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, None)))
 
         if (container_source_ids is not None):
             # convert it to list
@@ -968,6 +974,15 @@ class QradarConnector(BaseConnector):
         # Update the parameter
         action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 
+        if param["ingest_offense"]:
+            result = self._on_poll(param)
+
+            if (phantom.is_fail(action_result.get_status())):
+                self.debug_print("call_api failed: ", action_result.get_status())
+                return action_result.get_status()
+
+            return result
+
         response = self._call_api('siem/offenses/{0}'.format(offense_id), 'get', action_result)
 
         if (phantom.is_fail(action_result.get_status())):
@@ -1171,24 +1186,64 @@ class QradarConnector(BaseConnector):
 
 if __name__ == '__main__':
 
-    import sys
-    # import simplejson as json
-
     import pudb
+    import argparse
+
     pudb.set_trace()
 
-    if (len(sys.argv) < 2):
-        print "No test json specified as input"
-        exit(0)
+    argparser = argparse.ArgumentParser()
 
-    with open(sys.argv[1]) as f:
+    argparser.add_argument('input_test_json', help='Input Test JSON file')
+    argparser.add_argument('-u', '--username', help='username', required=False)
+    argparser.add_argument('-p', '--password', help='password', required=False)
+
+    args = argparser.parse_args()
+    session_id = None
+
+    username = args.username
+    password = args.password
+
+    if (username is not None and password is None):
+
+        # User specified a username but not a password, so ask
+        import getpass
+        password = getpass.getpass("Password: ")
+
+    if (username and password):
+        try:
+            print ("Accessing the Login page")
+            r = requests.get("https://127.0.0.1/login", verify=False)
+            csrftoken = r.cookies['csrftoken']
+
+            data = dict()
+            data['username'] = username
+            data['password'] = password
+            data['csrfmiddlewaretoken'] = csrftoken
+
+            headers = dict()
+            headers['Cookie'] = 'csrftoken=' + csrftoken
+            headers['Referer'] = 'https://127.0.0.1/login'
+
+            print ("Logging into Platform to get the session id")
+            r2 = requests.post("https://127.0.0.1/login", verify=False, data=data, headers=headers)
+            session_id = r2.cookies['sessionid']
+        except Exception as e:
+            print ("Unable to get session id from the platfrom. Error: " + str(e))
+            exit(1)
+
+    with open(args.input_test_json) as f:
         in_json = f.read()
         in_json = json.loads(in_json)
-        print(json.dumps(in_json, indent=' ' * 4))
+        print(json.dumps(in_json, indent=4))
 
         connector = QradarConnector()
         connector.print_progress_message = True
+
+        if (session_id is not None):
+            in_json['user_session_token'] = session_id
+            connector._set_csrf_info(csrftoken, headers['Referer'])
+
         ret_val = connector._handle_action(json.dumps(in_json), None)
-        print (ret_val)
+        print (json.dumps(json.loads(ret_val), indent=4))
 
     exit(0)
