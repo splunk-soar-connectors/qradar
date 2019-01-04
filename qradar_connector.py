@@ -389,13 +389,12 @@ class QradarConnector(BaseConnector):
         # Create the param dictionary for the range
         filter_string += '(({2} >= {0} and {2} <= {1}) or ({3} >= {0} and {3} <= {1}))'.format(
             start_time_msecs, end_time_msecs, 'start_time', 'last_updated_time')
-        self.save_progress('Filter is {0}'.format(filter_string))
 
         # get the list of offenses that we are supposed to query for
         container_source_ids = str(phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID,
                 phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, None)))
 
-        if (container_source_ids is not None):
+        if (container_source_ids != 'None'):
             # convert it to list
             offense_id_list = ['id=' + x.strip() for x in container_source_ids.split(',') if len(x.strip()) > 0]
             if (len(offense_id_list) > 0):
@@ -406,6 +405,7 @@ class QradarConnector(BaseConnector):
                         ' or '.join(offense_id_list))
 
         params['filter'] = filter_string
+        self.save_progress('Filter is {0}'.format(filter_string))
 
         offenses = list()
 
@@ -449,9 +449,10 @@ class QradarConnector(BaseConnector):
             # Now the range
             headers['Range'] = 'items={0}-{1}'.format(start_index, start_index + count_to_query - 1)
             if resolved_disabled:
-                response = self._call_api('siem/offenses?filter=status=OPEN', 'get', action_result, params=params, headers=headers)
-            else:
-                response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
+                params['filter'] = filter_string + ' and status=OPEN'
+                self.save_progress('Filter is {0}'.format(params['filter']))
+            response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
+
             if (phantom.is_fail(action_result.get_status())):
                 self.debug_print("call_api failed: ", action_result.get_status())
                 return action_result.get_status()
