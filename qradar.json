@@ -1100,6 +1100,19 @@
                     ],
                     "required": true,
                     "primary": true
+                },
+                "tenant_id": {
+                    "data_type": "numeric",
+                    "order": 1,
+                    "description": "Tenant ID for saving container",
+                    "required": false
+                },
+                "ingest_offense": {
+                    "data_type": "boolean",
+                    "order": 2,
+                    "default": false,
+                    "description": "Ingest offense into Phantom?",
+                    "required": true
                 }
             },
             "render": {
