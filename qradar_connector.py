@@ -321,6 +321,14 @@ class QradarConnector(BaseConnector):
             events = event_action_result.get_data()
             self.debug_print("Got {0} events for offense {1}".format(len(events), offense_id))
 
+            offense_artifact = {}
+            offense_artifact['container_id'] = container_id
+            offense_artifact['name'] = 'Offense Artifact'
+            offense_artifact['label'] = 'offense'
+            offense_artifact['cef'] = offense
+
+            artifacts = [offense_artifact]
+
             event_index = 0
             len_events = len(events)
             for j, event in enumerate(events):
