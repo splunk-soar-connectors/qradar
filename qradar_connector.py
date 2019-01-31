@@ -52,32 +52,6 @@ class QradarConnector(BaseConnector):
         self._auth = {}
         self._headers = {}
 
-        # cef mapping for events
-        # 'deviceDirection' = 0 if eventdirection == L2R else 1
-        self._cef_event_map = {
-                'signature_id': 'qid',
-                'name': 'qidname_qid',
-                'severity': 'severity',
-                'applicationProtocol': 'Application',
-                'destinationMacAddress': 'destinationmac',
-                'destinationNtDomain': 'AccountDomain',
-                'destinationPort': 'destinationport',
-                'destinationAddress': 'destinationaddress',
-                'endTime': 'endtime',
-                'fileHash': 'File Hash',
-                'fileId': 'File ID',
-                'filePath': 'File Path',
-                'fileName': 'Filename',
-                'bytesIn': 'BytesReceived',
-                'message': 'Message',
-                'bytesOut': 'BytesSent',
-                'transportProtocol': 'protocolname_protocolid',
-                'sourceMacAddress': 'sourcemac',
-                'sourcePort': 'sourceport',
-                'sourceAddress': 'sourceaddress',
-                'startTime': 'starttime',
-                'payload': 'Payload'}
-
     def _create_authorization_header(self, config):
 
         username = phantom.get_str_val(config, phantom.APP_JSON_USERNAME)
@@ -192,9 +166,12 @@ class QradarConnector(BaseConnector):
                 'name': event['qidname_qid'],
                 'type': 'network',  # TODO: need to find a better way to map qradar data to this field
                 'severity': phantom.SEVERITY_MEDIUM if ('severity' not in event) else get_ph_severity(event['severity']),
-                'container_id': container_id,
-                'start_time': '' if ('starttime' not in event) else self._get_str_from_epoch(event['starttime']),
-                'end_time': '' if ('endtime' not in event) else self._get_str_from_epoch(event['endtime'])}
+                'container_id': container_id
+                    }
+        if 'starttime' in event:
+            artifact['start_time'] = self._get_str_from_epoch(event['starttime'])
+        if 'endtime' in event:
+            artifact['end_time'] = self._get_str_from_epoch(event['endtime'])
 
         return artifact
 
@@ -232,6 +209,48 @@ class QradarConnector(BaseConnector):
         artifact_max = self._artifact_max
         add_to_resolved = self._add_to_resolved
 
+        # cef mapping for events
+        # 'deviceDirection' = 0 if eventdirection == L2R else 1
+        config = self.get_config()
+        if config.get('cef_event_map', None) is not None:
+            try:
+                self._cef_event_map = json.loads(config.get('cef_event_map'))
+            except Exception as e:
+                action_result.set_status(phantom.APP_ERROR, 'Optional CEF event map is not valid JSON: {}'.format(str(e)))
+                return action_result.get_status()
+        else:
+            self._cef_event_map = {
+                'signature_id': 'qid',
+                'name': 'qidname_qid',
+                'severity': 'severity',
+                'applicationProtocol': 'Application',
+                'destinationMacAddress': 'destinationmac',
+                'destinationNtDomain': 'AccountDomain',
+                'destinationPort': 'destinationport',
+                'destinationAddress': 'destinationaddress',
+                'endTime': 'endtime',
+                'fileHash': 'File Hash',
+                'fileId': 'File ID',
+                'filePath': 'File Path',
+                'fileName': 'Filename',
+                'bytesIn': 'BytesReceived',
+                'message': 'Message',
+                'bytesOut': 'BytesSent',
+                'transportProtocol': 'protocolname_protocolid',
+                'sourceMacAddress': 'sourcemac',
+                'sourcePort': 'sourceport',
+                'sourceAddress': 'sourceaddress',
+                'startTime': 'starttime',
+                'payload': 'Payload'}
+
+        if config.get('event_fields_for_query', None) is not None:
+            bad_chars = set("&^%")
+            if any((c in bad_chars) for c in config.get('event_fields_for_query')):
+                action_result.set_status(phantom.APP_ERROR, 'Please do not use invalid characters in event field names in event_fields_for_query')
+                return action_result.get_status()
+            if "'" in config.get('event_fields_for_query'):
+                action_result.set_status(phantom.APP_ERROR, 'Please use double quotes instead of single quotes around event field names in event_fields_for_query')
+                return action_result.get_status()
         # Call _list_offenses with a local action result,
         # this one need not be added to the connector run
         # result. It will be used to contain the offenses data
@@ -698,7 +717,11 @@ class QradarConnector(BaseConnector):
         if (phantom.is_fail(ret_val)):
             return action_result.get_status()
 
-        ariel_query = QRADAR_AQL_EVENT_SELECT + QRADAR_AQL_EVENT_FROM
+        config = self.get_config()
+        if config.get('event_fields_for_query', None) is not None:
+            ariel_query = 'select qid, QidName(qid), ' + config.get('event_fields_for_query') + QRADAR_AQL_EVENT_FROM
+        else:
+            ariel_query = QRADAR_AQL_EVENT_SELECT + QRADAR_AQL_EVENT_FROM
 
         # default the where clause to empty
         where_clause = ''

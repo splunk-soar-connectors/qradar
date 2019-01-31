@@ -72,6 +72,20 @@
             "data_type": "boolean",
             "order": 8,
             "description": "Ingest only open"
+        },
+        "cef_event_map": {
+            "data_type": "string",
+            "order": 9,
+            "description": "JSON formatted string of key value pairs for CEF mapping - use double quotes",
+            "verbose": "CEF values are the keys, Qradar fields are the values",
+            "required": false
+        },
+        "event_fields_for_query": {
+            "data_type": "string",
+            "order": 10,
+            "description": "Optionally define a new comma separated list of fields for querying",
+            "verbose": "Comma separated list of field names.  Use double quotes if field names contain spaces",
+            "required": false
         }
     },
     "app_config": {
