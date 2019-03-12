@@ -623,11 +623,11 @@ class QradarConnector(BaseConnector):
         # If start_time is not given, then start_time is QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME
         # days behind end_time
         #
+        resolved_disabled = self._resolved_disabled
         if (self.is_poll_now() or param.get('ingest_offense', False)):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
-            resolved_disabled = self._resolved_disabled
         else:
             curr_epoch_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             end_time_msecs = curr_epoch_msecs if end_time_msecs is None else int(end_time_msecs)
