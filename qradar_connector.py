@@ -31,7 +31,6 @@ from pytz import timezone
 import pytz
 
 import calendar
-import logging
 
 class QradarConnector(BaseConnector):
 
@@ -124,12 +123,10 @@ class QradarConnector(BaseConnector):
 
     def initialize(self):
 
-        logging.basicConfig(filename="/tmp/testing.log", level=logging.DEBUG)
-
         config = self.get_config()
         self._config = self.get_config()
         self._state = self.load_state()
-        self_is_on_poll = False
+        self._is_on_poll = False
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
@@ -233,20 +230,33 @@ class QradarConnector(BaseConnector):
             # 3. if the configuration set the  alt_initial_ingest_time, decode and set as start_time
             # 4. if nothing configured assume 24 hours ago
 
-            start_time = param.get('start_time',
-                self._state.get('last_saved_ingest_time', 
-                    self._config.get('alt_initial_ingest_time', "yesterday")))
+            if self._is_on_poll:
+                start_time = self._state.get('last_saved_ingest_time', 
+                        self._config.get('alt_initial_ingest_time', "yesterday"))
+            else:
+                start_time = param.get('start_time',
+                    self._state.get('last_saved_ingest_time', 
+                        self._config.get('alt_initial_ingest_time', "yesterday")))
 
             # datetime string, decode
-            if not start_time.isdigit():
-                start_time = calendar.timegm(time.gmtime()) * 1000 - QRADAR_MILLISECONDS_IN_A_DAY
-
-            self.save_progress("start_time is ({})".format(self._get_tz_str_from_epoch(start_time)))
+            if isinstance(start_time, basestring):
+                if start_time.isdigit():
+                    start_time = int(start_time)
+                else:
+                    start_time = calendar.timegm(time.gmtime()) * 1000 - QRADAR_MILLISECONDS_IN_A_DAY
 
             # end time is either specified in the param or is now
             
             end_time = param.get('end_time', calendar.timegm(time.gmtime()) * 1000)
+            if isinstance(end_time, basestring):
+                if end_time.isdigit():
+                    end_time = int(end_time)
+                else:
+                    end_time = int(end_time)
             
+            self.save_progress("start_time: {}".format(self._utcctime(start_time)))
+            self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
+
             # the time_field configuaration parameter determines which time fields are used in the filter,
             #   if missing or unknown value, default to start_time
             time_field = self._config.get('alt_time_field', "start_time")
@@ -260,8 +270,8 @@ class QradarConnector(BaseConnector):
                 reqfilter = "(start_time >= {} and start_time <= {})".format(start_time, end_time)
 
             self.save_progress("Applying time range between [{} -> {}] inclusive (total minutes {})".format(
-                self._get_tz_str_from_epoch(start_time),
-                    self._get_tz_str_from_epoch(end_time),
+                self._utcctime(start_time),
+                    self._utcctime(end_time),
                         (end_time - start_time) / (1000 * 60)))
 
         # last requirement, are we listing only opened offenses?
@@ -303,6 +313,7 @@ class QradarConnector(BaseConnector):
             # get offenses, one max_single_query chunk at a time.
             # if retrieved offenses < max_single_query, then we are done
 
+            runs = 0
             while True:
 
                 # check if we can still proceed or error out with too many runs
@@ -311,7 +322,7 @@ class QradarConnector(BaseConnector):
                     return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_RAN_TOO_MANY_QUERIES_TO_GET_NUMBER_OF_OFFENSES, query_runs=runs)
 
                 # start at the end of offenses list and retrieve max_single_query number of offenses
-                curent_index = len(offenses)
+                current_index = len(offenses)
                 reqheaders['Range'] = 'items={}-{}'.format(current_index, current_index + max_single_query - 1)
 
                 self.save_progress("Retrieving index: {} -> {}".format(current_index, current_index + max_single_query - 1))
@@ -328,11 +339,15 @@ class QradarConnector(BaseConnector):
                 if len(new_offenses) < max_single_query:
                     break
 
+        self.save_progress("Total offenses discovered: {}".format(len(offenses)))
+
         # sort the list by timefield
         if time_field == "start_time":
             offenses = sorted(offenses, lambda x: x['start_time'])
         else:
             offenses = sorted(offenses, lambda x: x['last_updated_time'])
+
+        self.save_progress("Ingesting {} offenses out of {}".format(count, len(offenses)))
 
         # and extract the slice we want
         if count < len(offenses):
@@ -341,16 +356,18 @@ class QradarConnector(BaseConnector):
                 ingestion_oder = "latest first"
     
             if ingestion_order == "oldest first":
+                self.save_progress("Ingesting the oldest first")
                 offenses = offenses[:count]
             else:
-                offenses = offenses[-count:]
+                self.save_progress("Ingesting the latest first")
+                offenses = reversed(offenses[-count:])
 
         # add offense to action_result and return
         action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len(offenses)})
         for offense in offenses:
-            self.save_progress("Downloading offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
-                offense['start_time'], self._get_tz_str_from_epoch(offense['start_time']),
-                        offense['last_updated_time'], self._get_tz_str_from_epoch(offense['last_updated_time'])))
+            self.save_progress("Queuing offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
+                offense['start_time'], self._utcctime(offense['start_time']),
+                        offense['last_updated_time'], self._utcctime(offense['last_updated_time'])))
             action_result.add_data(offense)
 
         # if we are polling, save the last ingested time
@@ -401,7 +418,9 @@ class QradarConnector(BaseConnector):
 
         self.save_progress("run {}: downloaded ({}) earliest offense [ id ({}) start_time ({}) ] latest offense [ id ({}) start_time ({}) ]".format(run,
             len(new_offenses), offenses_bytime[0]['id'], offenses_bytime[0]['start_time'], offenses_bytime[-1]['id'], offenses_bytime['start_time']))
-
+    
+    def _utcctime(self, et):
+        return datetime.utcfromtimestamp(et/1000).ctime() + " UTC"
 
     def _on_poll(self, param):
 
