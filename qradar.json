@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.56",
+    "app_version": "1.2.562",
     "utctime_updated": "2019-01-31T01:14:02.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
@@ -86,6 +86,47 @@
             "description": "Optionally define a new comma separated list of fields for querying",
             "verbose": "Comma separated list of field names.  Use double quotes if field names contain spaces",
             "required": false
+        },
+        "alternative_ingest_algorithm": {
+            "data_type": "boolean",
+            "default": false,
+            "required": false,
+            "order": 11,
+            "description": "Alternative ingest algorithm; The following alt_* parameters only apply when this is set to True. Please read the documentation",
+            "verbose": "Use alternative algorithm to determine ingestible offenses. The following <b>alt_*</b> parameters only apply when this is set to True. The appconfig parameter interval_days is ignored"
+        },
+        "alt_time_field": {
+            "data_type": "string",
+            "default": "start_time",
+            "required": false,
+            "order": 12,
+            "value_list": [
+                "start_time",
+                "last_updated_time",
+                "either"
+            ],
+            "description": "alt: Ingest offenses this field(s) is within the ingestion time range",
+            "verbose": "Ingest offenses if <b>time_field</b> is within the ingestion time range. You can specify checking the offense's start_time, last_updated_time or if either are within the time range. If set to either, the ingestion list will be sorted by last_updated_time and <b>last saved ingestion time</b> will be set to the <b>last_updated_time</b> of the last ingested offense"
+        },
+        "alt_initial_ingest_time": {
+            "data_type": "string",
+            "default": "yesterday",
+            "required": false,
+            "order": 13,
+            "description": "alt: Initially ingest offenses with time field set after this time",
+            "verbose": "Set the <b>last saved ingestion time</b> to this. This is the initial lower limit to ingest offenses. This field should be a python parsaable datetime <b>(dateutil module)</b>, nothing exotic, please"
+        },
+        "alt_ingestion_order": {
+            "data_type": "string",
+            "default": "oldest first",
+            "required": false,
+            "order": 15,
+            "value_list": [
+                "oldest first",
+                "latest first"
+            ],
+            "description": "alt: Ingest from the bottom up or the top down",
+            "verbose": "Ingest from the bottom up or the top down. If <b>oldest first</b>, ingest oldest offenses first. The last saved ingestion time is set to the time of the last offense ingested. If <b>latest first</b>, ingest the newest offenses first. The last saved ingestion time is set to the first offense (latest/newest) ingested"
         }
     },
     "app_config": {

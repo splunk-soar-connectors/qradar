@@ -30,6 +30,8 @@ from datetime import timedelta
 from pytz import timezone
 import pytz
 
+import calendar
+import logging
 
 class QradarConnector(BaseConnector):
 
@@ -122,7 +124,12 @@ class QradarConnector(BaseConnector):
 
     def initialize(self):
 
+        logging.basicConfig(filename="/tmp/testing.log", level=logging.DEBUG)
+
         config = self.get_config()
+        self._config = self.get_config()
+        self._state = self.load_state()
+        self_is_on_poll = False
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
@@ -201,7 +208,204 @@ class QradarConnector(BaseConnector):
 
         return self.set_status_save_progress(phantom.APP_SUCCESS, QRADAR_SUCC_CONNECTIVITY_TEST)
 
+    def _createfilter(self, param):
+
+        start_time = None
+        end_time = None
+        reqfilter = None
+        time_field = None
+
+        # first determine if there are any offenses requested, if so, no need to limit time range
+        offense_ids_list = str(phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID, phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, "")))
+
+        # clean up the string and parse into list, assume whitespace and commas as separators
+        offense_ids_list = " ".join([ x.strip() for x in  offense_ids_list.split(",") ])
+        offense_ids_list = [ x for x in offense_ids_list.split() if x ]
+
+        if len(offense_ids_list) > 0:
+            reqfilter = "({})".format(" or ".join([ "id=" + str(x) for x in offense_ids_list]))
+            self.save_progress("Retrieving the following ids: {}".format(", ".join(offense_ids_list)))
+
+        else:
+            # List of precedences for determining start_time
+            # 1. if the param has a start time, use what's in the param
+            # 2. if the saved state has a last saved ingest time, use that as start time
+            # 3. if the configuration set the  alt_initial_ingest_time, decode and set as start_time
+            # 4. if nothing configured assume 24 hours ago
+
+            start_time = param.get('start_time',
+                self._state.get('last_saved_ingest_time', 
+                    self._config.get('alt_initial_ingest_time', "yesterday")))
+
+            # datetime string, decode
+            if not start_time.isdigit():
+                start_time = calendar.timegm(time.gmtime()) * 1000 - QRADAR_MILLISECONDS_IN_A_DAY
+
+            self.save_progress("start_time is ({})".format(self._get_tz_str_from_epoch(start_time)))
+
+            # end time is either specified in the param or is now
+            
+            end_time = param.get('end_time', calendar.timegm(time.gmtime()) * 1000)
+            
+            # the time_field configuaration parameter determines which time fields are used in the filter,
+            #   if missing or unknown value, default to start_time
+            time_field = self._config.get('alt_time_field', "start_time")
+
+            if time_field == "last_updated_time":
+                reqfilter = "(last_updated_time >= {} and last_updated_time <= {})".format(start_time, end_time)
+            elif time_field == "either":
+                reqfilter = "((start_time >= {} and start_time <= {}) or (last_updated_time >= {} and last_updated_time <= {}))".format(start_time, end_time, start_time, end_time)
+            else: 
+                time_field = 'start_time'
+                reqfilter = "(start_time >= {} and start_time <= {})".format(start_time, end_time)
+
+            self.save_progress("Applying time range between [{} -> {}] inclusive (total minutes {})".format(
+                self._get_tz_str_from_epoch(start_time),
+                    self._get_tz_str_from_epoch(end_time),
+                        (end_time - start_time) / (1000 * 60)))
+
+        # last requirement, are we listing only opened offenses?
+        if not self._config.get('ingest_resolved', False):
+            reqfilter + ' and status=OPEN'
+
+        self.save_progress("using filter: {}".format(reqfilter))
+        return start_time, end_time, reqfilter, time_field, offense_ids_list
+
+    def _alt_list_offenses(self, param, action_result=None):
+
+        self.save_progress("Utilizing alternative ingestion algorithm")
+
+        reqheaders = dict()
+        reqparams = dict()
+        offenses = list()
+
+        # create the filter to apply to query
+
+        start_time, end_time, reqfilter, time_field, offenses_ids_list = self._createfilter(param)
+        reqparams['filter'] = reqfilter
+
+        # for now retrieve all fields
+        # reqparams['fields'] = 'id, start_time'
+
+        # there is a list of offenses ids, retrieve these offenses only
+        if len(offenses_ids_list) > 0:
+            self.save_progress("Retrieving requested offenses only")
+            offenses = self._retrieve_offenses(action_result, reqheaders, reqparams)
+
+            # exit if error
+            if (phantom.is_fail(action_result.get_status())):
+                return action_result.get_status()
+        else:
+            count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
+            self.save_progress("Retrieving maximum {} number of offenses".format(count))
+            
+            max_single_query = QRADAR_QUERY_HIGH_RANGE
+            # get offenses, one max_single_query chunk at a time.
+            # if retrieved offenses < max_single_query, then we are done
+
+            while True:
+
+                # check if we can still proceed or error out with too many runs
+                runs += 1
+                if (runs > QRADAR_MAX_ALLOWED_RUNS_TO_GET_LATEST_OFFENSES):
+                    return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_RAN_TOO_MANY_QUERIES_TO_GET_NUMBER_OF_OFFENSES, query_runs=runs)
+
+                # start at the end of offenses list and retrieve max_single_query number of offenses
+                curent_index = len(offenses)
+                reqheaders['Range'] = 'items={}-{}'.format(current_index, current_index + max_single_query - 1)
+
+                self.save_progress("Retrieving index: {} -> {}".format(current_index, current_index + max_single_query - 1))
+                new_offenses = self._retrieve_offenses(action_result, reqheaders, reqparams) 
+
+                # exit if error
+                if (phantom.is_fail(action_result.get_status())):
+                    return action_result.get_status()
+
+                offenses.extend(new_offenses)
+                self._report_back(time_field, new_offenses, run)
+
+                # stop if we exhausted the list possible offenses
+                if len(new_offenses) < max_single_query:
+                    break
+
+        # sort the list by timefield
+        if time_field == "start_time":
+            offenses = sorted(offenses, lambda x: x['start_time'])
+        else:
+            offenses = sorted(offenses, lambda x: x['last_updated_time'])
+
+        # and extract the slice we want
+        if count < len(offenses):
+            ingestion_order =  self._config.get('alt_ingestion_order')
+            if ingestion_order != "latest first" and ingestion_order != "oldest first":
+                ingestion_oder = "latest first"
+    
+            if ingestion_order == "oldest first":
+                offenses = offenses[:count]
+            else:
+                offenses = offenses[-count:]
+
+        # add offense to action_result and return
+        action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len(offenses)})
+        for offense in offenses:
+            self.save_progress("Downloading offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
+                offense['start_time'], self._get_tz_str_from_epoch(offense['start_time']),
+                        offense['last_updated_time'], self._get_tz_str_from_epoch(offense['last_updated_time'])))
+            action_result.add_data(offense)
+
+        # if we are polling, save the last ingested time
+        if self._is_on_poll:
+            if time_field == "start_time":
+                self._state['last_saved_ingest_time'] = offenses[-1]['start_time']
+            else:
+                self._state['last_saved_ingest_time'] = offenses[-1]['last_updated_time']
+
+        return action_result.get_status()
+
+    def _retrieve_offenses(self, action_result, reqheaders, reqparams):
+
+        # make rest call
+        response = self._call_api('siem/offenses', 'get', action_result, params=reqparams, headers=reqheaders)
+
+        # error with the call_api function, most likely network error
+        if (phantom.is_fail(action_result.get_status())):
+            self.save_progress("Rest call failed: {}\nResponse code: {}".format(action_result.get_status(), response.status_code))
+            return action_result.get_status()
+
+        # error with the rest call, either authorization or malformed parameters
+        if (response.status_code != 200):
+            self.save_progress("Rest call errored: {}\nResponse code: {}".format(response.text, response.status_code))
+            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_LIST_OFFENSES_API_FAILED)
+            action_result.append_to_message(response.text)
+            return action_result.get_status()
+
+        # decode and save offenses
+        try:
+            new_offenses = response.json()
+
+        except Exception as e:
+            # error with rest call, as it did not return the data as json
+            self.save_progress("Unable to parse response as a valid JSON: {}".format(e))
+            return action_result.set_status(phantom.APP_ERROR, e)
+
+        return new_offenses
+
+    def _report_back(self, time_field, new_offenses, run):
+
+        # report back what we downloaded
+        offenses_bytime = None
+        if time_field == "start_time":
+            offenses_bytime = sorted(new_offenses, lambda x: x['start_time'])
+        else:
+            offenses_bytime = sorted(new_offenses, lambda x: x['last_updated_time'])
+
+        self.save_progress("run {}: downloaded ({}) earliest offense [ id ({}) start_time ({}) ] latest offense [ id ({}) start_time ({}) ]".format(run,
+            len(new_offenses), offenses_bytime[0]['id'], offenses_bytime[0]['start_time'], offenses_bytime[-1]['id'], offenses_bytime['start_time']))
+
+
     def _on_poll(self, param):
+
+        self._is_on_poll = True
 
         # Create a action result to represent this action
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -379,6 +583,9 @@ class QradarConnector(BaseConnector):
         if (not action_result):
             # Create a action result to represent this action
             action_result = self.add_action_result(ActionResult(dict(param)))
+
+        if self._config.get('alternative_ingest_algorithm'):
+            return self._alt_list_offenses(param, action_result)
 
         filter_string = ""
         params = dict()
@@ -1221,7 +1428,7 @@ if __name__ == '__main__':
     import pudb
     import argparse
 
-    pudb.set_trace()
+    #pudb.set_trace()
 
     argparser = argparse.ArgumentParser()
 
