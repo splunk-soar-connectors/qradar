@@ -366,8 +366,9 @@ class QradarConnector(BaseConnector):
                     self.save_progress("error, exiting")
                     return action_result.get_status()
 
-                offenses.extend(new_offenses)
-                self._report_back(new_offenses, runs)
+                if len(new_offenses) > 0:
+                    offenses.extend(new_offenses)
+                    self._report_back(new_offenses, runs)
 
                 # stop if we exhausted the list of possible offenses
                 if len(new_offenses) < max_single_query:
@@ -388,9 +389,10 @@ class QradarConnector(BaseConnector):
 
             self.save_progress("Ingesting {} offenses out of {}".format(count, len(offenses)))
 
+            ingestion_order = self._config.get('alt_ingestion_order')
+
             # and extract the slice we want
             if count < len(offenses):
-                ingestion_order = self._config.get('alt_ingestion_order')
                 if ingestion_order != "latest first" and ingestion_order != "oldest first":
                     ingestion_oder = "latest first"
         
