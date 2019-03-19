@@ -30,7 +30,8 @@ from datetime import timedelta
 from pytz import timezone
 import pytz
 
-import calendar, dateutil.parser
+import calendar, dateutil.parser, dateutil.tz
+import default_timezones
 
 class QradarConnector(BaseConnector):
 
@@ -207,6 +208,27 @@ class QradarConnector(BaseConnector):
 
         return self.set_status_save_progress(phantom.APP_SUCCESS, QRADAR_SUCC_CONNECTIVITY_TEST)
 
+    def _utcnow(self):
+        return datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
+
+    def _epochtime(self, dt):
+        # datetime_to_epoch
+        # time.mktime takes /etc/localtime into account. This is all wrong. ### dateepoch = int(time.mktime(datetuple))
+        utcdt = dt.astimezone(dateutil.tz.tzutc())
+        return calendar.timegm(utcdt.timetuple())
+
+
+    def _parsedtime(self, datestring):
+        default_time = dateutil.parser.parse("00:00Z").replace(tzinfo=dateutil.tz.tzlocal())
+        tzinfos = default_timezones.timezones()
+        if datestring.lower() == "yesterday":
+            delta = timedelta(seconds=(QRADAR_MILLISECONDS_IN_A_DAY / 1000))
+            return self._utcnow() - delta
+        return  dateutil.parser.parse(datestring.upper(), tzinfos=tzinfos, default=default_time)
+
+    def _utcctime(self, et):
+        return datetime.utcfromtimestamp(et/1000).replace(tzinfo=dateutil.tz.tzutc()).strftime("%a %b %d %H:%M:%S %Y %Z %z")
+
     def _createfilter(self, param):
 
         start_time = None
@@ -245,22 +267,20 @@ class QradarConnector(BaseConnector):
                     start_time = int(start_time)
                 else:
                     self.save_progress("start_time is derived from string: {}".format(start_time))
-                    if start_time == "yesterday":
-                        start_time = calendar.timegm(time.gmtime()) * 1000 - QRADAR_MILLISECONDS_IN_A_DAY
-                    else:
-                        start_time = calendar.timegm(dateutil.parser.parse(start_time).timetuple())
+                    start_time = self._epochtime(self._parsedtime(start_time)) * 1000
+
             else:
                 start_time = int(start_time)
 
             # end time is either specified in the param or is now
             
-            end_time = param.get('end_time', calendar.timegm(time.gmtime()) * 1000)
+            end_time = param.get('end_time', self._epochtime(self._utcnow()) * 1000)
             if isinstance(end_time, basestring):
                 if end_time.isdigit():
                     end_time = int(end_time)
                 else:
                     self.save_progress("end_time is derived from string: {}".format(start_time))
-                    end_time = calendar.timegm(dateutil.parser.parse(end_time).timetuple())
+                    end_time = self._epochtime(self._parsedtime(end_time)) * 1000
             
             self.save_progress("start_time: {}".format(self._utcctime(start_time)))
             self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
@@ -302,6 +322,9 @@ class QradarConnector(BaseConnector):
         start_time, end_time, reqfilter, offenses_ids_list = self._createfilter(param)
         reqparams['filter'] = reqfilter
 
+        # prep last saved ingested time to end_time, for now
+        self._new_last_ingest_time = end_time
+
         # for now retrieve all fields
         # reqparams['fields'] = 'id, start_time'
 
@@ -335,8 +358,8 @@ class QradarConnector(BaseConnector):
 
                 self.save_progress("Retrieving index: {} -> {}".format(current_index, current_index + max_single_query - 1))
                 new_offenses = self._retrieve_offenses(action_result, reqheaders, reqparams) 
-                ## test -- new_offenses = [ { 'id': runs, 'start_time': calendar.timegm(time.gmtime()) * 1000, 'last_updated_time': 0 } ]
-                ## test -- action_result.set_status(phantom.APP_SUCCESS)
+                # for testing - new_offenses = [ { 'id': runs, 'start_time': calendar.timegm(time.gmtime()) * 1000, 'last_updated_time': 0 } ]
+                # for testing - action_result.set_status(phantom.APP_SUCCESS)
 
                 # exit if error
                 if (phantom.is_fail(action_result.get_status())):
@@ -346,7 +369,7 @@ class QradarConnector(BaseConnector):
                 offenses.extend(new_offenses)
                 self._report_back(new_offenses, runs)
 
-                # stop if we exhausted the list possible offenses
+                # stop if we exhausted the list of possible offenses
                 if len(new_offenses) < max_single_query:
                     break
 
@@ -367,7 +390,7 @@ class QradarConnector(BaseConnector):
 
             # and extract the slice we want
             if count < len(offenses):
-                ingestion_order =  self._config.get('alt_ingestion_order')
+                ingestion_order = self._config.get('alt_ingestion_order')
                 if ingestion_order != "latest first" and ingestion_order != "oldest first":
                     ingestion_oder = "latest first"
         
@@ -376,10 +399,15 @@ class QradarConnector(BaseConnector):
                     offenses = offenses[:count]
                 else:
                     self.save_progress("Ingesting the latest first")
-                    offenses = reversed(offenses[-count:])
+                    offenses = offenses[-count:]
+           
+            # prep last saved ingested time to the offense with the newest last_updated_time 
+            self._new_last_ingest_time = offenses[-1]['last_updated_time']
+            # reverse the list of offenses if ingesting latest first
+            if ingestion_order == "latest first":
+                offenses.reverse()
 
-            # add offense to action_result and return
-            action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len(offenses)})
+            # add offense to action_result 
             for offense in offenses:
                 self.save_progress("Queuing offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
                     offense['start_time'], self._utcctime(offense['start_time']),
@@ -387,6 +415,7 @@ class QradarConnector(BaseConnector):
                 action_result.add_data(offense)
 
         ## add summary for action_result
+        action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len(offenses)})
 
         return action_result.get_status()
 
@@ -423,16 +452,13 @@ class QradarConnector(BaseConnector):
         # report back what we downloaded
         offenses_bytime = None
         if self._time_field == "start_time":
-            offenses_bytime = sorted(new_offenses, lambda x: x['start_time'])
+            offenses_bytime = sorted(new_offenses, key=lambda x: x['start_time'])
         else:
-            offenses_bytime = sorted(new_offenses, lambda x: x['last_updated_time'])
+            offenses_bytime = sorted(new_offenses, key=lambda x: x['last_updated_time'])
 
         self.save_progress("run {}: downloaded ({}) earliest offense [ id ({}) start_time ({}) ] latest offense [ id ({}) start_time ({}) ]".format(runs,
             len(new_offenses), offenses_bytime[0]['id'], self._utcctime(offenses_bytime[0]['start_time']), offenses_bytime[-1]['id'], self._utcctime(offenses_bytime[-1]['start_time'])))
     
-    def _utcctime(self, et):
-        return datetime.utcfromtimestamp(et/1000).ctime() + " UTC"
-
     def _on_poll(self, param):
 
         self._is_on_poll = True
@@ -508,6 +534,7 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Number of offenses:", len_offenses)
 
+        add_offense_id_to_name = self._config.get("add_offense_id_to_name", False)
         for i, offense in enumerate(offenses):
 
             get_ph_severity = lambda x: phantom.SEVERITY_LOW if x <= 3 else (
@@ -527,7 +554,7 @@ class QradarConnector(BaseConnector):
             container = {}
             if param.get('tenant_id', None) is not None:
                 container['tenant_id'] = param['tenant_id']
-            container['name'] = offense['description']
+            container['name'] = "{} - {}".format(offense['id'], offense['description']) if add_offense_id_to_name else offense['description']
             container['data'] = offense
             # Two hard coded lines for testing multi-tenancy adds
             # container['asset_id'] = 44
@@ -607,11 +634,7 @@ class QradarConnector(BaseConnector):
 
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
-            if self._time_field == "start_time":
-                self._state['last_saved_ingest_time'] = offenses[-1]['start_time']
-            else:
-                self._state['last_saved_ingest_time'] = offenses[-1]['last_updated_time']
-            self.save_progress("saving last ingested time as: {}".format(self._utcctime(self._state['last_saved_ingest_time'])))
+            self._state['last_saved_ingest_time'] = self._new_last_ingest_time
             self.save_state(self._state)
 
         self.send_progress(" ")
@@ -1420,6 +1443,33 @@ class QradarConnector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
+    def _alt_manage_ingestion(self, param):
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        operation = param.get('operation', "")
+        datestring = param.get('datetime', None)
+
+        if operation == "delete last saved ingest time":
+            if 'last_saved_ingest_time' in self._state:
+                del self._state['last_saved_ingest_time']
+        elif operation == "set last saved ingest time":
+            if not datestring:
+                return self.set_status(phantom.APP_ERROR, "datetime field must be provided if setting last saved ingest time")
+            self._state['last_saved_ingest_time'] = self._epochtime(self._parsedtime(datestring)) * 1000
+
+        last_saved_ingest_time = self._state.get('last_saved_ingest_time', None)
+        action_result.update_summary({
+            'last_saved_ingest_time': self._utcctime(last_saved_ingest_time) if last_saved_ingest_time else None,
+        })
+        action_result.add_data({
+            'last_saved_ingest_time': self._utcctime(last_saved_ingest_time) if last_saved_ingest_time else None,
+            'last_saved_ingest_time_as_epoch_date': last_saved_ingest_time
+        })
+        self.save_state(self._state)
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+
     def handle_action(self, param):
 
         result = None
@@ -1448,6 +1498,8 @@ class QradarConnector(BaseConnector):
             diff_time = end_time - start_time
             human_time = str(timedelta(seconds=int(diff_time)))
             self.save_progress("Time taken: {0}".format(human_time))
+        elif (action == "alt_manage_ingestion"):
+            result = self._alt_manage_ingestion(param)
         elif (action == phantom.ACTION_ID_TEST_ASSET_CONNECTIVITY):
             result = self._test_connectivity(param)
         else:

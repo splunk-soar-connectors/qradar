@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.562",
+    "app_version": "1.2.568",
     "utctime_updated": "2019-01-31T01:14:02.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
@@ -87,11 +87,17 @@
             "verbose": "Comma separated list of field names.  Use double quotes if field names contain spaces",
             "required": false
         },
+        "add_offense_id_to_name": {
+            "data_type": "boolean",
+            "order": 11,
+            "description": "Optionally add the offense id to the container name",
+            "required": false
+        },
         "alternative_ingest_algorithm": {
             "data_type": "boolean",
             "default": false,
             "required": false,
-            "order": 11,
+            "order": 12,
             "description": "Alternative ingest algorithm; The following alt_* parameters only apply when this is set to True. Please read the documentation",
             "verbose": "Use alternative algorithm to determine ingestible offenses. The following <b>alt_*</b> parameters only apply when this is set to True. The appconfig parameter interval_days is ignored"
         },
@@ -99,20 +105,20 @@
             "data_type": "string",
             "default": "start_time",
             "required": false,
-            "order": 12,
+            "order": 13,
             "value_list": [
                 "start_time",
                 "last_updated_time",
                 "either"
             ],
-            "description": "alt: Ingest offenses this field(s) is within the ingestion time range",
+            "description": "alt: Ingest offenses when this field(s) is within the ingestion time range",
             "verbose": "Ingest offenses if <b>time_field</b> is within the ingestion time range. You can specify checking the offense's start_time, last_updated_time or if either are within the time range. If set to either, the ingestion list will be sorted by last_updated_time and <b>last saved ingestion time</b> will be set to the <b>last_updated_time</b> of the last ingested offense"
         },
         "alt_initial_ingest_time": {
             "data_type": "string",
             "default": "yesterday",
             "required": false,
-            "order": 13,
+            "order": 14,
             "description": "alt: Initially ingest offenses with time field set after this time",
             "verbose": "Set the <b>last saved ingestion time</b> to this. This is the initial lower limit to ingest offenses. This field should be a python parsaable datetime <b>(dateutil module)</b>, nothing exotic, please"
         },
@@ -1357,6 +1363,72 @@
                 {
                     "data_path": "summary.total_objects_successful",
                     "data_type": "numeric"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "alt manage ingestion",
+            "description": "mange ingestion details",
+            "type": "generic",
+            "identifier": "alt_manage_ingestion",
+            "read_only": false,
+            "parameters": {
+                "operation": {
+                    "data_type": "string",
+                    "order": 0,
+                    "description": "operation to perform",
+                    "value_list": [
+                        "get last saved ingest time",
+                        "delete last saved ingest time",
+                        "set last saved ingest time"
+                    ],
+                    "required": true,
+                    "primary": true,
+		    "default": "get last saved ingest time"
+                },
+                "datetime": {
+                    "data_type": "string",
+                    "order": 1,
+                    "default": false,
+                    "description": "datetime string",
+                    "required": false
+                }
+            },
+            "render": {
+                "type": "table",
+                "width": 12,
+                "height": 5,
+                "title": "Manage Alt Ingestion"
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.operation",
+                    "data_type": "string",
+                    "column_name": "operation",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.parameter.datetime",
+                    "data_type": "string",
+                    "column_name": "new datatime",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.last_saved_ingest_time",
+                    "data_type": "string",
+                    "column_name": "last saved ingest time",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.last_saved_ingest_time_as_epoch_date",
+                    "data_type": "numeric",
+                    "column_name": "as epoch date",
+                    "column_order": 3
                 }
             ],
             "versions": "EQ(*)"
