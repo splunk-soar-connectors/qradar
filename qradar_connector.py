@@ -290,12 +290,12 @@ class QradarConnector(BaseConnector):
             self._time_field = self._config.get('alt_time_field', "start_time")
 
             if self._time_field == "last_updated_time":
-                reqfilter = "(last_updated_time >= {} and last_updated_time <= {})".format(start_time, end_time)
+                reqfilter = "(last_updated_time > {} and last_updated_time <= {})".format(start_time, end_time)
             elif self._time_field == "either":
-                reqfilter = "((start_time >= {} and start_time <= {}) or (last_updated_time >= {} and last_updated_time <= {}))".format(start_time, end_time, start_time, end_time)
+                reqfilter = "((start_time > {} and start_time <= {}) or (last_updated_time > {} and last_updated_time <= {}))".format(start_time, end_time, start_time, end_time)
             else: 
                 self._time_field = 'start_time'
-                reqfilter = "(start_time >= {} and start_time <= {})".format(start_time, end_time)
+                reqfilter = "(start_time > {} and start_time <= {})".format(start_time, end_time)
 
             self.save_progress("Applying time range between [{} -> {}] inclusive (total minutes {})".format(
                 self._utcctime(start_time),
@@ -329,6 +329,7 @@ class QradarConnector(BaseConnector):
         # reqparams['fields'] = 'id, start_time'
 
         # there is a list of offenses ids, retrieve these offenses only
+        count = 1
         if len(offenses_ids_list) > 0:
             self.save_progress("Retrieving requested offenses only")
             offenses = self._retrieve_offenses(action_result, reqheaders, reqparams)
