@@ -130,6 +130,13 @@ class QradarConnector(BaseConnector):
         self._is_on_poll = False
         self._time_field = None
         self._use_alt_ingest = self._config.get('alternative_ingest_algorithm', False)
+        self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
+        self._cef_value_map = self._config.get('cef_event_map', False) 
+        if self._cef_value_map:
+            try:
+                self._cef_event_map = json.loads(self._cef_event_map)
+            except Exception as e:
+                save_progress("Error cef_value_map is not valid JSON")
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
@@ -157,6 +164,14 @@ class QradarConnector(BaseConnector):
     def _get_artifact(self, event, container_id):
 
         cef = phantom.get_cef_data(event, self._cef_event_map)
+
+        if self._cef_value_map:
+            for k,v in cef.iteritems():
+                if v in self._cef_value_map:
+                    cef[k] = self._cef_value_map[v]
+
+        if self._delete_empty_fields:
+            cef = { k:v for k,v in cef.iteritems() if v }
 
         self.debug_print("event: ", event)
         self.debug_print("cef: ", cef)
