@@ -283,7 +283,7 @@ class QradarConnector(BaseConnector):
             offense = dict([(x[0], None if x[1] == 'null' else x[1]) for x in offense.items()])
 
             # strip \r, \n and space from the values, qradar does that for the description field atleast
-            v_strip = lambda v: v.strip(' \r\n') if type(v) == str or type(v) == unicode else v
+            v_strip = lambda v: v.strip(' \r\n').replace(u'\u0000', '') if type(v) == str or type(v) == unicode else v
             offense = dict([(k, v_strip(v)) for k, v in offense.iteritems()])
 
             # Don't want dumping non None
