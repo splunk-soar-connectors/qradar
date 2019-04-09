@@ -131,12 +131,14 @@ class QradarConnector(BaseConnector):
         self._time_field = None
         self._use_alt_ingest = self._config.get('alternative_ingest_algorithm', False)
         self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
-        self._cef_value_map = self._config.get('cef_event_map', False) 
-        if self._cef_value_map:
+        self._cef_value_map = self._config.get('cef_value_map', False) 
+        if self._cef_value_map and len(self._cef_value_map) > 1:
             try:
-                self._cef_event_map = json.loads(self._cef_event_map)
+                self._cef_value_map = json.loads(self._cef_value_map)
             except Exception as e:
-                save_progress("Error cef_value_map is not valid JSON")
+                self.save_progress("Error cef_value_map is not valid JSON")
+        else:
+            self._cef_value_map = False
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
@@ -170,7 +172,7 @@ class QradarConnector(BaseConnector):
                 if v in self._cef_value_map:
                     cef[k] = self._cef_value_map[v]
 
-        if self._delete_empty_fields:
+        if self._delete_empty_cef_fields:
             cef = { k:v for k,v in cef.iteritems() if v }
 
         self.debug_print("event: ", event)
@@ -270,11 +272,13 @@ class QradarConnector(BaseConnector):
 
             if self._is_on_poll:
                 start_time = self._state.get('last_saved_ingest_time', 
-                        self._config.get('alt_initial_ingest_time', "yesterday"))
+                    self._config.get('alt_initial_ingest_time', "yesterday"))
+                self.save_progress("last_saved_ingest_time: {}".format(start_time))
             else:
                 start_time = param.get('start_time',
                     self._state.get('last_saved_ingest_time', 
                         self._config.get('alt_initial_ingest_time', "yesterday")))
+                self.save_progress("param start_time: {}".format(start_time))
 
             # datetime string, decode
             if isinstance(start_time, basestring):
@@ -337,8 +341,8 @@ class QradarConnector(BaseConnector):
         start_time, end_time, reqfilter, offenses_ids_list = self._createfilter(param)
         reqparams['filter'] = reqfilter
 
-        # prep last saved ingested time to end_time, for now
-        self._new_last_ingest_time = end_time
+        # prep last saved ingested time to start_time; always start here if not ingested anything
+        self._new_last_ingest_time = start_time
 
         # for now retrieve all fields
         # reqparams['fields'] = 'id, start_time'
@@ -420,7 +424,10 @@ class QradarConnector(BaseConnector):
                     offenses = offenses[-count:]
            
             # prep last saved ingested time to the offense with the newest last_updated_time 
-            self._new_last_ingest_time = offenses[-1]['last_updated_time']
+            if self._time_field == "last_updated_time":
+                self._new_last_ingest_time = offenses[-1]['last_updated_time']
+            else:
+                self._new_last_ingest_time = offenses[-1]['start_time']
             # reverse the list of offenses if ingesting latest first
             if ingestion_order == "latest first":
                 offenses.reverse()
@@ -653,6 +660,8 @@ class QradarConnector(BaseConnector):
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
             self._state['last_saved_ingest_time'] = self._new_last_ingest_time
+            self.save_progress("Setting last_saved_ingest_time to: {} {}".format(self._state['last_saved_ingest_time'],
+                self._utcctime(self._state['last_saved_ingest_time'])))
             self.save_state(self._state)
 
         self.send_progress(" ")
