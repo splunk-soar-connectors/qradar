@@ -33,6 +33,8 @@ import pytz
 import calendar, dateutil.parser, dateutil.tz
 import default_timezones
 
+import re
+
 class QradarConnector(BaseConnector):
 
     # The actions supported by this connector
@@ -139,6 +141,8 @@ class QradarConnector(BaseConnector):
                 self.save_progress("Error cef_value_map is not valid JSON")
         else:
             self._cef_value_map = False
+
+        self._on_poll_action_result = None
 
         # Base URL
         self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
@@ -488,8 +492,11 @@ class QradarConnector(BaseConnector):
 
         self._is_on_poll = True
 
-        # Create a action result to represent this action
-        action_result = self.add_action_result(ActionResult(dict(param)))
+        # if action_result is passed in, use it otherwise generate our own
+        if not self._on_poll_action_result:
+            self._on_poll_action_result = self.add_action_result(ActionResult(dict(param)))
+
+        action_result = self._on_poll_action_result
         offenses = list()
         artifact_max = self._artifact_max
         add_to_resolved = self._add_to_resolved
@@ -946,7 +953,32 @@ class QradarConnector(BaseConnector):
             return action_result.get_status()
 
         try:
-            response_json = response.json()
+            # https://www-01.ibm.com/support/docview.wss?uid=swg1IV98260
+            # siem bug. no workwaround, sort of work with what we got
+
+            r = """
+                (?P<error>
+                    \s* { \s*
+                        "http_response": \s* { \s*
+                            "code": \s* 500, \s*
+                            "message": \s* "Unexpected \s internal \s server \s error" \s*
+                        }, \s*
+                        "code": \s* 13, \s*
+                        "message": \s* "Invocation \s was \s successful, \s but \s transformation \s to \s content \s type \s ..APPLICATION_JSON.. \s failed", \s*
+                        "description": \s* "", \s*
+                        "details": \s* {} \s*
+                    } $
+                )"""
+
+            (response_body, subcount) = re.subn(r, "", response.text, flags=re.X)
+
+            if subcount > 0:
+                self.save_progress("**** Warning: qradar bug: https://www-01.ibm.com/support/docview.wss?uid=swg1IV98260 *****")
+                self.save_progress("Fixing ariel query response and continuing")
+                response_body += "]}"
+
+            response_json = json.loads(response_body)
+
         except Exception as e:
             self.debug_print("Unable to parse response as a valid JSON", e)
             return action_result.set_status(phantom.APP_ERROR, "Unable to parse reponse as a valid JSON")
@@ -1303,6 +1335,7 @@ class QradarConnector(BaseConnector):
         action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 
         if param["ingest_offense"]:
+            self._on_poll_action_result = action_result
             result = self._on_poll(param)
 
             if (phantom.is_fail(action_result.get_status())):
