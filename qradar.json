@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.576",
+    "app_version": "1.2.581",
     "utctime_updated": "2019-01-31T01:14:02.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
@@ -108,19 +108,25 @@
             "description": "Optionally add the offense id to the container name",
             "required": false
         },
-        "alternative_ingest_algorithm": {
+        "alternative_ariel_query": {
             "data_type": "boolean",
             "default": false,
             "required": false,
             "order": 14,
-            "description": "Alternative ingest algorithm; The following alt_* parameters only apply when this is set to True. Please read the documentation",
-            "verbose": "Use alternative algorithm to determine ingestible offenses. The following <b>alt_*</b> parameters only apply when this is set to True. The appconfig parameter interval_days is ignored"
+            "description": "Alternative ariel query; ignore date specifications and retrieve events from the last [interval_days] (default=5) days; affects on_poll, offense_details and get_events actions; on_poll will auto-extend the number of days to start on/before the day of the offense being retrieved."
+        },
+        "alternative_ingest_algorithm": {
+            "data_type": "boolean",
+            "default": false,
+            "required": false,
+            "order": 15,
+            "description": "Alternative ingest algorithm; The following alt_* parameters only apply when this is set to True"
         },
         "alt_time_field": {
             "data_type": "string",
             "default": "start_time",
             "required": false,
-            "order": 15,
+            "order": 16,
             "value_list": [
                 "start_time",
                 "last_updated_time",
@@ -133,7 +139,7 @@
             "data_type": "string",
             "default": "yesterday",
             "required": false,
-            "order": 16,
+            "order": 17,
             "description": "alt: Initially ingest offenses with time field set after this time",
             "verbose": "Set the <b>last saved ingestion time</b> to this. This is the initial lower limit to ingest offenses. This field should be a python parsaable datetime <b>(dateutil module)</b>, nothing exotic, please"
         },
@@ -141,7 +147,7 @@
             "data_type": "string",
             "default": "oldest first",
             "required": false,
-            "order": 17,
+            "order": 18,
             "value_list": [
                 "oldest first",
                 "latest first"
@@ -458,7 +464,14 @@
                     "order": 5,
                     "description": "Filter on event field values",
                     "verbose": "Use this parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'"
-                }
+                },
+		"interval_days": {
+		    "data_type": "numeric",
+		    "order": 6,
+		    "description": "Interval (days) used during 'Poll Now'",
+		    "value": "5",
+		    "required": false
+		}
             },
             "render": {
                 "type": "table",
@@ -1189,7 +1202,14 @@
                     "default": false,
                     "description": "Ingest offense into Phantom?",
                     "required": true
-                }
+                },
+		"interval_days": {
+		    "data_type": "numeric",
+		    "order": 3,
+		    "description": "Interval (days) used during 'Poll Now'",
+		    "value": "5",
+		    "required": false
+		}
             },
             "render": {
                 "type": "table",

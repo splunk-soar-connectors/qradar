@@ -132,6 +132,7 @@ class QradarConnector(BaseConnector):
         self._is_on_poll = False
         self._time_field = None
         self._use_alt_ingest = self._config.get('alternative_ingest_algorithm', False)
+        self._use_alt_ariel_query = self._config.get('alternative_ariel_query', False)
         self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
         self._cef_value_map = self._config.get('cef_value_map', False) 
         if self._cef_value_map and len(self._cef_value_map) > 1:
@@ -232,12 +233,14 @@ class QradarConnector(BaseConnector):
     def _utcnow(self):
         return datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
 
+    def _datetime(self, et):
+        return datetime.utcfromtimestamp(float(et)/1000).replace(tzinfo=dateutil.tz.tzutc())
+
     def _epochtime(self, dt):
         # datetime_to_epoch
         # time.mktime takes /etc/localtime into account. This is all wrong. ### dateepoch = int(time.mktime(datetuple))
         utcdt = dt.astimezone(dateutil.tz.tzutc())
         return calendar.timegm(utcdt.timetuple())
-
 
     def _parsedtime(self, datestring):
         default_time = dateutil.parser.parse("00:00Z").replace(tzinfo=dateutil.tz.tzlocal())
@@ -248,7 +251,13 @@ class QradarConnector(BaseConnector):
         return  dateutil.parser.parse(datestring.upper(), tzinfos=tzinfos, default=default_time)
 
     def _utcctime(self, et):
-        return datetime.utcfromtimestamp(et/1000).replace(tzinfo=dateutil.tz.tzutc()).strftime("%a %b %d %H:%M:%S %Y %Z %z")
+        return datetime.utcfromtimestamp(float(et)/1000).replace(tzinfo=dateutil.tz.tzutc()).strftime("%a %b %d %H:%M:%S %Y %Z %z")
+
+    def _utciso(self, et):
+        return datetime.utcfromtimestamp(float(et)/1000).replace(tzinfo=dateutil.tz.tzutc()).isoformat()
+
+    def _utc_string(self, et):
+        return datetime.utcfromtimestamp(float(et)/1000).replace(tzinfo=dateutil.tz.tzutc()).strftime("%Y-%m-%d %H:%M:%S%z")
 
     def _createfilter(self, param):
 
@@ -490,7 +499,7 @@ class QradarConnector(BaseConnector):
     
     def _on_poll(self, param):
 
-        self._is_on_poll = True
+        self._is_on_poll = self.get_action_identifier() == "on_poll"
 
         # if action_result is passed in, use it otherwise generate our own
         if not self._on_poll_action_result:
@@ -569,6 +578,8 @@ class QradarConnector(BaseConnector):
         add_offense_id_to_name = self._config.get("add_offense_id_to_name", False)
         for i, offense in enumerate(offenses):
 
+            self.debug_print('offense id:{}'.format(offense['id']), offense)
+
             get_ph_severity = lambda x: phantom.SEVERITY_LOW if x <= 3 else (
                     phantom.SEVERITY_MEDIUM if x <= 7 else phantom.SEVERITY_HIGH)
 
@@ -621,6 +632,7 @@ class QradarConnector(BaseConnector):
             event_param = dict(param)
             # Add the offense id to the param dict
             event_param['offense_id'] = offense_id
+            event_param['offense_start_time'] = offense['start_time']
 
             # Create a action result specifically for the event
             event_action_result = ActionResult(event_param)
@@ -643,6 +655,9 @@ class QradarConnector(BaseConnector):
 
             event_index = 0
             len_events = len(events)
+            self.send_progress("Found {} events for offense id {}".format(len_events, offense_id))
+            added = 0
+            dup = 0
             for j, event in enumerate(events):
 
                 # strip \r, \n and space from the values, qradar does that for the description field atleast
@@ -650,19 +665,26 @@ class QradarConnector(BaseConnector):
 
                 artifact = self._get_artifact(event, container_id)
 
-                self.debug_print('artifact', artifact)
-
+                self.debug_print('Saving artifact(container_id={},container={},artifact={},offense={},qid={}'.format(container_id, i, j, offense_id, event['qid']) , artifact)
                 self.send_progress("Saving Container # {0}, Artifact # {1}".format(i, j))
 
                 if ((j + 1) == len_events):
                     artifact['run_automation'] = True
 
                 ret_val, message, artifact_id = self.save_artifact(artifact)
-                self.debug_print("save_artifact returns, value: {0}, message: {1}, id: {2}".format(ret_val, message, artifact_id))
+                self.debug_print("save_artifact (id=({3},{4},{5},{6}) returns, value: {0}, message: {1}, id: {2}".format(ret_val, message, artifact_id, container_id, i, j, offense_id, event['qid']))
+
+                if message.startswith("Added"):
+                    added += 1
+                elif message.startswith("duplicate"):
+                    dup += 1
 
                 event_index += 1
 
                 # self.debug_print("event", event)
+
+            self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts, from {}, to {}".format(
+                offense_id, container_id, len_events, added, dup, self._utcctime(events[-1]['starttime']), self._utcctime(events[0]['starttime'])))
 
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
@@ -703,12 +725,12 @@ class QradarConnector(BaseConnector):
         resolved_disabled = self._resolved_disabled
         if (self.is_poll_now() or param.get('ingest_offense', False)):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
-            num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
+            num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
         else:
             curr_epoch_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             end_time_msecs = curr_epoch_msecs if end_time_msecs is None else int(end_time_msecs)
-            num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
+            num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days) if start_time_msecs is None else int(start_time_msecs)
 
         if (end_time_msecs < start_time_msecs):
@@ -852,6 +874,7 @@ class QradarConnector(BaseConnector):
             return action_result.get_status()
 
         self.debug_print("Response Code", response.status_code)
+        self.debug_print("Response Text", response.text)
 
         if (response.status_code != 201):
             # Error condition
@@ -983,6 +1006,10 @@ class QradarConnector(BaseConnector):
             self.debug_print("Unable to parse response as a valid JSON", e)
             return action_result.set_status(phantom.APP_ERROR, "Unable to parse reponse as a valid JSON")
 
+        if 'events' in response_json:
+            self.save_progress("Ariel query retrieved {} events for offense {}. starttime of earliest ({}) latest ({})".format(
+                len(response_json['events']), offense_id, self._utcctime(response_json['events'][-1]['starttime']), self._utcctime(response_json['events'][0]['starttime'])))
+
         if (obj_result_key):
             # Got the results
             if (obj_result_key not in response_json):
@@ -1079,7 +1106,7 @@ class QradarConnector(BaseConnector):
         # the last 60 seconds or something small like that.
         # We also need to get the the events closest to the end time, so add the
         # starttime comparison operators for that
-        num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
+        num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
         curr_epoch_msecs = int(time.time()) * 1000
         start_time_msecs = 0
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
@@ -1110,13 +1137,27 @@ class QradarConnector(BaseConnector):
             count = QRADAR_QUERY_HIGH_RANGE
             # put a max count to get after ordering by starttime in descending order
 
-        where_clause += " ORDER BY starttime DESC LIMIT {0}".format(count)
+        where_clause += " order by STARTTIME desc limit {0}".format(count)
 
         # From testing queries, it was noticed that the START and STOP are required else the default
         # result returned by the REST api is of 60 seconds or so. Also the time format needs to be in
         # the device's timezone.
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch(start_time_msecs))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch(end_time_msecs))
+
+        # throw it all away, use alternative query
+        # btw: LIMIT doesn't seem to work for any values > 150 on this version of qradar (7.2.4)
+        if self._use_alt_ariel_query:
+            offense_start_time = param.get('offense_start_time', False)
+            if not param.get(QRADAR_JSON_DEF_NUM_DAYS,False) and offense_start_time:
+                now = self._utcnow()
+                start = self._datetime(offense_start_time)
+                diff = now - start
+                offense_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
+                if num_days < offense_days:
+                    self.save_progress("Auto-extending the number of days in Ariel query from {} to {}".format(num_days, offense_days))
+                    num_days = offense_days
+            where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, num_days)
 
         self.debug_print('where_clause', where_clause)
 
@@ -1246,7 +1287,7 @@ class QradarConnector(BaseConnector):
         # the last 60 seconds or something small like that.
         # We also need to get the the flows closest to the end time, so add the
         # starttime comparison operators for that
-        num_days = int(self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
+        num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
         curr_epoch_msecs = int(time.time()) * 1000
         start_time_msecs = 0
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
