@@ -587,7 +587,7 @@ class QradarConnector(BaseConnector):
             offense = dict([(x[0], None if x[1] == 'null' else x[1]) for x in offense.items()])
 
             # strip \r, \n and space from the values, qradar does that for the description field atleast
-            v_strip = lambda v: v.strip(' \r\n') if type(v) == str or type(v) == unicode else v
+            v_strip = lambda v: v.strip(' \r\n').replace(u'\u0000', '') if type(v) == str or type(v) == unicode else v
             offense = dict([(k, v_strip(v)) for k, v in offense.iteritems()])
 
             # Don't want dumping non None
@@ -1006,10 +1006,6 @@ class QradarConnector(BaseConnector):
             self.debug_print("Unable to parse response as a valid JSON", e)
             return action_result.set_status(phantom.APP_ERROR, "Unable to parse reponse as a valid JSON")
 
-        if 'events' in response_json:
-            self.save_progress("Ariel query retrieved {} events for offense {}. starttime of earliest ({}) latest ({})".format(
-                len(response_json['events']), offense_id, self._utcctime(response_json['events'][-1]['starttime']), self._utcctime(response_json['events'][0]['starttime'])))
-
         if (obj_result_key):
             # Got the results
             if (obj_result_key not in response_json):
@@ -1023,6 +1019,12 @@ class QradarConnector(BaseConnector):
                 # Replace the 'null' string to None if any
                 obj = dict([(x[0], None if x[1] == 'null' else x[1]) for x in obj.items()])
                 action_result.add_data(obj)
+
+            self.save_progress("Ariel query retrieved {} {} for offense {}".format(len(objs), obj_result_key, offense_id))
+            if len(objs) > 0 and 'starttime' in objs[0]:
+                self.save_progress("Ariel query retrieved {} {} for offense {}; starttime of earliest ({}) latest ({})".format(
+                    len(objs), obj_result_key, offense_id, self._utcctime(objs[-1]['starttime']), self._utcctime(objs[0]['starttime'])))
+
         else:
             action_result.add_data(response_json)
 

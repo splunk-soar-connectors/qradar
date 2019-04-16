@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.581",
+    "app_version": "1.2.583",
     "utctime_updated": "2019-01-31T01:14:02.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
