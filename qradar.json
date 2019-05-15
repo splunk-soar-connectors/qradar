@@ -5,8 +5,8 @@
     "type": "siem",
     "publisher": "Phantom",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.58",
-    "utctime_updated": "2019-01-31T01:14:02.000000Z",
+    "app_version": "1.2.59",
+    "utctime_updated": "2019-05-15T23:04:45.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
@@ -85,14 +85,14 @@
             "order": 10,
             "description": "JSON formatted string representation of a dictionary used to map cef field values to new values. Similiar to cef_event_map",
             "verbose": "Replace the value of any cef field with another value. For example, to replace the value of cef.requestURL of \"nourl\", with null value, provide { \"nourl\": null }",
-	    "default": "",
+            "default": "",
             "required": false
         },
         "delete_empty_cef_fields": {
             "data_type": "boolean",
             "order": 11,
             "description": "Set true to delete cef fields with empty values",
-	    "default": false,
+            "default": false,
             "required": false
         },
         "event_fields_for_query": {
@@ -465,13 +465,13 @@
                     "description": "Filter on event field values",
                     "verbose": "Use this parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'"
                 },
-		"interval_days": {
-		    "data_type": "numeric",
-		    "order": 6,
-		    "description": "Interval (days) used during 'Poll Now'",
-		    "value": "5",
-		    "required": false
-		}
+                "interval_days": {
+                    "data_type": "numeric",
+                    "order": 6,
+                    "description": "Interval (days) used during 'Poll Now'",
+                    "value": "5",
+                    "required": false
+                }
             },
             "render": {
                 "type": "table",
@@ -1203,13 +1203,13 @@
                     "description": "Ingest offense into Phantom?",
                     "required": true
                 },
-		"interval_days": {
-		    "data_type": "numeric",
-		    "order": 3,
-		    "description": "Interval (days) used during 'Poll Now'",
-		    "value": "5",
-		    "required": false
-		}
+                "interval_days": {
+                    "data_type": "numeric",
+                    "order": 3,
+                    "description": "Interval (days) used during 'Poll Now'",
+                    "value": "5",
+                    "required": false
+                }
             },
             "render": {
                 "type": "table",
@@ -1420,7 +1420,7 @@
                     ],
                     "required": true,
                     "primary": true,
-		    "default": "get last saved ingest time"
+                    "default": "get last saved ingest time"
                 },
                 "datetime": {
                     "data_type": "string",
