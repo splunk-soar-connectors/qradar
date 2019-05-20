@@ -30,6 +30,7 @@ QRADAR_JSON_REFSET_VALUE = "reference_set_value"
 QRADAR_JSON_ARTIFACT_MAX_DEF = "artifact_max"
 QRADAR_JSON_ADD_TO_RESOLVED = "add_to_resolved"
 QRADER_JSON_NOTE_TEXT = "note_text"
+QRADER_JSON_ASSIGNEE = "assignee"
 QRADAR_INGEST_RESOLVED = "ingest_resolved"
 
 QRADAR_JSON_NAME = "name"

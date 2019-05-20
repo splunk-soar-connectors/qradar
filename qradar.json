@@ -1962,6 +1962,85 @@
             }
         },
         {
+            "action": "assign user",
+            "description": "Assign user to an offense",
+            "type": "generic",
+            "identifier": "assign_user",
+            "read_only": false,
+            "parameters": {
+                "offense_id": {
+                    "data_type": "numeric",
+                    "order": 0,
+                    "description": "Offense ID to assign user to",
+                    "contains": [
+                        "qradar offense id"
+                    ],
+                    "required": true,
+                    "primary": true
+                },
+                "assignee": {
+                    "data_type": "string",
+                    "order": 1,
+                    "description": "Name of the user",
+                    "required": true
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.assignee",
+                    "data_type": "string",
+                    "example_values": [
+                        "test_name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.offense_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "19"
+                    ],
+                    "contains": [
+                        "qradar offense id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Successfully assigned user to offense"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "versions": "EQ(*)",
+            "render": {
+                "width": 12,
+                "title": "Assign User",
+                "type": "table",
+                "height": 5
+            }
+        },
+        {
             "action": "on poll",
             "description": "Callback action for the on_poll ingest functionality",
             "type": "ingest",

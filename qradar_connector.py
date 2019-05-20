@@ -49,6 +49,7 @@ class QradarConnector(BaseConnector):
     ACTION_ID_CLOSE_OFFENSE = "close_offense"
     ACTION_ID_ADD_TO_REF_SET = "add_to_reference_set"
     ACTION_ID_ADD_NOTE = "add_note"
+    ACTION_ID_ASSIGNE_USER = "assign_user"
 
     def __init__(self):
 
@@ -1354,6 +1355,27 @@ class QradarConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully added note to offense")
 
+    def _handle_assign_user(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        offense_id = param[QRADAR_JSON_OFFENSE_ID]
+        assignee = param[QRADER_JSON_ASSIGNEE]
+
+        params = {
+            'assigned_to': assignee,
+        }
+        endpoint = 'siem/offenses/{}'.format(offense_id)
+
+        response = self._call_api(endpoint, 'post', action_result, params=params)
+        if (phantom.is_fail(action_result.get_status())):
+            self.debug_print("call_api failed: ", action_result.get_status())
+            return action_result.get_status()
+
+        if response.status_code not in [200, 399]:
+            reason = json.loads(response.text)
+            return action_result.set_status(phantom.APP_ERROR, reason.get('message'))
+
+        return action_result.set_status(phantom.APP_SUCCESS, "Successfully assigned user to offense")
+
     def _get_offense_details(self, param):
 
         # Get the list of offense ids
@@ -1592,6 +1614,8 @@ class QradarConnector(BaseConnector):
             result = self._alt_manage_ingestion(param)
         elif (action == phantom.ACTION_ID_TEST_ASSET_CONNECTIVITY):
             result = self._test_connectivity(param)
+        elif (action == self.ACTION_ID_ASSIGNE_USER):
+            result = self._handle_assign_user(param)
         else:
             self.unknown_action()
 
