@@ -26,6 +26,7 @@ SOFTWARE.
 
 from dateutil.tz import gettz
 
+
 def timezones():
     timezones = {}
 

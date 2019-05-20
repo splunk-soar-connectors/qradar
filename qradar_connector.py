@@ -581,6 +581,7 @@ class QradarConnector(BaseConnector):
         self.debug_print("Number of offenses:", len_offenses)
 
         add_offense_id_to_name = self._config.get("add_offense_id_to_name", False)
+
         for i, offense in enumerate(offenses):
 
             self.debug_print('offense id:{}'.format(offense['id']), offense)
@@ -773,7 +774,6 @@ class QradarConnector(BaseConnector):
         start_index = 0
         end_index = 1000
         total_offenses = 0
-        params['fields'] = '''id, start_time'''
 
         try:
             count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
@@ -803,6 +803,7 @@ class QradarConnector(BaseConnector):
             runs += 1
             end_index = min((temp * 1000) + count - 1, end_index + (temp * 1000) - 1)
             headers['Range'] = 'items={0}-{1}'.format(start_index + (temp * 1000), end_index)
+
             temp = temp + 1
             count = count - 1000
 
@@ -837,7 +838,6 @@ class QradarConnector(BaseConnector):
 
             if count <= 0:
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=total_offenses)
-                del params['fields']
                 break
 
         # Parse the output, which is an array of offenses
@@ -940,10 +940,11 @@ class QradarConnector(BaseConnector):
             if ('status' not in response_json):
                 return action_result.set_status(phantom.APP_ERROR, "Response JSON does not contain 'status' key")
 
+            status_list = ['COMPLETED', 'EXECUTE', 'SORTING', 'WAIT']
+
             # What is the status string for error, the sample apps don't have this info
             # niether the documentation
-            if ((response_json.get('status') != 'COMPLETED') and (response_json.get('status') != 'EXECUTE') and
-            (response_json.get('status') != 'SORTING') and (response_json.get('status') != 'WAIT')):
+            if (response_json.get('status') not in status_list):
                 # Error condition
                 action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ARIEL_QUERY_STATUS_CHECK_FAILED)
                 # Add the response that we got from the device, it contains additional info
@@ -976,15 +977,15 @@ class QradarConnector(BaseConnector):
 
             r = """
                 (?P<error>
-                    \s* { \s*
-                        "http_response": \s* { \s*
-                            "code": \s* 500, \s*
-                            "message": \s* "Unexpected \s internal \s server \s error" \s*
-                        }, \s*
-                        "code": \s* 13, \s*
-                        "message": \s* "Invocation \s was \s successful, \s but \s transformation \s to \s content \s type \s ..APPLICATION_JSON.. \s failed", \s*
-                        "description": \s* "", \s*
-                        "details": \s* {} \s*
+                    \\s* { \\s*
+                        "http_response": \\s* { \\s*
+                            "code": \\s* 500, \\s*
+                            "message": \\s* "Unexpected \\s internal \\s server \\s error" \\s*
+                        }, \\s*
+                        "code": \\s* 13, \\s*
+                        "message": \\s* "Invocation \\s was \\s successful, \\s but \\s transformation \\s to \\s content \\s type \\s ..APPLICATION_JSON.. \\s failed", \\s*
+                        "description": \\s* "", \\s*
+                        "details": \\s* {} \\s*
                     } $
                 )"""
 
