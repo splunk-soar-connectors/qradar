@@ -203,7 +203,7 @@
                     "default": 100
                 },
                 "offense_id": {
-                    "data_type": "numeric",
+                    "data_type": "string",
                     "order": 3,
                     "description": "Id of offenses to restrict to",
                     "contains": [
@@ -1991,14 +1991,18 @@
                     "data_type": "string",
                     "example_values": [
                         "success"
-                    ]
+                    ],
+                    "column_order": 0,
+                    "column_name": "Status"
                 },
                 {
                     "data_path": "action_result.parameter.assignee",
                     "data_type": "string",
                     "example_values": [
                         "test_name"
-                    ]
+                    ],
+                    "column_order": 1,
+                    "column_name": "Assignee"
                 },
                 {
                     "data_path": "action_result.parameter.offense_id",
@@ -2008,7 +2012,9 @@
                     ],
                     "contains": [
                         "qradar offense id"
-                    ]
+                    ],
+                    "column_order": 2,
+                    "column_name": "Offense ID"
                 },
                 {
                     "data_path": "action_result.message",

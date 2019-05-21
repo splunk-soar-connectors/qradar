@@ -709,6 +709,14 @@ class QradarConnector(BaseConnector):
             # Create a action result to represent this action
             action_result = self.add_action_result(ActionResult(dict(param)))
 
+        try:
+            count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
+        except Exception:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+        # Count zero means get all the possible items
+        if (count <= 0):
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+
         if self._use_alt_ingest:
             return self._alt_list_offenses(param, action_result)
 
@@ -750,12 +758,20 @@ class QradarConnector(BaseConnector):
             start_time_msecs, end_time_msecs, 'start_time', 'last_updated_time')
 
         # get the list of offenses that we are supposed to query for
-        container_source_ids = str(phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID,
-                phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, None)))
+        container_source_ids = str(param.get(phantom.APP_JSON_CONTAINER_ID,
+                param.get(QRADAR_JSON_OFFENSE_ID, None)))
 
         if (container_source_ids != 'None'):
             # convert it to list
-            offense_id_list = ['id=' + x.strip() for x in container_source_ids.split(',') if len(x.strip()) > 0]
+
+            offense_id_list = list()
+            for x in container_source_ids.split(','):
+                try:
+                    if len(x.strip()) > 0 and int(x.strip()) >= 0:
+                        offense_id_list.append('id={}'.format(int(x.strip())))
+                except Exception as e:
+                    pass
+
             if (len(offense_id_list) > 0):
 
                 # we have data to work on
@@ -774,15 +790,6 @@ class QradarConnector(BaseConnector):
         start_index = 0
         end_index = 1000
         total_offenses = 0
-
-        try:
-            count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
-        except Exception:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value')
-
-        # Count zero means get all the possible items
-        if (count == 0):
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value')
 
         # The following loop queries for offenses in a loop to get details about the most recent 'count' offenses.
         # Steps are as follows:
@@ -810,6 +817,7 @@ class QradarConnector(BaseConnector):
             if resolved_disabled:
                 params['filter'] = filter_string + ' and status=OPEN'
                 self.save_progress('Filter is {0}'.format(params['filter']))
+
             response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
 
             if (phantom.is_fail(action_result.get_status())):
@@ -1065,6 +1073,14 @@ class QradarConnector(BaseConnector):
             # Create a action result
             action_result = self.add_action_result(ActionResult(dict(param)))
 
+        try:
+            count = int(param.get(phantom.APP_JSON_ARTIFACT_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT)))
+        except Exception:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+
+        if (count <= 0):
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+
         ret_val = self._validate_times(param, action_result)
 
         if (phantom.is_fail(ret_val)):
@@ -1111,11 +1127,6 @@ class QradarConnector(BaseConnector):
         start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME,
                 end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
 
-        try:
-            count = int(param.get(phantom.APP_JSON_ARTIFACT_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT)))
-        except Exception:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value')
-
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
 
@@ -1128,9 +1139,6 @@ class QradarConnector(BaseConnector):
         action_result.update_param({phantom.APP_JSON_START_TIME: start_time_msecs,
             phantom.APP_JSON_END_TIME: end_time_msecs})
 
-        if (count == 0):
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value')
-            # using QRADAR_QUERY_HIGH_RANGE is way too high for usability ***
         where_clause += " order by STARTTIME desc limit {0}".format(count)
 
         # From testing queries, it was noticed that the START and STOP are required else the default
@@ -1202,6 +1210,15 @@ class QradarConnector(BaseConnector):
 
         # Create a action result
         action_result = self.add_action_result(ActionResult(dict(param)))
+
+        try:
+            count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_FLOW_COUNT))
+        except Exception:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+
+        if (count <= 0):
+            # set it to the max number we can use in the query, so that we get all of them
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
         ret_val = self._validate_times(param, action_result)
 
@@ -1287,10 +1304,6 @@ class QradarConnector(BaseConnector):
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
         start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME,
                 end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
-        try:
-            count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_FLOW_COUNT))
-        except Exception:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value')
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
@@ -1302,10 +1315,6 @@ class QradarConnector(BaseConnector):
         where_clause += " starttime >= {0} and starttime <= {1}".format(start_time_msecs, end_time_msecs)
         action_result.update_param({phantom.APP_JSON_START_TIME: start_time_msecs,
             phantom.APP_JSON_END_TIME: end_time_msecs})
-
-        if (count == 0):
-            # set it to the max number we can use in the query, so that we get all of them
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value')
 
         where_clause += " ORDER BY starttime DESC LIMIT {0}".format(count)
 
