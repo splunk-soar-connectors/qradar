@@ -717,6 +717,8 @@ class QradarConnector(BaseConnector):
         if (count <= 0):
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
+        if (param.get('start_time') and param.get('start_time') <= 0) or (param.get('end_time') and param.get('end_time') <= 0):
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid time parameter')
         if self._use_alt_ingest:
             return self._alt_list_offenses(param, action_result)
 
@@ -866,7 +868,7 @@ class QradarConnector(BaseConnector):
 
         params = dict()
 
-        self.debug_print("Executing ariel query: {0}".format(ariel_query))
+        # self.debug_print("Executing ariel query: {0}".format(ariel_query))
 
         # First create a search
         params['query_expression'] = ariel_query
@@ -883,8 +885,11 @@ class QradarConnector(BaseConnector):
         if (response.status_code != 201):
             # Error condition
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ARIEL_QUERY_FAILED)
-            # Add the response that we got from the device, it contains additional info
-            resp_text = response.text
+            try:
+                resp_text = response.text
+            except:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide valid input')
+
             if ("InOffense function: Error loading Offense" in resp_text):
                 action_result.append_to_message("Queried offense might not contain data on QRadar")
             action_result.append_to_message("\nResponse from QRadar: {0}".format(resp_text))
@@ -1067,8 +1072,6 @@ class QradarConnector(BaseConnector):
 
     def _get_events(self, param, action_result=None):
 
-        self.debug_print("In _get_events")
-
         if (not action_result):
             # Create a action result
             action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1080,6 +1083,14 @@ class QradarConnector(BaseConnector):
 
         if (count <= 0):
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+
+        if (param.get('start_time') and param.get('start_time') <= 0) or (param.get('end_time') and param.get('end_time') <= 0):
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid time parameter')
+        try:
+            if param.get('offense_id') and int(param.get('offense_id')) <= 0:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
 
         ret_val = self._validate_times(param, action_result)
 
@@ -1112,6 +1123,7 @@ class QradarConnector(BaseConnector):
             where_clause += " {0}".format(fields_filter)
             action_result.update_param({QRADAR_JSON_FIELDS_FILTER: fields_filter})
 
+        # self.debug_print(where_clause)
         # This is the rule
         # If end_time is not given, then end_time is 'now'
         # If start_time is not given, then start_time is 10 days behind end_time'
@@ -1120,7 +1132,14 @@ class QradarConnector(BaseConnector):
         # the last 60 seconds or something small like that.
         # We also need to get the the events closest to the end time, so add the
         # starttime comparison operators for that
-        num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
+        try:
+            num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in interval_days parameter')
+
+        if num_days <= 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+
         curr_epoch_msecs = int(time.time()) * 1000
         start_time_msecs = 0
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
@@ -1161,11 +1180,7 @@ class QradarConnector(BaseConnector):
                     num_days = offense_days
             where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, num_days)
 
-        self.debug_print('where_clause', where_clause)
-
         ariel_query += " where {0}".format(where_clause)
-
-        self.debug_print('ariel_query', ariel_query)
 
         self._handle_ariel_query(ariel_query, action_result, 'events', offense_id)
 
@@ -1219,6 +1234,9 @@ class QradarConnector(BaseConnector):
         if (count <= 0):
             # set it to the max number we can use in the query, so that we get all of them
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+
+        if (param.get('start_time') and param.get('start_time') <= 0) or (param.get('end_time') and param.get('end_time') <= 0):
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid time parameter')
 
         ret_val = self._validate_times(param, action_result)
 
@@ -1340,6 +1358,12 @@ class QradarConnector(BaseConnector):
         offense_id = param[QRADAR_JSON_OFFENSE_ID]
         note_text = param[QRADER_JSON_NOTE_TEXT]
 
+        try:
+            if int(param.get('offense_id')) <= 0:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+
         params = {
             'note_text': note_text,
         }
@@ -1369,6 +1393,12 @@ class QradarConnector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
         offense_id = param[QRADAR_JSON_OFFENSE_ID]
         assignee = param[QRADER_JSON_ASSIGNEE]
+
+        try:
+            if int(param.get('offense_id')) <= 0:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
 
         params = {
             'assigned_to': assignee,
