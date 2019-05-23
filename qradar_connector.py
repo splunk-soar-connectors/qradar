@@ -77,7 +77,7 @@ class QradarConnector(BaseConnector):
 
     def _call_api(self, endpoint, method, result, params=None, headers=None, send_progress=False):
 
-        url = self._base_url + endpoint
+        url = self._base_url + endpoint.decode('utf-8')
 
         r = None
 
@@ -602,6 +602,11 @@ class QradarConnector(BaseConnector):
             offense_id = offense['id']
             container = {}
             if param.get('tenant_id', None) is not None:
+                try:
+                    str(param['tenant_id']).encode('utf-8')
+                except:
+                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid tenant')
+
                 container['tenant_id'] = param['tenant_id']
             container['name'] = "{} - {}".format(offense['id'], offense['description']) if add_offense_id_to_name else offense['description']
             container['data'] = offense
@@ -689,9 +694,9 @@ class QradarConnector(BaseConnector):
                 event_index += 1
 
                 # self.debug_print("event", event)
-
-            self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts, from {}, to {}".format(
-                offense_id, container_id, len_events, added, dup, self._utcctime(events[-1]['starttime']), self._utcctime(events[0]['starttime'])))
+            if events:
+                self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts, from {}, to {}".format(
+                    offense_id, container_id, len_events, added, dup, self._utcctime(events[-1]['starttime']), self._utcctime(events[0]['starttime'])))
 
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
@@ -740,14 +745,19 @@ class QradarConnector(BaseConnector):
         # days behind end_time
         #
         resolved_disabled = self._resolved_disabled
+        try:
+            num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
+            if int(num_days <= 0):
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in interval_days parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in interval_days parameter')
+
         if (self.is_poll_now() or param.get('ingest_offense', False)):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
-            num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
         else:
             curr_epoch_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             end_time_msecs = curr_epoch_msecs if end_time_msecs is None else int(end_time_msecs)
-            num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days) if start_time_msecs is None else int(start_time_msecs)
 
         if (end_time_msecs < start_time_msecs):
@@ -1155,8 +1165,6 @@ class QradarConnector(BaseConnector):
         # The starttime >= and starttime <= clause is required without which the limit clause fails
         where_clause += " starttime >= {0} and starttime <= {1}".format(start_time_msecs, end_time_msecs)
         # where_clause += " starttime BETWEEN {0} and {1}".format(start_time_msecs, end_time_msecs)
-        action_result.update_param({phantom.APP_JSON_START_TIME: start_time_msecs,
-            phantom.APP_JSON_END_TIME: end_time_msecs})
 
         where_clause += " order by STARTTIME desc limit {0}".format(count)
 
@@ -1418,11 +1426,14 @@ class QradarConnector(BaseConnector):
 
     def _get_offense_details(self, param):
 
+        action_result = self.add_action_result(ActionResult(dict(param)))
         # Get the list of offense ids
         offense_id = param[QRADAR_JSON_OFFENSE_ID]
-
-        # Create a action result
-        action_result = self.add_action_result(ActionResult(dict(param)))
+        try:
+            if int(offense_id) <= 0:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
 
         # Update the parameter
         action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
@@ -1608,7 +1619,7 @@ class QradarConnector(BaseConnector):
                 del self._state['last_saved_ingest_time']
         elif operation == "set last saved ingest time":
             if not datestring:
-                return self.set_status(phantom.APP_ERROR, "datetime field must be provided if setting last saved ingest time")
+                return action_result.set_status(phantom.APP_ERROR, "datetime field must be provided if setting last saved ingest time")
             self._state['last_saved_ingest_time'] = self._epochtime(self._parsedtime(datestring)) * 1000
 
         last_saved_ingest_time = self._state.get('last_saved_ingest_time', None)

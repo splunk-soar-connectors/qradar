@@ -1611,42 +1611,112 @@
             "output": [
                 {
                     "data_path": "action_result.status",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "success"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.timeout_type",
+                    "data_type": "string",
+                    "example_values": [
+                        "FIRST_SEEN"
+                    ],
+                    "column_order": 0,
+                    "column_name": "Timeout Type"
+                },
+                {
+                    "data_path": "action_result.data.*.element_type",
+                    "data_type": "string",
+                    "example_values": [
+                        "IP"
+                    ],
+                    "column_order": 1,
+                    "column_name": "Element Type"
+                },
+                {
+                    "data_path": "action_result.data.*.creation_time",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1558518483009
+                    ],
+                    "column_order": 2,
+                    "column_name": "Creation Time"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Demo"
+                    ],
+                    "column_order": 3,
+                    "column_name": "Name"
+                },
+                {
+                    "data_path": "action_result.data.*.number_of_elements",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Element type: IP, Name: Demo, Number of elements: 3"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.reference_set_name",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "Demo"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.reference_set_value",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.id",
-                    "data_type": "numeric",
-                    "contains": [
-                        "qradar offense id"
-                    ],
-                    "column_name": "Offense Id",
-                    "column_order": 0
-                },
-                {
-                    "data_path": "action_result.data.*.status",
                     "data_type": "string",
-                    "column_name": "Status",
-                    "column_order": 1
+                    "example_values": [
+                        "127.0.0.2"
+                    ],
+                    "contains": [
+                        "ip"
+                    ]
                 },
                 {
-                    "data_path": "action_result.summary",
-                    "data_type": "string"
+                    "data_path": "action_result.summary.element_type",
+                    "data_type": "string",
+                    "example_values": [
+                        "IP"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Demo"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.number_of_elements",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3
+                    ]
                 },
                 {
                     "data_path": "summary.total_objects",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
                 },
                 {
                     "data_path": "summary.total_objects_successful",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
                 }
             ],
             "versions": "EQ(*)"
