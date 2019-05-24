@@ -1446,6 +1446,7 @@ class QradarConnector(BaseConnector):
                 self.debug_print("call_api failed: ", action_result.get_status())
                 return action_result.get_status()
 
+            # return action_result.set_status(phantom.APP_SUCCESS, "Offenses ingested successfully")
             return result
 
         response = self._call_api('siem/offenses/{0}'.format(offense_id), 'get', action_result)
@@ -1620,7 +1621,10 @@ class QradarConnector(BaseConnector):
         elif operation == "set last saved ingest time":
             if not datestring:
                 return action_result.set_status(phantom.APP_ERROR, "datetime field must be provided if setting last saved ingest time")
-            self._state['last_saved_ingest_time'] = self._epochtime(self._parsedtime(datestring)) * 1000
+            try:
+                self._state['last_saved_ingest_time'] = self._epochtime(self._parsedtime(datestring)) * 1000
+            except:
+                return action_result.set_status(phantom.APP_ERROR, "Invalid datetime parameter")
 
         last_saved_ingest_time = self._state.get('last_saved_ingest_time', None)
         action_result.update_summary({
