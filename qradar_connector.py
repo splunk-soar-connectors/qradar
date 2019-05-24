@@ -505,7 +505,7 @@ class QradarConnector(BaseConnector):
     def _on_poll(self, param):
 
         self._is_on_poll = self.get_action_identifier() == "on_poll"
-
+        
         # if action_result is passed in, use it otherwise generate our own
         if not self._on_poll_action_result:
             self._on_poll_action_result = self.add_action_result(ActionResult(dict(param)))
@@ -605,7 +605,7 @@ class QradarConnector(BaseConnector):
                 try:
                     str(param['tenant_id']).encode('utf-8')
                 except:
-                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid tenant')
+                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid tenant ID')
 
                 container['tenant_id'] = param['tenant_id']
             container['name'] = "{} - {}".format(offense['id'], offense['description']) if add_offense_id_to_name else offense['description']
@@ -654,6 +654,10 @@ class QradarConnector(BaseConnector):
                 continue
 
             events = event_action_result.get_data()
+            max_events = dict()
+            for i in range(artifact_max):
+                max_events[events.keys()[i]] = events.values()[i]
+
             self.debug_print("Got {0} events for offense {1}".format(len(events), offense_id))
 
             offense_artifact = {}
@@ -665,11 +669,11 @@ class QradarConnector(BaseConnector):
             # artifacts = [offense_artifact]
 
             event_index = 0
-            len_events = len(events)
+            len_events = len(max_events)
             self.send_progress("Found {} events for offense id {}".format(len_events, offense_id))
             added = 0
             dup = 0
-            for j, event in enumerate(events):
+            for j, event in enumerate(max_events):
 
                 # strip \r, \n and space from the values, qradar does that for the description field atleast
                 event = dict([(k, v_strip(v)) for k, v in event.iteritems()])
@@ -694,9 +698,9 @@ class QradarConnector(BaseConnector):
                 event_index += 1
 
                 # self.debug_print("event", event)
-            if events:
+            if max_events:
                 self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts, from {}, to {}".format(
-                    offense_id, container_id, len_events, added, dup, self._utcctime(events[-1]['starttime']), self._utcctime(events[0]['starttime'])))
+                    offense_id, container_id, len_events, added, dup, self._utcctime(max_events[-1]['starttime']), self._utcctime(max_events[0]['starttime'])))
 
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
