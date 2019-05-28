@@ -1,16 +1,8 @@
-# --
 # File: qradar_connector.py
+# Copyright (c) 2016-2019 Splunk Inc.
 #
-# Copyright (c) Phantom Cyber Corporation, 2014-2018
-#
-# This unpublished material is proprietary to Phantom Cyber.
-# All rights reserved. The methods and
-# techniques described herein are considered trade secrets
-# and/or confidential. Reproduction or distribution, in whole
-# or in part, is forbidden except by express written permission
-# of Phantom Cyber Corporation.
-#
-# --
+# SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
+# without a valid written license from Splunk Inc. is PROHIBITED.
 
 # Phantom imports
 import phantom.app as phantom
@@ -505,7 +497,7 @@ class QradarConnector(BaseConnector):
     def _on_poll(self, param):
 
         self._is_on_poll = self.get_action_identifier() == "on_poll"
-        
+
         # if action_result is passed in, use it otherwise generate our own
         if not self._on_poll_action_result:
             self._on_poll_action_result = self.add_action_result(ActionResult(dict(param)))
@@ -569,6 +561,10 @@ class QradarConnector(BaseConnector):
             action_result.set_status(offenses_action_result.get_status())
             action_result.append_to_message(offenses_action_result.get_message())
             return action_result.get_status()
+
+        if self.get_action_identifier() == 'offense_details' and offenses_action_result.get_data():
+            for offense in offenses_action_result.get_data():
+                self._on_poll_action_result.add_data(offense)
 
         # From here onwards the action is treated as success, if an event query failed
         # it's still a success and the message, summary should specify details about it
@@ -654,9 +650,6 @@ class QradarConnector(BaseConnector):
                 continue
 
             events = event_action_result.get_data()
-            max_events = dict()
-            for i in range(artifact_max):
-                max_events[events.keys()[i]] = events.values()[i]
 
             self.debug_print("Got {0} events for offense {1}".format(len(events), offense_id))
 
@@ -669,11 +662,11 @@ class QradarConnector(BaseConnector):
             # artifacts = [offense_artifact]
 
             event_index = 0
-            len_events = len(max_events)
+            len_events = len(events)
             self.send_progress("Found {} events for offense id {}".format(len_events, offense_id))
             added = 0
             dup = 0
-            for j, event in enumerate(max_events):
+            for j, event in enumerate(events):
 
                 # strip \r, \n and space from the values, qradar does that for the description field atleast
                 event = dict([(k, v_strip(v)) for k, v in event.iteritems()])
@@ -687,8 +680,6 @@ class QradarConnector(BaseConnector):
                     artifact['run_automation'] = True
 
                 ret_val, message, artifact_id = self.save_artifact(artifact)
-                self.debug_print("save_artifact (id=({3},{4},{5},{6}) returns, value: {0}, message: {1}, id: {2}"
-                .format(ret_val, message, artifact_id, container_id, i, j, offense_id, event['qid']))
 
                 if message.startswith("Added"):
                     added += 1
@@ -698,9 +689,9 @@ class QradarConnector(BaseConnector):
                 event_index += 1
 
                 # self.debug_print("event", event)
-            if max_events:
-                self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts, from {}, to {}".format(
-                    offense_id, container_id, len_events, added, dup, self._utcctime(max_events[-1]['starttime']), self._utcctime(max_events[0]['starttime'])))
+            if events:
+                self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts".format(
+                    offense_id, container_id, len_events, added, dup))
 
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
@@ -710,7 +701,7 @@ class QradarConnector(BaseConnector):
             self.save_state(self._state)
 
         self.send_progress(" ")
-        return self.set_status(phantom.APP_SUCCESS)
+        return action_result.set_status(phantom.APP_SUCCESS)
 
     def _list_offenses(self, param, action_result=None):
 
@@ -1492,8 +1483,6 @@ class QradarConnector(BaseConnector):
             # No reason to halt and throw an error since only summary creation has failed.
             pass
 
-        return action_result.get_status()
-
         return phantom.APP_SUCCESS
 
     def _post_add_to_reference_set(self, param):
@@ -1618,6 +1607,9 @@ class QradarConnector(BaseConnector):
 
         operation = param.get('operation', "")
         datestring = param.get('datetime', None)
+
+        if not operation == "set last saved ingest time" and datestring:
+            return action_result.set_status(phantom.APP_ERROR, 'Datetime is required only while setting the last saved ingest time')
 
         if operation == "delete last saved ingest time":
             if 'last_saved_ingest_time' in self._state:
