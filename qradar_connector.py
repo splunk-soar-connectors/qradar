@@ -130,6 +130,7 @@ class QradarConnector(BaseConnector):
         self._use_alt_ingest = self._config.get('alternative_ingest_algorithm', False)
         self._use_alt_ariel_query = self._config.get('alternative_ariel_query', False)
         self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
+        self._container_only = self._config.get("containers_only", False)
         self._cef_value_map = self._config.get('cef_value_map', False)
         if self._cef_value_map and len(self._cef_value_map) > 1:
             try:
@@ -599,9 +600,10 @@ class QradarConnector(BaseConnector):
             container = {}
             if param.get('tenant_id', None) is not None:
                 try:
-                    str(param['tenant_id']).encode('utf-8')
+                    if str(param.get('tenant_id')).isdigit() or int(param.get('tenant_id')) < 0:
+                        action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
                 except:
-                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid tenant ID')
+                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
 
                 container['tenant_id'] = param['tenant_id']
             container['name'] = "{} - {}".format(offense['id'], offense['description']) if add_offense_id_to_name else offense['description']
@@ -659,7 +661,13 @@ class QradarConnector(BaseConnector):
             offense_artifact['label'] = 'offense'
             offense_artifact['cef'] = offense
 
-            # artifacts = [offense_artifact]
+            if self._container_only:
+                artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id)
+
+                if phantom.is_fail(artifacts_creation_status):
+                    self.debug_print('Error while creating artifacts for container with ID {container_id}. {error_msg}'.format(container_id=container_id, error_msg=artifacts_creation_msg))
+
+                continue
 
             event_index = 0
             len_events = len(events)
@@ -702,6 +710,28 @@ class QradarConnector(BaseConnector):
 
         self.send_progress(" ")
         return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _create_artifacts(self, offense, container_id):
+        """ This function is used to create artifacts in given container using finding data.
+
+        :param finding: Data of single finding
+        :param container_id: ID of container in which we have to create the artifacts
+        :return: status(success/failure), message
+        """
+
+        artifact = {}
+        artifact['name'] = 'Artifact'
+        artifact['container_id'] = container_id
+        artifact['source_data_identifier'] = offense['Id']
+        artifact['cef'] = offense
+
+        create_artifact_status, create_artifact_msg, _ = self.save_artifacts([artifact])
+
+        if phantom.is_fail(create_artifact_status):
+            return phantom.APP_ERROR, create_artifact_msg
+
+        return phantom.APP_SUCCESS, 'Artifacts created successfully'
+
 
     def _list_offenses(self, param, action_result=None):
 
@@ -1148,8 +1178,12 @@ class QradarConnector(BaseConnector):
         curr_epoch_msecs = int(time.time()) * 1000
         start_time_msecs = 0
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
+
         start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME,
                 end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
+
+        if self._is_on_poll:
+            start_time_msecs = param['offense_start_time']
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
@@ -1344,8 +1378,6 @@ class QradarConnector(BaseConnector):
         # the device's timezone.
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch(start_time_msecs))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch(end_time_msecs))
-
-        self.debug_print('where_clause', where_clause)
 
         ariel_query += " where {0}".format(where_clause)
 

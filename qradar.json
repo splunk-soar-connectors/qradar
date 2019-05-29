@@ -23,6 +23,12 @@
             "description": "Server IP/Hostname",
             "required": true
         },
+        "containers_only": {
+            "data_type": "boolean",
+            "order": 19,
+            "description": "containers only",
+            "required": false
+        },
         "verify_server_cert": {
             "data_type": "boolean",
             "description": "Verify server certificate",
