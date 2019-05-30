@@ -495,6 +495,27 @@ class QradarConnector(BaseConnector):
         .format(runs, len(new_offenses), offenses_bytime[0]['id'], self._utcctime(offenses_bytime[0]['start_time']), offenses_bytime[-1]['id'],
         self._utcctime(offenses_bytime[-1]['start_time'])))
 
+    def _create_offense_artifacts(self, offense, container_id):
+        """ This function is used to create artifacts in given container using finding data.
+
+        :param finding: Data of single finding
+        :param container_id: ID of container in which we have to create the artifacts
+        :return: status(success/failure), message
+        """
+
+        artifact = {}
+        artifact['name'] = 'Artifact'
+        artifact['container_id'] = container_id
+        artifact['source_data_identifier'] = offense['id']
+        artifact['cef'] = offense
+
+        create_artifact_status, create_artifact_msg, _ = self.save_artifacts([artifact])
+
+        if phantom.is_fail(create_artifact_status):
+            return phantom.APP_ERROR, create_artifact_msg
+
+        return phantom.APP_SUCCESS, 'Artifacts created successfully'
+
     def _on_poll(self, param):
 
         self._is_on_poll = self.get_action_identifier() == "on_poll"
@@ -600,8 +621,8 @@ class QradarConnector(BaseConnector):
             container = {}
             if param.get('tenant_id', None) is not None:
                 try:
-                    if str(param.get('tenant_id')).isdigit() or int(param.get('tenant_id')) < 0:
-                        action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
+                    if not str(param.get('tenant_id')).isdigit() or int(param.get('tenant_id')) < 0:
+                        return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
                 except:
                     return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
 
@@ -636,6 +657,15 @@ class QradarConnector(BaseConnector):
                     self.debug_print("Skipping artifact ingest to closed container.")
                     continue
 
+            if self._container_only:
+                artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id)
+
+                if phantom.is_fail(artifacts_creation_status):
+                    self.debug_print('Error while creating artifacts for container with ID {container_id}. {error_msg}'
+                    .format(container_id=container_id, error_msg=artifacts_creation_msg))
+
+                continue
+
             # set the event params same as that of the input poll params
             # since the time range should be the same
             event_param = dict(param)
@@ -660,14 +690,6 @@ class QradarConnector(BaseConnector):
             offense_artifact['name'] = 'Offense Artifact'
             offense_artifact['label'] = 'offense'
             offense_artifact['cef'] = offense
-
-            if self._container_only:
-                artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id)
-
-                if phantom.is_fail(artifacts_creation_status):
-                    self.debug_print('Error while creating artifacts for container with ID {container_id}. {error_msg}'.format(container_id=container_id, error_msg=artifacts_creation_msg))
-
-                continue
 
             event_index = 0
             len_events = len(events)
@@ -710,28 +732,6 @@ class QradarConnector(BaseConnector):
 
         self.send_progress(" ")
         return action_result.set_status(phantom.APP_SUCCESS)
-
-    def _create_artifacts(self, offense, container_id):
-        """ This function is used to create artifacts in given container using finding data.
-
-        :param finding: Data of single finding
-        :param container_id: ID of container in which we have to create the artifacts
-        :return: status(success/failure), message
-        """
-
-        artifact = {}
-        artifact['name'] = 'Artifact'
-        artifact['container_id'] = container_id
-        artifact['source_data_identifier'] = offense['Id']
-        artifact['cef'] = offense
-
-        create_artifact_status, create_artifact_msg, _ = self.save_artifacts([artifact])
-
-        if phantom.is_fail(create_artifact_status):
-            return phantom.APP_ERROR, create_artifact_msg
-
-        return phantom.APP_SUCCESS, 'Artifacts created successfully'
-
 
     def _list_offenses(self, param, action_result=None):
 
@@ -1378,6 +1378,8 @@ class QradarConnector(BaseConnector):
         # the device's timezone.
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch(start_time_msecs))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch(end_time_msecs))
+
+        self.debug_print('where_clause', where_clause)
 
         ariel_query += " where {0}".format(where_clause)
 
