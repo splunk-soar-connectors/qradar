@@ -310,9 +310,11 @@ class QradarConnector(BaseConnector):
                 else:
                     self.save_progress("end_time is derived from string: {}".format(start_time))
                     end_time = self._epochtime(self._parsedtime(end_time)) * 1000
-
-            self.save_progress("start_time: {}".format(self._utcctime(start_time)))
-            self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
+            try:
+                self.save_progress("start_time: {}".format(self._utcctime(start_time)))
+                self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
+            except Exception as e:
+                self.debug_print('Provided time is not valid. Error: {}'.format(str(e)))
 
             # the time_field configuaration parameter determines which time fields are used in the filter,
             #   if missing or unknown value, default to start_time
@@ -326,10 +328,13 @@ class QradarConnector(BaseConnector):
                 self._time_field = 'start_time'
                 reqfilter = "(start_time > {} and start_time <= {})".format(start_time, end_time)
 
-            self.save_progress("Applying time range between [{} -> {}] inclusive (total minutes {})".format(
-                self._utcctime(start_time),
-                self._utcctime(end_time),
-                (end_time - start_time) / (1000 * 60)))
+            try:
+                self.save_progress("Applying time range between [{} -> {}] inclusive (total minutes {})".format(
+                    self._utcctime(start_time),
+                    self._utcctime(end_time),
+                    (end_time - start_time) / (1000 * 60)))
+            except Exception as e:
+                self.debug_print('Provided time is not valid. Error: {}'.format(str(e)))
 
         # last requirement, are we listing only opened offenses?
         if not self._config.get('ingest_resolved', False):
@@ -444,9 +449,12 @@ class QradarConnector(BaseConnector):
 
             # add offense to action_result
             for offense in offenses:
-                self.save_progress("Queuing offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
-                    offense['start_time'], self._utcctime(offense['start_time']),
-                            offense['last_updated_time'], self._utcctime(offense['last_updated_time'])))
+                try:
+                    self.save_progress("Queuing offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
+                        offense['start_time'], self._utcctime(offense['start_time']),
+                                offense['last_updated_time'], self._utcctime(offense['last_updated_time'])))
+                except:
+                    pass
                 action_result.add_data(offense)
 
         # add summary for action_result
@@ -491,9 +499,12 @@ class QradarConnector(BaseConnector):
         else:
             offenses_bytime = sorted(new_offenses, key=lambda x: x['last_updated_time'])
 
-        self.save_progress("run {}: downloaded ({}) earliest offense [ id ({}) start_time ({}) ] latest offense [ id ({}) start_time ({}) ]"
-        .format(runs, len(new_offenses), offenses_bytime[0]['id'], self._utcctime(offenses_bytime[0]['start_time']), offenses_bytime[-1]['id'],
-        self._utcctime(offenses_bytime[-1]['start_time'])))
+        try:
+            self.save_progress("run {}: downloaded ({}) earliest offense [ id ({}) start_time ({}) ] latest offense [ id ({}) start_time ({}) ]"
+            .format(runs, len(new_offenses), offenses_bytime[0]['id'], self._utcctime(offenses_bytime[0]['start_time']), offenses_bytime[-1]['id'],
+            self._utcctime(offenses_bytime[-1]['start_time'])))
+        except Exception as e:
+            self.debug_print('Provided time is not valid. Error: {}'.format(str(e)))
 
     def _create_offense_artifacts(self, offense, container_id):
         """ This function is used to create artifacts in given container using finding data.
@@ -726,8 +737,11 @@ class QradarConnector(BaseConnector):
         # if we are polling, save the last ingested time
         if self._use_alt_ingest and self._is_on_poll:
             self._state['last_saved_ingest_time'] = self._new_last_ingest_time
-            self.save_progress("Setting last_saved_ingest_time to: {} {}".format(self._state['last_saved_ingest_time'],
-                self._utcctime(self._state['last_saved_ingest_time'])))
+            try:
+                self.save_progress("Setting last_saved_ingest_time to: {} {}".format(self._state['last_saved_ingest_time'],
+                    self._utcctime(self._state['last_saved_ingest_time'])))
+            except Exception as e:
+                self.debug_print('Error: {}'.format(str(e)))
             self.save_state(self._state)
 
         self.send_progress(" ")
@@ -1066,8 +1080,11 @@ class QradarConnector(BaseConnector):
 
             self.save_progress("Ariel query retrieved {} {} for offense {}".format(len(objs), obj_result_key, offense_id))
             if len(objs) > 0 and 'starttime' in objs[0]:
-                self.save_progress("Ariel query retrieved {} {} for offense {}; starttime of earliest ({}) latest ({})".format(
-                    len(objs), obj_result_key, offense_id, self._utcctime(objs[-1]['starttime']), self._utcctime(objs[0]['starttime'])))
+                try:
+                    self.save_progress("Ariel query retrieved {} {} for offense {}; starttime of earliest ({}) latest ({})".format(
+                        len(objs), obj_result_key, offense_id, self._utcctime(objs[-1]['starttime']), self._utcctime(objs[0]['starttime'])))
+                except Exception as e:
+                    self.debug_print('Error: {}'.format(str(e)))
 
         else:
             action_result.add_data(response_json)
@@ -1184,6 +1201,8 @@ class QradarConnector(BaseConnector):
 
         if self._is_on_poll:
             start_time_msecs = param['offense_start_time']
+            if self._state.get('last_ingested_event'):
+                start_time_msecs = self._state['last_ingested_event']
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
@@ -1221,6 +1240,9 @@ class QradarConnector(BaseConnector):
 
         self._handle_ariel_query(ariel_query, action_result, 'events', offense_id)
 
+        events_list = action_result.get_data()
+        if events_list:
+            self._state['last_ingested_event'] = events_list[-1]['starttime']
         # Set the summary
         action_result.update_summary({QRADAR_JSON_TOTAL_EVENTS: action_result.get_data_size()})
 
@@ -1657,13 +1679,16 @@ class QradarConnector(BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, "Invalid datetime parameter")
 
         last_saved_ingest_time = self._state.get('last_saved_ingest_time', None)
-        action_result.update_summary({
-            'last_saved_ingest_time': self._utcctime(last_saved_ingest_time) if last_saved_ingest_time else None,
-        })
-        action_result.add_data({
-            'last_saved_ingest_time': self._utcctime(last_saved_ingest_time) if last_saved_ingest_time else None,
-            'last_saved_ingest_time_as_epoch_date': last_saved_ingest_time
-        })
+        try:
+            action_result.update_summary({
+                'last_saved_ingest_time': self._utcctime(last_saved_ingest_time) if last_saved_ingest_time else None,
+            })
+            action_result.add_data({
+                'last_saved_ingest_time': self._utcctime(last_saved_ingest_time) if last_saved_ingest_time else None,
+                'last_saved_ingest_time_as_epoch_date': last_saved_ingest_time
+            })
+        except Exception as e:
+            return action_result.set_status(phantom.APP_ERROR, 'Provided time is not valid. Error: {}'.format(str(e)))
         self.save_state(self._state)
         return action_result.set_status(phantom.APP_SUCCESS)
 
