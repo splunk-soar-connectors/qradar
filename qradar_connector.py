@@ -13,27 +13,32 @@ from phantom.app import ActionResult
 from qradar_consts import *
 
 # Other imports used by this connector
-import simplejson as json
 import requests
 import base64
 import time
-from datetime import datetime
-from datetime import timedelta
-from pytz import timezone
 import pytz
-
+import re
 import calendar
 import dateutil.parser
 import dateutil.tz
 import default_timezones
+import simplejson as json
+from datetime import datetime
+from datetime import timedelta
+from pytz import timezone
+from bs4 import BeautifulSoup
 
-import re
+
+class RetVal(tuple):
+    def __new__(cls, val1, val2=None):
+        return tuple.__new__(RetVal, (val1, val2))
 
 
 class QradarConnector(BaseConnector):
 
     # The actions supported by this connector
     ACTION_ID_LIST_OFFENSES = "list_offenses"
+    ACTION_ID_LIST_CLOSING_REASONS = "list_closing_reasons"
     ACTION_ID_GET_EVENTS = "get_events"
     ACTION_ID_GET_FLOWS = "get_flows"
     ACTION_ID_RUN_QUERY = "run_query"
@@ -66,6 +71,62 @@ class QradarConnector(BaseConnector):
         self._auth['Authorization'] = auth_string
 
         return phantom.APP_SUCCESS
+
+    @staticmethod
+    def _process_html_response(response, action_result):
+        """ This function is used to process html response.
+
+        :param response: Response data
+        :param action_result: Object of ActionResult
+        :return: status phantom.APP_ERROR(along with appropriate message)
+        """
+
+        # An html response, treat it like an error
+        status_code = response.status_code
+
+        try:
+            soup = BeautifulSoup(response.text, "html.parser")
+            error_text = soup.text.encode('utf-8').encode('utf-8')
+            split_lines = error_text.split('\n')
+            split_lines = [x.strip() for x in split_lines if x.strip()]
+            error_text = '\n'.join(split_lines)
+        except:
+            error_text = "Cannot parse error details"
+
+        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
+
+        message = message.replace('{', '{{').replace('}', '}}')
+
+        if len(message) > 500:
+            message = 'Error while connecting to a server'
+
+        return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
+
+    @staticmethod
+    def _get_json_error_message(response, action_result):
+        """ This function is used to process json error response.
+
+        :param response: Response data
+        :param action_result: Object of ActionResult
+        :return: status phantom.APP_ERROR(along with appropriate message)
+        """
+
+        # Try a json parse
+        try:
+            resp_json = response.json()
+        except Exception as e:
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".
+                                                   format(str(e))), None)
+
+        error_code = resp_json.get('code')
+        error_message = resp_json.get('message').encode('utf-8')
+        error_description = resp_json.get('description').encode('utf-8')
+
+        # You should process the error returned in the json
+        message = "Error from server. Status Code: {0} Error Code: {1}, Error Message: {2}, Error Description: {3}".\
+            format(response.status_code, error_code, error_message, error_description)
+
+        return message
 
     def _call_api(self, endpoint, method, result, params=None, headers=None, send_progress=False):
 
@@ -203,6 +264,8 @@ class QradarConnector(BaseConnector):
 
     def _test_connectivity(self, param):
 
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
         self.save_progress(QRADAR_USING_BASE_URL, base_url=self._base_url)
 
         config = self.get_config()
@@ -214,14 +277,19 @@ class QradarConnector(BaseConnector):
         response = self._call_api('ariel/databases', 'get', self)
 
         if (phantom.is_fail(self.get_status())):
+            self.save_progress('Error occurred while connecting QRadar instance with Server Hostname | IP : {0}'.format(config[phantom.APP_JSON_DEVICE]))
+            self.save_progress(QRADAR_ERR_CONNECTIVITY_TEST)
             self.debug_print("call_api failed: ", self.get_status())
             return self.get_status()
 
-        self.debug_print("Response Code", response.status_code)
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
 
-        if (response.status_code != 200):
-            # Error condition
-            status_message = '{0}. {1}. HTTP status_code: {2}, reason: {3}'.format(QRADAR_ERR_CONNECTIVITY_TEST,
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. {1}. HTTP status_code: {2}, reason: {3}'.format(QRADAR_ERR_CONNECTIVITY_TEST,
                 QRADAR_MSG_CHECK_CREDENTIALS, response.status_code, response.reason)
             return self.set_status(phantom.APP_ERROR, status_message)
 
@@ -286,8 +354,7 @@ class QradarConnector(BaseConnector):
                 self.save_progress("last_saved_ingest_time: {}".format(start_time))
             else:
                 start_time = param.get('start_time',
-                    self._state.get('last_saved_ingest_time',
-                        self._config.get('alt_initial_ingest_time', "yesterday")))
+                    self._config.get('alt_initial_ingest_time', "yesterday"))
                 self.save_progress("param start_time: {}".format(start_time))
 
             # datetime string, decode
@@ -314,7 +381,7 @@ class QradarConnector(BaseConnector):
                 self.save_progress("start_time: {}".format(self._utcctime(start_time)))
                 self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
             except Exception as e:
-                self.debug_print('Provided time is not valid. Error: {}'.format(str(e)))
+                self.debug_print('Provided time is invalid. Error: {}'.format(str(e)))
 
             # the time_field configuaration parameter determines which time fields are used in the filter,
             #   if missing or unknown value, default to start_time
@@ -334,7 +401,7 @@ class QradarConnector(BaseConnector):
                     self._utcctime(end_time),
                     (end_time - start_time) / (1000 * 60)))
             except Exception as e:
-                self.debug_print('Provided time is not valid. Error: {}'.format(str(e)))
+                self.debug_print('Provided time is invalid. Error: {}'.format(str(e)))
 
         # last requirement, are we listing only opened offenses?
         if not self._config.get('ingest_resolved', False):
@@ -453,8 +520,8 @@ class QradarConnector(BaseConnector):
                     self.save_progress("Queuing offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
                         offense['start_time'], self._utcctime(offense['start_time']),
                                 offense['last_updated_time'], self._utcctime(offense['last_updated_time'])))
-                except:
-                    pass
+                except Exception as e:
+                    self.debug_print('Error occurred: {}'.format(str(e)))
                 action_result.add_data(offense)
 
         # add summary for action_result
@@ -469,15 +536,24 @@ class QradarConnector(BaseConnector):
 
         # error with the call_api function, most likely network error
         if (phantom.is_fail(action_result.get_status())):
-            self.save_progress("Rest call failed: {}\nResponse code: {}".format(action_result.get_status(), response.status_code))
+            if response:
+                status_code = response.status_code
+            else:
+                status_code = None
+            self.save_progress("Rest call failed: {}\nResponse code: {}".format(action_result.get_status(), status_code))
             return action_result.get_status()
 
         # error with the rest call, either authorization or malformed parameters
-        if (response.status_code != 200):
-            self.save_progress("Rest call errored: {}\nResponse code: {}".format(response.text, response.status_code))
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_LIST_OFFENSES_API_FAILED)
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
+
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_OFFENSES_API_FAILED, response.status_code, response.reason)
+            self.save_progress("Rest call errored: {}\nResponse code: {}".format(status_message, response.status_code))
+            return action_result.set_status(phantom.APP_ERROR, status_message)
 
         # decode and save offenses
         try:
@@ -504,7 +580,7 @@ class QradarConnector(BaseConnector):
             .format(runs, len(new_offenses), offenses_bytime[0]['id'], self._utcctime(offenses_bytime[0]['start_time']), offenses_bytime[-1]['id'],
             self._utcctime(offenses_bytime[-1]['start_time'])))
         except Exception as e:
-            self.debug_print('Provided time is not valid. Error: {}'.format(str(e)))
+            self.debug_print('Error occurred: {}'.format(str(e)))
 
     def _create_offense_artifacts(self, offense, container_id):
         """ This function is used to create artifacts in given container using finding data.
@@ -650,9 +726,14 @@ class QradarConnector(BaseConnector):
 
             self.send_progress("Saving Container # {0}".format(i))
             ret_val, message, container_id = self.save_container(container)
-            self.debug_print("save_container returns, ret_val: {0}, message: {1}, id: {2}".format(ret_val, message, container_id))
+            self.debug_print("Save container returns, ret_val: {0}, message: {1}, id: {2}".format(ret_val, message, container_id))
 
             if (phantom.is_fail(ret_val)):
+                error_message = 'Error occurred while container creation for Offense ID: {0}. Error: {1}'.format(offense_id, message)
+                self.debug_print(error_message)
+                if message and 'Tenant "{0}" was not found or is not enabled'.format(param.get('tenant_id')) in message:
+                    self.save_progress('Aborting the polling process')
+                    return action_result.set_status(phantom.APP_ERROR, error_message)
                 continue
 
             if (not container_id):
@@ -665,15 +746,16 @@ class QradarConnector(BaseConnector):
                 statusOfContainer = this_container[1]['status']  # pylint: disable=E0001,E1126
                 self.debug_print("Add_to_resolved: {0}, status: {1}, container_id: {2}".format(add_to_resolved, statusOfContainer, container_id))
                 if (not add_to_resolved and (statusOfContainer == "resolved" or statusOfContainer == "closed")):
-                    self.debug_print("Skipping artifact ingest to closed container.")
+                    self.debug_print("Skipping artifact ingest to closed container")
                     continue
 
             if self._container_only:
                 artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id)
 
                 if phantom.is_fail(artifacts_creation_status):
-                    self.debug_print('Error while creating artifacts for container with ID {container_id}. {error_msg}'
-                    .format(container_id=container_id, error_msg=artifacts_creation_msg))
+                    self.debug_print('Logging the artifact creation failure for the current offense and continuing with the next offense')
+                    self.debug_print('Error while creating artifacts for the Offense ID: {0} and Container ID {1}. Error: {2}'
+                    .format(offense_id, container_id, artifacts_creation_msg))
 
                 continue
 
@@ -722,6 +804,11 @@ class QradarConnector(BaseConnector):
 
                 ret_val, message, artifact_id = self.save_artifact(artifact)
 
+                if (phantom.is_fail(ret_val)):
+                    self.debug_print('Logging the artifact creation failure for the current event and continuing with the next event')
+                    self.debug_print('Error occurred while artifact creation for the event with QID: {0} for the Offense ID: {1}. Error: {2}'.format(event['qid'], offense_id, message))
+                    continue
+
                 if message.startswith("Added"):
                     added += 1
                 elif message.startswith("duplicate"):
@@ -729,19 +816,18 @@ class QradarConnector(BaseConnector):
 
                 event_index += 1
 
-                # self.debug_print("event", event)
             if events:
                 self.save_progress("Offense id {} - Container {}: retrieved {} events, added {} artifacts, duplicated {} artifacts".format(
                     offense_id, container_id, len_events, added, dup))
 
         # if we are polling, save the last ingested time
-        if self._use_alt_ingest and self._is_on_poll:
+        if self._is_on_poll:
             self._state['last_saved_ingest_time'] = self._new_last_ingest_time
             try:
                 self.save_progress("Setting last_saved_ingest_time to: {} {}".format(self._state['last_saved_ingest_time'],
                     self._utcctime(self._state['last_saved_ingest_time'])))
             except Exception as e:
-                self.debug_print('Error: {}'.format(str(e)))
+                self.debug_print('Error occurred: {}'.format(str(e)))
             self.save_state(self._state)
 
         self.send_progress(" ")
@@ -793,7 +879,10 @@ class QradarConnector(BaseConnector):
 
         if (self.is_poll_now() or param.get('ingest_offense', False)):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
-            start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
+            if self.is_poll_now() and self._state.get('last_saved_ingest_time'):
+                start_time_msecs = self._state.get('last_saved_ingest_time')
+            else:
+                start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
         else:
             curr_epoch_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
             end_time_msecs = curr_epoch_msecs if end_time_msecs is None else int(end_time_msecs)
@@ -801,6 +890,8 @@ class QradarConnector(BaseConnector):
 
         if (end_time_msecs < start_time_msecs):
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
+
+        self._new_last_ingest_time = start_time_msecs
 
         self.save_progress('Getting data from {0} to {1}'.format(self._get_tz_str_from_epoch(start_time_msecs), self._get_tz_str_from_epoch(end_time_msecs)))
 
@@ -853,6 +944,7 @@ class QradarConnector(BaseConnector):
         # 3.> If total is greater that what we want then specify the a range in the second query.
         #     This range would be specify the latest offenses
         #     if N > C then range in second query is N-C till the last index
+        offenses_status_msg = ''
         while True:
             if (runs > QRADAR_MAX_ALLOWED_RUNS_TO_GET_LATEST_OFFENSES):
                 return action_result.set_status(phantom.APP_ERROR,
@@ -866,6 +958,7 @@ class QradarConnector(BaseConnector):
             count = count - 1000
 
             if resolved_disabled:
+                offenses_status_msg = 'Fetching all open offenses as the asset configuration parameter for ingest only open is selected. '
                 params['filter'] = filter_string + ' and status=OPEN'
                 self.save_progress('Filter is {0}'.format(params['filter']))
 
@@ -877,12 +970,15 @@ class QradarConnector(BaseConnector):
 
             self.debug_print("Response Code", response.status_code)
 
-            if (response.status_code != 200):
+            if response and response.status_code != 200:
+                if 'html' in response.headers.get('Content-Type', ''):
+                    return self._process_html_response(response, action_result)
                 # Error condition
-                action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_LIST_OFFENSES_API_FAILED)
-                # Add the response that we got from the device, it contains additional info
-                action_result.append_to_message(response.text)
-                return action_result.get_status()
+                if 'json' in response.headers.get('Content-Type', ''):
+                    status_message = self._get_json_error_message(response, action_result)
+                else:
+                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_OFFENSES_API_FAILED, response.status_code, response.reason)
+                return action_result.set_status(phantom.APP_ERROR, status_message)
 
             try:
                 offenses += response.json()
@@ -893,8 +989,6 @@ class QradarConnector(BaseConnector):
             number_of_offenses = len(offenses)
             total_offenses += number_of_offenses
 
-            self.debug_print("Got {0} total offenses after {1} runs".format(total_offenses, runs), "")
-
             if count <= 0:
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=total_offenses)
                 break
@@ -902,10 +996,71 @@ class QradarConnector(BaseConnector):
         # Parse the output, which is an array of offenses
         # Update the summary
         action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len(offenses)})
+
+        # Sort the offenses on the basis of the start_time and last_updated_time both
+        # Note the recent start_time and recent last_updated_time
+        # Update the _new_last_ingest_time with the maximum of the two as next time we will fetch the offenses
+        # whose start_time or last_updated_time is greater than the _new_last_ingest_time
+        # This _new_last_ingest_time variable will be used only in the On_Poll action to store it in the last_saved_ingest_time of the state file
+        if offenses:
+            offenses.sort(key=lambda x: x['start_time'])
+            recent_start_time = offenses[-1]['start_time']
+            offenses.sort(key=lambda x: x['last_updated_time'])
+            recent_last_updated_time = offenses[-1]['last_updated_time']
+            self._new_last_ingest_time = max(recent_start_time, recent_last_updated_time)
+
         for offense in offenses:
             action_result.add_data(offense)
 
+        action_result.set_status(phantom.APP_SUCCESS, '{0}Total Offenses: {1}'.format(offenses_status_msg, len(offenses)))
         return action_result.get_status()
+
+    def _list_offense_closing_reasons(self, param):
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        params = dict()
+        if param.get('include_reserved'):
+            params['include_reserved'] = True
+
+        if param.get('include_deleted'):
+            params['include_deleted'] = True
+
+        if len(params) == 0:
+            params = None
+
+        closing_reasons_response = self._call_api('siem/offense_closing_reasons', 'get', action_result, params=params, headers=None)
+
+        if (phantom.is_fail(action_result.get_status())):
+            self.debug_print("call_api failed: ", action_result.get_status())
+            return action_result.get_status()
+
+        if not closing_reasons_response:
+            return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS)
+
+        if (closing_reasons_response.status_code != 200):
+            if 'html' in closing_reasons_response.headers.get('Content-Type', ''):
+                return self._process_html_response(closing_reasons_response, action_result)
+            # Error condition
+            if 'json' in closing_reasons_response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(closing_reasons_response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS, closing_reasons_response.status_code, closing_reasons_response.text)
+            return action_result.set_status(phantom.APP_ERROR, status_message)
+
+        try:
+            closing_reasons = closing_reasons_response.json()
+        except Exception as e:
+            self.debug_print("Unable to parse response as a valid JSON", e)
+            return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
+
+        for closing_reason in closing_reasons:
+            action_result.add_data(closing_reason)
+
+        summary = action_result.update_summary({})
+        summary['total_offense_closing_reasons'] = action_result.get_data_size()
+
+        return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_ariel_query(self, ariel_query, action_result, obj_result_key=None, offense_id=None):
 
@@ -916,8 +1071,6 @@ class QradarConnector(BaseConnector):
             self.save_progress("Executing ariel query")
 
         params = dict()
-
-        # self.debug_print("Executing ariel query: {0}".format(ariel_query))
 
         # First create a search
         params['query_expression'] = ariel_query
@@ -984,14 +1137,16 @@ class QradarConnector(BaseConnector):
                 self.save_progress(QRADAR_CONNECTION_FAILED)
                 return action_result.get_status()
 
-            if (response.status_code != 200):
+            if response and response.status_code != 200:
+                if 'html' in response.headers.get('Content-Type', ''):
+                    return self._process_html_response(response, action_result)
                 # Error condition
-                action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ARIEL_QUERY_STATUS_CHECK_FAILED)
-                # Add the response that we got from the device, it contains additional info
-                action_result.append_to_message(response.text)
-                # set the error and break
+                if 'json' in response.headers.get('Content-Type', ''):
+                    status_message = self._get_json_error_message(response, action_result)
+                else:
+                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_ARIEL_QUERY_STATUS_CHECK_FAILED, response.status_code, response.text)
                 got_error = True
-                return action_result.get_status()
+                return action_result.set_status(phantom.APP_ERROR, status_message)
 
             # re-setting the failed times
             try:
@@ -1026,12 +1181,15 @@ class QradarConnector(BaseConnector):
             self.debug_print("call_api failed: ", action_result.get_status())
             return action_result.get_status()
 
-        if (response.status_code != 200):
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
             # Error condition
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ARIEL_QUERY_RESULTS_FAILED)
-            # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_ARIEL_QUERY_RESULTS_FAILED, response.status_code, response.text)
+            return action_result.set_status(phantom.APP_ERROR, status_message)
 
         try:
             # https://www-01.ibm.com/support/docview.wss?uid=swg1IV98260
@@ -1084,7 +1242,7 @@ class QradarConnector(BaseConnector):
                     self.save_progress("Ariel query retrieved {} {} for offense {}; starttime of earliest ({}) latest ({})".format(
                         len(objs), obj_result_key, offense_id, self._utcctime(objs[-1]['starttime']), self._utcctime(objs[0]['starttime'])))
                 except Exception as e:
-                    self.debug_print('Error: {}'.format(str(e)))
+                    self.debug_print('Error occurred: {}'.format(str(e)))
 
         else:
             action_result.add_data(response_json)
@@ -1151,7 +1309,10 @@ class QradarConnector(BaseConnector):
 
         config = self.get_config()
         if config.get('event_fields_for_query', None) is not None:
-            ariel_query = 'select qid, QidName(qid), ' + config.get('event_fields_for_query') + QRADAR_AQL_EVENT_FROM
+            event_fields = [event_field.strip() for event_field in config.get('event_fields_for_query').split(',')]
+            event_fields = ' '.join(event_fields).split()
+            event_fields_str = ','.join(event_fields)
+            ariel_query = 'select qid, QidName(qid), ' + event_fields_str + QRADAR_AQL_EVENT_FROM
         else:
             ariel_query = QRADAR_AQL_EVENT_SELECT + QRADAR_AQL_EVENT_FROM
 
@@ -1175,10 +1336,9 @@ class QradarConnector(BaseConnector):
             where_clause += " {0}".format(fields_filter)
             action_result.update_param({QRADAR_JSON_FIELDS_FILTER: fields_filter})
 
-        # self.debug_print(where_clause)
         # This is the rule
         # If end_time is not given, then end_time is 'now'
-        # If start_time is not given, then start_time is 10 days behind end_time'
+        # If start_time is not given, then start_time is 5 days behind end_time'
         # The START clause has to come before the STOP clause, else the query fails
         # The START and STOP clause have to be given, else the results will be for
         # the last 60 seconds or something small like that.
@@ -1201,8 +1361,8 @@ class QradarConnector(BaseConnector):
 
         if self._is_on_poll:
             start_time_msecs = param['offense_start_time']
-            if self._state.get('last_ingested_event'):
-                start_time_msecs = self._state['last_ingested_event']
+            if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
+                start_time_msecs = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
@@ -1225,24 +1385,36 @@ class QradarConnector(BaseConnector):
         # throw it all away, use alternative query
         # btw: LIMIT doesn't seem to work for any values > 150 on this version of qradar (7.2.4)
         if self._use_alt_ariel_query:
-            offense_start_time = param.get('offense_start_time', False)
-            if not param.get(QRADAR_JSON_DEF_NUM_DAYS, False) and offense_start_time:
-                now = self._utcnow()
-                start = self._datetime(offense_start_time)
-                diff = now - start
-                offense_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
-                if num_days < offense_days:
-                    self.save_progress("Auto-extending the number of days in Ariel query from {} to {}".format(num_days, offense_days))
-                    num_days = offense_days
-            where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, num_days)
+            if not param.get(QRADAR_JSON_DEF_NUM_DAYS, False):
+                event_start_time = param.get('offense_start_time')
+                if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
+                    event_start_time = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+
+                if not event_start_time:
+                    event_days = num_days
+                else:
+                    now = self._utcnow()
+                    start = self._datetime(event_start_time)
+                    diff = now - start
+                    event_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
+            else:
+                event_days = num_days
+            where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, event_days)
 
         ariel_query += " where {0}".format(where_clause)
 
         self._handle_ariel_query(ariel_query, action_result, 'events', offense_id)
 
         events_list = action_result.get_data()
-        if events_list:
-            self._state['last_ingested_event'] = events_list[-1]['starttime']
+        if self._is_on_poll and events_list:
+            events_list.sort(key=lambda x: x['starttime'])
+            if not self._state.get('last_ingested_events_data'):
+                offense_dict = {str(param['offense_id']): events_list[-1]['starttime']}
+                self._state.update({'last_ingested_events_data': offense_dict})
+            else:
+                last_ingested_events_data_dict = self._state.get('last_ingested_events_data')
+                last_ingested_events_data_dict[str(param['offense_id'])] = events_list[-1]['starttime']
+                self._state['last_ingested_events_data'] = last_ingested_events_data_dict
         # Set the summary
         action_result.update_summary({QRADAR_JSON_TOTAL_EVENTS: action_result.get_data_size()})
 
@@ -1285,6 +1457,14 @@ class QradarConnector(BaseConnector):
         # Create a action result
         action_result = self.add_action_result(ActionResult(dict(param)))
 
+        offense_id = param.get(QRADAR_JSON_OFFENSE_ID)
+        if offense_id:
+            try:
+                if int(offense_id) <= 0:
+                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            except:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+
         try:
             count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_FLOW_COUNT))
         except Exception:
@@ -1315,12 +1495,15 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if (response.status_code != 200):
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
             # Error condition
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED)
-            # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED, response.status_code, response.text)
+            return action_result.set_status(phantom.APP_ERROR, status_message)
 
         try:
             event_columns_json = response.json()
@@ -1343,9 +1526,8 @@ class QradarConnector(BaseConnector):
         where_clause = ''
 
         # Get the offense id
-        offense_id = phantom.get_str_val(param, QRADAR_JSON_OFFENSE_ID, None)
-        if (offense_id):
-            if (len(where_clause)):
+        if offense_id:
+            if len(where_clause):
                 where_clause += " and"
             where_clause += " hasoffense='true' and InOffense({0})".format(offense_id)
             # Update the parameter
@@ -1369,7 +1551,7 @@ class QradarConnector(BaseConnector):
 
         # This is the rule
         # If end_time is not given, then end_time is 'now'
-        # If start_time is not given, then start_time is 10 days behind end_time'
+        # If start_time is not given, then start_time is 5 days behind end_time'
         # The START clause has to come before the STOP clause, else the query fails
         # The START and STOP clause have to be given, else the results will be for
         # the last 60 seconds or something small like that.
@@ -1390,8 +1572,6 @@ class QradarConnector(BaseConnector):
 
         # The starttime >= and starttime <= clause is required without which the limit clause fails
         where_clause += " starttime >= {0} and starttime <= {1}".format(start_time_msecs, end_time_msecs)
-        action_result.update_param({phantom.APP_JSON_START_TIME: start_time_msecs,
-            phantom.APP_JSON_END_TIME: end_time_msecs})
 
         where_clause += " ORDER BY starttime DESC LIMIT {0}".format(count)
 
@@ -1400,8 +1580,6 @@ class QradarConnector(BaseConnector):
         # the device's timezone.
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch(start_time_msecs))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch(end_time_msecs))
-
-        self.debug_print('where_clause', where_clause)
 
         ariel_query += " where {0}".format(where_clause)
 
@@ -1508,12 +1686,15 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if (response.status_code != 200):
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
             # Error condition
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
-            # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code, response.text)
+            return action_result.set_status(phantom.APP_ERROR, status_message)
 
         # Parse the output, which is details of an offense
         try:
@@ -1564,12 +1745,15 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if (response.status_code != 200):
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
             # Error condition
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
-            # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code, response.text)
+            return action_result.set_status(phantom.APP_ERROR, status_message)
 
         self.debug_print("content-type", response.headers['content-type'])
 
@@ -1594,16 +1778,26 @@ class QradarConnector(BaseConnector):
 
         return action_result.get_status()
 
-        return phantom.APP_SUCCESS
-
     def _post_close_offense(self, param):
+
+        # Create a action result
+        action_result = self.add_action_result(ActionResult(dict(param)))
 
         # Get the list of offense ids
         offense_id = param[QRADAR_JSON_OFFENSE_ID]
         closing_reason_id = param[QRADAR_JSON_CLOSING_REASON_ID]
 
-        # Create a action result
-        action_result = self.add_action_result(ActionResult(dict(param)))
+        try:
+            if int(offense_id) <= 0:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+
+        try:
+            if int(closing_reason_id) < 0:
+                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid positive integer value in closing_reason_id parameter')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in closing_reason_id parameter')
 
         # Update the parameter
         action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
@@ -1620,12 +1814,15 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if (response.status_code != 200):
+        if response and response.status_code != 200:
+            if 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
             # Error condition
-            action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED)
-            # Add the response that we got from the device, it contains additional info
-            action_result.append_to_message(response.text)
-            return action_result.get_status()
+            if 'json' in response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code, response.text)
+            return action_result.set_status(phantom.APP_ERROR, status_message)
 
         self.debug_print("content-type", response.headers['content-type'])
 
@@ -1654,8 +1851,6 @@ class QradarConnector(BaseConnector):
             pass
 
         return action_result.get_status()
-
-        return phantom.APP_SUCCESS
 
     def _alt_manage_ingestion(self, param):
 
@@ -1688,7 +1883,7 @@ class QradarConnector(BaseConnector):
                 'last_saved_ingest_time_as_epoch_date': last_saved_ingest_time
             })
         except Exception as e:
-            return action_result.set_status(phantom.APP_ERROR, 'Provided time is not valid. Error: {}'.format(str(e)))
+            return action_result.set_status(phantom.APP_ERROR, 'Provided time is invalid. Error: {}'.format(str(e)))
         self.save_state(self._state)
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -1699,6 +1894,8 @@ class QradarConnector(BaseConnector):
 
         if (action == self.ACTION_ID_LIST_OFFENSES):
             result = self._list_offenses(param)
+        elif (action == self.ACTION_ID_LIST_CLOSING_REASONS):
+            result = self._list_offense_closing_reasons(param)
         elif (action == self.ACTION_ID_GET_EVENTS):
             result = self._get_events(param)
         elif (action == self.ACTION_ID_GET_FLOWS):
