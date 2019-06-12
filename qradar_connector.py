@@ -130,7 +130,7 @@ class QradarConnector(BaseConnector):
 
     def _call_api(self, endpoint, method, result, params=None, headers=None, send_progress=False):
 
-        url = self._base_url + endpoint.decode('utf-8')
+        url = self._base_url + endpoint
 
         r = None
 
@@ -193,6 +193,7 @@ class QradarConnector(BaseConnector):
         self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
         self._container_only = self._config.get("containers_only", False)
         self._cef_value_map = self._config.get('cef_value_map', False)
+        self._server = config[phantom.APP_JSON_DEVICE].encode('utf-8')
         if self._cef_value_map and len(self._cef_value_map) > 1:
             try:
                 self._cef_value_map = json.loads(self._cef_value_map)
@@ -204,7 +205,7 @@ class QradarConnector(BaseConnector):
         self._on_poll_action_result = None
 
         # Base URL
-        self._base_url = 'https://' + config[phantom.APP_JSON_DEVICE] + '/api/'
+        self._base_url = 'https://' + self._server + '/api/'
         self._artifact_max = config.get(QRADAR_JSON_ARTIFACT_MAX_DEF, 1000)
         self._add_to_resolved = config.get(QRADAR_JSON_ADD_TO_RESOLVED, False)
         self._resolved_disabled = config.get(QRADAR_INGEST_RESOLVED, False)
@@ -270,19 +271,19 @@ class QradarConnector(BaseConnector):
 
         config = self.get_config()
 
-        self.save_progress(phantom.APP_PROG_CONNECTING_TO_ELLIPSES, config[phantom.APP_JSON_DEVICE])
+        self.save_progress(phantom.APP_PROG_CONNECTING_TO_ELLIPSES, self._server)
 
         # Get the databases on the ariels endpoint, this is the fastest way of
         # testing connectivity
         response = self._call_api('ariel/databases', 'get', self)
 
         if (phantom.is_fail(self.get_status())):
-            self.save_progress('Error occurred while connecting QRadar instance with Server Hostname | IP : {0}'.format(config[phantom.APP_JSON_DEVICE]))
+            self.save_progress('Error occurred while connecting QRadar instance with Server Hostname | IP : {0}'.format(self._server))
             self.save_progress(QRADAR_ERR_CONNECTIVITY_TEST)
             self.debug_print("call_api failed: ", self.get_status())
             return self.get_status()
 
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
 
@@ -544,7 +545,7 @@ class QradarConnector(BaseConnector):
             return action_result.get_status()
 
         # error with the rest call, either authorization or malformed parameters
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
 
@@ -847,8 +848,12 @@ class QradarConnector(BaseConnector):
         if (count <= 0):
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
-        if (param.get('start_time') and param.get('start_time') <= 0) or (param.get('end_time') and param.get('end_time') <= 0):
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid time parameter')
+        if (param.get('start_time') and not str(param.get('start_time')).isdigit()) or param.get('start_time') == 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid start_time parameter')
+
+        if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid end_time parameter')
+
         if self._use_alt_ingest:
             return self._alt_list_offenses(param, action_result)
 
@@ -970,7 +975,7 @@ class QradarConnector(BaseConnector):
 
             self.debug_print("Response Code", response.status_code)
 
-            if response and response.status_code != 200:
+            if response.status_code != 200:
                 if 'html' in response.headers.get('Content-Type', ''):
                     return self._process_html_response(response, action_result)
                 # Error condition
@@ -1137,7 +1142,7 @@ class QradarConnector(BaseConnector):
                 self.save_progress(QRADAR_CONNECTION_FAILED)
                 return action_result.get_status()
 
-            if response and response.status_code != 200:
+            if response.status_code != 200:
                 if 'html' in response.headers.get('Content-Type', ''):
                     return self._process_html_response(response, action_result)
                 # Error condition
@@ -1181,7 +1186,7 @@ class QradarConnector(BaseConnector):
             self.debug_print("call_api failed: ", action_result.get_status())
             return action_result.get_status()
 
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
             # Error condition
@@ -1294,8 +1299,12 @@ class QradarConnector(BaseConnector):
         if (count <= 0):
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
-        if (param.get('start_time') and param.get('start_time') <= 0) or (param.get('end_time') and param.get('end_time') <= 0):
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid time parameter')
+        if (param.get('start_time') and not str(param.get('start_time')).isdigit()) or param.get('start_time') == 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid start_time parameter')
+
+        if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid end_time parameter')
+
         try:
             if param.get('offense_id') and int(param.get('offense_id')) <= 0:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
@@ -1474,8 +1483,11 @@ class QradarConnector(BaseConnector):
             # set it to the max number we can use in the query, so that we get all of them
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
-        if (param.get('start_time') and param.get('start_time') <= 0) or (param.get('end_time') and param.get('end_time') <= 0):
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid time parameter')
+        if (param.get('start_time') and not str(param.get('start_time')).isdigit()) or param.get('start_time') == 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid start_time parameter')
+
+        if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid end_time parameter')
 
         ret_val = self._validate_times(param, action_result)
 
@@ -1495,7 +1507,7 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
             # Error condition
@@ -1686,7 +1698,7 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
             # Error condition
@@ -1745,7 +1757,7 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
             # Error condition
@@ -1814,7 +1826,7 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("Response Code", response.status_code)
 
-        if response and response.status_code != 200:
+        if response.status_code != 200:
             if 'html' in response.headers.get('Content-Type', ''):
                 return self._process_html_response(response, action_result)
             # Error condition
