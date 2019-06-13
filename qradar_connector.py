@@ -892,9 +892,9 @@ class QradarConnector(BaseConnector):
         except:
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in interval_days parameter')
 
-        if (self.is_poll_now() or param.get('ingest_offense', False)):
+        if (self._is_on_poll or param.get('ingest_offense', False)):
             end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
-            if self.is_poll_now() and self._state.get('last_saved_ingest_time'):
+            if self._is_on_poll and self._state.get('last_saved_ingest_time'):
                 start_time_msecs = self._state.get('last_saved_ingest_time')
             else:
                 start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
