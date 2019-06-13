@@ -553,7 +553,7 @@ class QradarConnector(BaseConnector):
                 status_message = self._get_json_error_message(response, action_result)
             else:
                 status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_OFFENSES_API_FAILED, response.status_code, response.reason)
-            self.save_progress("Rest call errored: {}\nResponse code: {}".format(status_message, response.status_code))
+            self.save_progress("Rest call error: {}\nResponse code: {}".format(status_message, response.status_code))
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         # decode and save offenses
@@ -777,7 +777,17 @@ class QradarConnector(BaseConnector):
 
             events = event_action_result.get_data()
 
-            self.debug_print("Got {0} events for offense {1}".format(len(events), offense_id))
+            self.save_progress("Got {0} events for offense {1}".format(len(events), offense_id))
+            count = int(param.get(phantom.APP_JSON_ARTIFACT_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT)))
+
+            if count > QRADAR_QUERY_HIGH_RANGE:
+                # Should not set more than the HIGH RANGE, else qradar throws an error
+                count = QRADAR_QUERY_HIGH_RANGE
+                # put a max count to get after ordering by starttime in descending order
+
+            if len(events) > count:
+                self.save_progress("Events count is {}: Truncating table to {} events\n".format(len(events), count))
+                events = events[:count]
 
             offense_artifact = {}
             offense_artifact['container_id'] = container_id
@@ -936,10 +946,7 @@ class QradarConnector(BaseConnector):
         offenses = list()
 
         runs = 0
-        temp = 0
-
         start_index = 0
-        end_index = 1000
         total_offenses = 0
 
         # The following loop queries for offenses in a loop to get details about the most recent 'count' offenses.
@@ -960,11 +967,14 @@ class QradarConnector(BaseConnector):
                         QRADAR_ERR_RAN_TOO_MANY_QUERIES_TO_GET_NUMBER_OF_OFFENSES, query_runs=runs)
 
             runs += 1
-            end_index = min((temp * 1000) + count - 1, end_index + (temp * 1000) - 1)
-            headers['Range'] = 'items={0}-{1}'.format(start_index + (temp * 1000), end_index)
+            end_index = min(start_index + QRADAR_QUERY_HIGH_RANGE - 1, count - 1)
 
-            temp = temp + 1
-            count = count - 1000
+            if start_index > end_index:
+                break
+
+            # end_index = min((temp * 1000) + count - 1, end_index + (temp * 1000) - 1)
+            headers['Range'] = 'items={0}-{1}'.format(start_index, end_index)
+            start_index += QRADAR_QUERY_HIGH_RANGE
 
             if resolved_disabled:
                 offenses_status_msg = 'Fetching all open offenses as the asset configuration parameter for ingest only open is selected. '
@@ -995,10 +1005,9 @@ class QradarConnector(BaseConnector):
                 self.debug_print("Unable to parse response as a valid JSON", e)
                 return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
 
-            number_of_offenses = len(offenses)
-            total_offenses += number_of_offenses
+            total_offenses = len(offenses)
 
-            if count <= 0:
+            if len(response.json()) < QRADAR_QUERY_HIGH_RANGE:
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=total_offenses)
                 break
 
@@ -1386,6 +1395,11 @@ class QradarConnector(BaseConnector):
         where_clause += " starttime >= {0} and starttime <= {1}".format(start_time_msecs, end_time_msecs)
         # where_clause += " starttime BETWEEN {0} and {1}".format(start_time_msecs, end_time_msecs)
 
+        if count > QRADAR_QUERY_HIGH_RANGE:
+            # Should not set more than the HIGH RANGE, else qradar throws an error
+            count = QRADAR_QUERY_HIGH_RANGE
+            # put a max count to get after ordering by starttime in descending order
+
         where_clause += " order by STARTTIME desc limit {0}".format(count)
 
         # From testing queries, it was noticed that the START and STOP are required else the default
@@ -1587,6 +1601,11 @@ class QradarConnector(BaseConnector):
 
         # The starttime >= and starttime <= clause is required without which the limit clause fails
         where_clause += " starttime >= {0} and starttime <= {1}".format(start_time_msecs, end_time_msecs)
+
+        if (count > QRADAR_QUERY_HIGH_RANGE):
+            # Should not set more than the HIGH RANGE, else qradar throws an error
+            count = QRADAR_QUERY_HIGH_RANGE
+            # put a max count to get after ordering by starttime in descending order
 
         where_clause += " ORDER BY starttime DESC LIMIT {0}".format(count)
 
