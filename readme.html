@@ -1,14 +1,140 @@
-<!-- 
-File: readme.html
+<!-- File: readme.html
+ Copyright (c) 2016-2019 Splunk Inc.
 
-Copyright (c) Phantom Cyber Corporation, 2014-2018
-
-This unpublished material is proprietary to Phantom Cyber.
-All rights reserved. The methods and
-techniques described herein are considered trade secrets
-and/or confidential. Reproduction or distribution, in whole
-or in part, is forbidden except by express written permission
-of Phantom Cyber.
+ SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
+ without a valid written license from Splunk Inc. is PROHIBITED.
 -->
 
 <p>This App is an Ingestion source. In the Phantom documentation, in the <a href="../admin/">Administration Manual</a> under the <a href="../admin/sources">Data Sources</a> section, you will find an explanation of how Ingest Apps works and how information is extracted from the ingested data. There is a general explanation in Overview, and some individuals Apps have their own sections.</p>
+
+<p><b>Notes</b>
+   <ul>
+		<li>Asset Configuration Parameter</li>
+           <ul>
+			   <li>
+				   artifact_max: Maximum number of artifacts to ingest on poll.
+			   </li>
+			   <li>
+					cef_event_map: JSON formatted string of key value pairs for CEF mapping - use double quotes. CEF values are the keys, Qradar fields are the values.
+			   </li>
+			   <li>
+					cef_value_map: JSON formatted string representation of a dictionary used to map cef field values to new values. Similiar to cef_event_map. Replace the value of any cef field with another value. For example, to replace the value of cef.requestURL of \"nourl\", with null value, provide { \"nourl\": null }.
+			   </li>
+			   <li>
+					delete_empty_cef_fields: Set true to delete cef fields with empty values.
+			   </li>
+			   <li>
+					event_fields_for_query: Optionally define a new comma separated list of fields for querying. Comma separated list of field names. Use double quotes if field names contain spaces.
+			   </li>
+			   <li>
+					add_offense_id_to_name: Optionally add the offense id to the container name.
+			   </li>
+			   <li>
+					alternative_ariel_query: Alternative ariel query; ignore date specifications and retrieve events from the last [interval_days] (default=5) days; affects on_poll, offense_details and get_events actions; on_poll will auto-extend the number of days to start on/before the day of the offense being retrieved.
+			   </li>
+			   <li>
+					alt_initial_ingest_time: Set the <b>last saved ingestion time</b> to this. This is the initial lower limit to ingest offenses. This field should be a python parsaable datetime <b>(dateutil module)</b>
+			   </li>
+			   alt_initial_ingest_time
+			   <li>
+					The parameter alt_ingest_order will decide the order in which the offense will be fetched (oldest first or latest first).
+			   </li>
+			   <li>
+					The parameter alt_time_field will decide the time on which the alt_ingest_order will be applied (start_time or last_updated_time or either)
+			   </li>
+               <li>
+					The parameter ingest only open is optional and if not set to true, it will fetch all the offenses (including the closed offenses). To fetch only open offenses ingest only open must be set to TRUE. This configuration parameter is used in LIST OFFENSES as well as in ON POLL action.
+			   </li>
+			   <li>
+					The parameter alternative_ingest_algorithm is optional and if not set to true then, the app will ignore the values kept in the alt_ingest_order and alt_time_field. If the parameter alternative_ingest_algorithm is set to true then, the offenses will be fetched according to alt_ingest_order and alt_time_field parameters. This configuration parameter is used in the LIST OFFENSES as well as in the ON POLL action.
+			   </li>
+			   <li>
+					The parameter containers only is optional and if not set to true then, the offenses will be created as containers and the events of the offenses will be created as the artifacts. If this parameter is set to true then, the offenses will be created as containers and the details of the offenses will be created as the artifacts in those containers respectively. This configuration parameter is used in the ON POLL action.
+			   </li>
+           </ul>
+       <br>
+
+       <li>Functioning of On Poll</li>
+			
+			<ul>
+				<li> The On Poll action works in 2 steps. In the first step, all the offenses in a defined time duration will be fetched. In the second step, all the events of the offenses (retrieved in the first step) will be fetched. A container will be created for each offense and for each offense all the events will be fetched as the respective artifacts.</li>
+				<br>
+				<li><b>Two approaches for fetching offenses</b></li>
+				<ul>
+					<li><b>alternative_ingest_algorithm is false</b></li>
+					<ul>
+						<li>Manual polling</li>
+						<ul>
+							<li>Fetch the offenses</li>
+							<ul>
+								<li>The application will fetch the number of offenses controlled by the container_count parameter in On Poll action irrespective of the values in alt_ingest_order and alt_time_field parameters, whose start time or updated time is greater than or equal to the time mentioned in the last_saved_ingest_time variable in the state file.</li>
+								<li>If the last_saved_ingest_time variable is not present in the state file i.e. the On Poll is executing for the first time, the application will fetch all the offenses of last N days (N: Value provided in the app settings).</li>
+								<li>The last_saved_ingest_time will be updated by the maximum of start_time and last_updated_time of the offenses which were ingested.</li>
+							</ul>
+							<li>Fetch the events</li>
+							<ul>
+								<li>This step will be executed only if containers_only parameter in the asset configuration is set to false</li>
+								<li>The application will fetch all events for each offense (retrieved in the previous step) controlled by the artifact_max parameter, whose start time is greater than or equal to the last_ingested_events_data time of that offense which is mentioned in the state file. (Structure of last_ingested_events_data in state file : {last_ingested_events_data : {offense id: time of the last ingested event} } )</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to true then, the application will fetch all the events whose start time is greater than or equal to the start time of that offense.</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to false then,  the application will fetch all the events of last N days (N: Value provided in the app settings).</li>
+								<li>The time for a particular offense in last_ingested_events_data will be updated by the start time of the event which was last ingested for that offense</li>
+							</ul>
+						</ul>
+						<br>
+						<li>Scheduled Polling</li>
+						<ul>
+							<li>Same functionality as manual polling</li>
+						</ul>
+					</ul>
+					<br>
+					<li><b>alternative_ingest_algorithm is true</b></li>
+					<ul>
+						<li>Manual Polling</li>
+						<ul>
+							<li>Fetch the offenses</li>
+							<ul>
+								<li>The application will fetch all the offenses, controlled by the count mentioned in the on poll parameter named container_count according to alt_ingest_order and alt_time_field parameters, whose start time or updated time is greater than or equal to the time mentioned in last_saved_ingest_time variable in state file.</li>
+								<li>If the last_saved_ingest_time variable is not present in the state file i.e., the On Poll is executing for the first time, the application will fetch all the offenses of last N days (where N is the number mentioned in the app settings).</li>
+								<li>The last_saved_ingest_time will be updated by the maximum of start time and last updated time of the offense which was last ingested.</li>
+							</ul>
+							<li>Fetch the events</li>
+							<ul>
+								<li>This step will only be executed if containers only parameter in the asset configuration is set to false</li>
+								<li>The application will fetch all events of each offense(which were retrieved in the previous step), controlled by the count mentioned in the asset configuration parameter named artifact_max, whose start time is greater than or equal to the last_ingested_events_data time of that offense which is mentioned in the state file. (Structure of last_ingested_events_data in state file : {last_ingested_events_data : {(offense id): (time of the last ingested event)}} )</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to true then, the application will fetch all the events whose start time is greater than or equal to the start time of that offense.</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to false then,  the application will fetch all the events of last N days (N: Value provided in the app settings).</li>
+								<li>The time for a particular offense in last_ingested_events_data will be updated by the start time of the event which was last ingested for that offense</li>
+							</ul>
+						</ul>
+						<br>
+						<li>Scheduled Polling</li>
+						<ul>
+							<li>Same functionality as manual polling</li>
+						</ul>
+					</ul>
+				</ul>
+			</ul>
+				
+       <br>
+	   <li>Get Offense Details</li>
+            <ul>
+               <li>The parameters interval_days and tenant_id will be accounted if and only if the ingest_offense parameter is set to TRUE.</li>
+           </ul>
+       <br>
+       <li>Case Sensitive</li>
+           <ul>
+               <li>For Assign User, Add Listitems</li>
+               <ul>
+                   <li>Parameters reference_set_name for 'add listitems' and assignee for 'assign user' are case sensitive.</li>
+               </ul>
+           </ul>
+       <br>
+        <li>Start_time/End_time Parameter</li>
+            <ul>
+               <li>For Get Events, List Offenses, Get Flows</li>
+                <ul>
+                    <li>The parameter start time and end time are optional. The current time will be considered as end time if it is not provided. If start time is not provided it will be considered as 5 days prior to the end time.</li>
+                </ul>
+           </ul>
+   </ul>
+</p>

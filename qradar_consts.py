@@ -1,16 +1,8 @@
-# --
 # File: qradar_consts.py
+# Copyright (c) 2016-2019 Splunk Inc.
 #
-# Copyright (c) Phantom Cyber Corporation, 2014-2018
-#
-# This unpublished material is proprietary to Phantom Cyber.
-# All rights reserved. The methods and
-# techniques described herein are considered trade secrets
-# and/or confidential. Reproduction or distribution, in whole
-# or in part, is forbidden except by express written permission
-# of Phantom Cyber Corporation.
-#
-# --
+# SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
+# without a valid written license from Splunk Inc. is PROHIBITED.
 
 
 QRADAR_JSON_AUTH_TOKEN = "authorization_token"
@@ -30,6 +22,7 @@ QRADAR_JSON_REFSET_VALUE = "reference_set_value"
 QRADAR_JSON_ARTIFACT_MAX_DEF = "artifact_max"
 QRADAR_JSON_ADD_TO_RESOLVED = "add_to_resolved"
 QRADER_JSON_NOTE_TEXT = "note_text"
+QRADER_JSON_ASSIGNEE = "assignee"
 QRADAR_INGEST_RESOLVED = "ingest_resolved"
 
 QRADAR_JSON_NAME = "name"
@@ -41,6 +34,7 @@ QRADAR_JSON_UPDATETIME = "update_time"
 QRADAR_JSON_DEF_NUM_DAYS = "interval_days"
 QRADAR_JSON_QUERY = "query"
 
+QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the offense closing reasons details"
 QRADAR_ERR_INVALID_CREDENTIAL_CONFIG = "Invalid or incomplete credential configuration. Either an auth_key or username & password should be specified."
 QRADAR_ERR_REST_API_CALL_FAILED = "Rest API call failed"
 QRADAR_ERR_REST_API_CALL_FAILED_RESPONSE_NONE = "Rest API call failed, HTTP response was 'None'"
@@ -92,9 +86,9 @@ QRADAR_AQL_FLOW_WHERE = " where hasoffense='true' "
 QRADAR_ARIEL_SEARCH_ENDPOINT = "ariel/searches"
 QRADAR_MILLISECONDS_IN_A_DAY = 86400000
 QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME = 5
-QRADAR_DEFAULT_EVENT_COUNT = 10
-QRADAR_DEFAULT_FLOW_COUNT = 10
-QRADAR_DEFAULT_OFFENSE_COUNT = 1
+QRADAR_DEFAULT_EVENT_COUNT = 100
+QRADAR_DEFAULT_FLOW_COUNT = 100
+QRADAR_DEFAULT_OFFENSE_COUNT = 100
 QRADAR_MAX_ALLOWED_RUNS_TO_GET_LATEST_OFFENSES = 50
 
 # This value is set by trial and error by quering qradar
