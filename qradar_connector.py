@@ -917,6 +917,7 @@ class QradarConnector(BaseConnector):
                     if len(x.strip()) > 0 and int(x.strip()) >= 0:
                         offense_id_list.append('id={}'.format(int(x.strip())))
                 except Exception as e:
+                    self.debug_print("The provided offense: {} is not valid".format(x))
                     pass
 
             if (len(offense_id_list) > 0):
@@ -925,8 +926,11 @@ class QradarConnector(BaseConnector):
                 filter_string += ' {0} ({1})'.format(
                         'and' if len(filter_string) > 0 else '',
                         ' or '.join(offense_id_list))
+            else:
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid offense ID")
 
         params['filter'] = filter_string
+        params['sort'] = "+last_updated_time"
         self.save_progress('Filter is {0}'.format(filter_string))
 
         offenses = list()
@@ -1369,7 +1373,6 @@ class QradarConnector(BaseConnector):
                 end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
 
         if self._is_on_poll:
-            start_time_msecs = param['offense_start_time']
             if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
                 start_time_msecs = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
 
