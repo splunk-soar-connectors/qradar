@@ -75,7 +75,8 @@
 							<ul>
 								<li>This step will be executed only if containers_only parameter in the asset configuration is set to false</li>
 								<li>The application will fetch all events for each offense (retrieved in the previous step) controlled by the artifact_max parameter, whose start time is greater than or equal to the last_ingested_events_data time of that offense which is mentioned in the state file. (Structure of last_ingested_events_data in state file : {last_ingested_events_data : {offense id: time of the last ingested event} } )</li>
-								<li>If the time is not stored in the last_ingested_events_data for an offense then, the application will fetch all the events whose start time is greater than or equal to the start time of that offense</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to true then, the application will fetch all the events whose start time is greater than or equal to the start time of that offense.</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to false then,  the application will fetch all the events of last N days (N: Value provided in the app settings).</li>
 								<li>The time for a particular offense in last_ingested_events_data will be updated by the start time of the event which was last ingested for that offense</li>
 							</ul>
 						</ul>
@@ -100,15 +101,15 @@
 							<ul>
 								<li>This step will only be executed if containers only parameter in the asset configuration is set to false</li>
 								<li>The application will fetch all events of each offense(which were retrieved in the previous step), controlled by the count mentioned in the asset configuration parameter named artifact_max, whose start time is greater than or equal to the last_ingested_events_data time of that offense which is mentioned in the state file. (Structure of last_ingested_events_data in state file : {last_ingested_events_data : {(offense id): (time of the last ingested event)}} )</li>
-								<li>If the time is not stored in the last_ingested_events_data for an offense then, the application will fetch all the events whose start time is greater than or equal to the start time of that offense</li>
-								<li>If offense_id is not fetched then, by default, the application will fetch all the events of last N days (N: Value provided in the app settings).</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to true then, the application will fetch all the events whose start time is greater than or equal to the start time of that offense.</li>
+								<li>If the time is not stored in the last_ingested_events_data for an offense and the alternative_ariel_query is set to false then,  the application will fetch all the events of last N days (N: Value provided in the app settings).</li>
 								<li>The time for a particular offense in last_ingested_events_data will be updated by the start time of the event which was last ingested for that offense</li>
 							</ul>
 						</ul>
 						<br>
 						<li>Scheduled Polling</li>
 						<ul>
-							<li>Same functionality as of manual polling</li>
+							<li>Same functionality as that of manual polling</li>
 						</ul>
 					</ul>
 				</ul>
