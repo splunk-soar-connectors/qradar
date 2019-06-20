@@ -82,19 +82,19 @@
         "cef_event_map": {
             "data_type": "string",
             "order": 9,
-            "description": "cef event map",
+            "description": "CEF event map",
             "required": false
         },
         "cef_value_map": {
             "data_type": "string",
             "order": 10,
-            "description": "cef value map",
+            "description": "CEF value map",
             "required": false
         },
         "delete_empty_cef_fields": {
             "data_type": "boolean",
             "order": 11,
-            "description": "Delete the empty cef fields",
+            "description": "Delete the empty CEF fields",
             "default": false,
             "required": false
         },
