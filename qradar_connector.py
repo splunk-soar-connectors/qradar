@@ -335,8 +335,8 @@ class QradarConnector(BaseConnector):
         offense_ids_list = str(phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID, phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, "")))
 
         # clean up the string and parse into list, assume whitespace and commas as separators
-        offense_ids_list = " ".join([ x.strip() for x in offense_ids_list.split(",") ])
-        offense_ids_list = [ x for x in offense_ids_list.split() if x ]
+        offense_ids_list = [ x.strip() for x in offense_ids_list.split(",") ]
+        offense_ids_list = list(filter(None, offense_ids_list))
 
         if len(offense_ids_list) > 0:
             reqfilter = "({})".format(" or ".join([ "id=" + str(x) for x in offense_ids_list]))
@@ -1332,7 +1332,7 @@ class QradarConnector(BaseConnector):
         config = self.get_config()
         if config.get('event_fields_for_query', None) is not None:
             event_fields = [event_field.strip() for event_field in config.get('event_fields_for_query').split(',')]
-            event_fields = ' '.join(event_fields).split()
+            event_fields = list(filter(None, event_fields))
             event_fields_str = ','.join(event_fields)
             ariel_query = 'select qid, QidName(qid), ' + event_fields_str + QRADAR_AQL_EVENT_FROM
         else:
