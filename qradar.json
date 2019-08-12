@@ -26,7 +26,7 @@
         "containers_only": {
             "data_type": "boolean",
             "order": 19,
-            "description": "containers only",
+            "description": "Ingest only offenses while polling",
             "required": false
         },
         "verify_server_cert": {
@@ -57,7 +57,7 @@
         "timezone": {
             "data_type": "timezone",
             "order": 5,
-            "description": "Timezone",
+            "description": "Qradar timezone",
             "required": true
         },
         "add_to_resolved": {
@@ -70,44 +70,44 @@
         "artifact_max": {
             "data_type": "numeric",
             "order": 7,
-            "description": "artifact_max",
+            "description": "Maximum artifact count",
             "required": false,
             "default": "1000"
         },
         "ingest_resolved": {
             "data_type": "boolean",
             "order": 8,
-            "description": "Ingest only open"
+            "description": "Ingest only open offenses"
         },
         "cef_event_map": {
             "data_type": "string",
             "order": 9,
-            "description": "cef_event_map",
+            "description": "CEF event map",
             "required": false
         },
         "cef_value_map": {
             "data_type": "string",
             "order": 10,
-            "description": "cef_value_map",
+            "description": "CEF value map",
             "required": false
         },
         "delete_empty_cef_fields": {
             "data_type": "boolean",
             "order": 11,
-            "description": "delete_empty_cef_fields",
+            "description": "Delete the empty CEF fields",
             "default": false,
             "required": false
         },
         "event_fields_for_query": {
             "data_type": "string",
             "order": 12,
-            "description": "event_fields_for_query",
+            "description": "Event fields to include while querying",
             "required": false
         },
         "add_offense_id_to_name": {
             "data_type": "boolean",
             "order": 13,
-            "description": "add_offense_id_to_name",
+            "description": "Add offense id to name of containers",
             "required": false
         },
         "alternative_ariel_query": {
@@ -115,14 +115,14 @@
             "default": false,
             "required": false,
             "order": 14,
-            "description": "alternative_ariel_query"
+            "description": "Alternative ariel query"
         },
         "alternative_ingest_algorithm": {
             "data_type": "boolean",
             "default": false,
             "required": false,
             "order": 15,
-            "description": "alternative_ingest_algorithm"
+            "description": "Alternative ingest algorithm for offenses"
         },
         "alt_time_field": {
             "data_type": "string",
@@ -134,14 +134,14 @@
                 "last_updated_time",
                 "either"
             ],
-            "description": "alt_time_field"
+            "description": "Time field"
         },
         "alt_initial_ingest_time": {
             "data_type": "string",
             "default": "yesterday",
             "required": false,
             "order": 17,
-            "description": "alt_initial_ingest_time"
+            "description": "Alternative initial ingestion time"
         },
         "alt_ingestion_order": {
             "data_type": "string",
@@ -152,7 +152,7 @@
                 "oldest first",
                 "latest first"
             ],
-            "description": "alt_ingestion_order"
+            "description": "Ingestion order for offenses"
         }
     },
     "app_config": {
@@ -1162,7 +1162,7 @@
                 "offense_id": {
                     "data_type": "numeric",
                     "order": 1,
-                    "description": "Offense ID",
+                    "description": "Offense ID to get flows of",
                     "primary": true,
                     "contains": [
                         "qradar offense id"
