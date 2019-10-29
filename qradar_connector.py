@@ -241,8 +241,7 @@ class QradarConnector(BaseConnector):
 
         self.debug_print("event: ", event)
         self.debug_print("cef: ", cef)
-        cef['version'] = 0
-
+        
         get_ph_severity = lambda x: phantom.SEVERITY_LOW if x <= 3 else (
                 phantom.SEVERITY_MEDIUM if x <= 7 else phantom.SEVERITY_HIGH)
 
