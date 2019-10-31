@@ -764,7 +764,7 @@ class QradarConnector(BaseConnector):
             event_param = dict(param)
             # Add the offense id to the param dict
             event_param['offense_id'] = offense_id
-            event_param['offense_start_time'] = offense['start_time']
+            event_param['start_time'] = offense['start_time']
 
             # Create a action result specifically for the event
             event_action_result = ActionResult(event_param)
@@ -890,17 +890,6 @@ class QradarConnector(BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in interval_days parameter')
         except:
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in interval_days parameter')
-
-        if (self._is_on_poll or param.get('ingest_offense', False)):
-            end_time_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
-            if self._is_on_poll and self._state.get('last_saved_ingest_time'):
-                start_time_msecs = self._state.get('last_saved_ingest_time')
-            else:
-                start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)
-        else:
-            curr_epoch_msecs = int(time.mktime(datetime.utcnow().timetuple())) * 1000
-            end_time_msecs = curr_epoch_msecs if end_time_msecs is None else int(end_time_msecs)
-            start_time_msecs = end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days) if start_time_msecs is None else int(start_time_msecs)
 
         if (end_time_msecs < start_time_msecs):
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
