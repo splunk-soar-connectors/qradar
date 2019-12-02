@@ -134,7 +134,7 @@
                 "last_updated_time",
                 "either"
             ],
-            "description": "Time field"
+            "description": "Alternative ingestion time field"
         },
         "alt_initial_ingest_time": {
             "data_type": "string",
@@ -152,7 +152,7 @@
                 "oldest first",
                 "latest first"
             ],
-            "description": "Ingestion order for offenses"
+            "description": "Alternative ingestion order for offenses"
         }
     },
     "app_config": {
@@ -1144,7 +1144,7 @@
         {
             "action": "get flows",
             "description": "Get flows that make up an offense for a particular IP",
-            "verbose": "The default start_time is past 5 days. The default end_time is now. The default count is 100 flows. Use this parameter to restrict the flows returned. For e.g. protocolid='6'.",
+            "verbose": "The default start_time is past 5 days. The default end_time is now. The default count is 100 flows. Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'.",
             "type": "investigate",
             "identifier": "get_flows",
             "read_only": true,
@@ -1575,6 +1575,7 @@
         {
             "action": "offense details",
             "description": "Get details about an offense",
+            "verbose": "If the <b>ingest_offense</b> parameter is checked, then, it will ingest the events within the last N days (N - value in the <b>interval_days</b> parameter if given or value in the <b>interval_days</b> parameter in the app config or default 5 days) for the offense mentioned in the <b>offense_id</b> parameter. If the <b>ingest_offense</b> parameter is unchecked, it will fetch only the details of the provided offense ID in the <b>offense_id</b> parameter. The parameter <b>tenant_id</b> is used only when the <b>ingest_offense</b> parameter is checked.",
             "type": "investigate",
             "identifier": "offense_details",
             "read_only": true,
