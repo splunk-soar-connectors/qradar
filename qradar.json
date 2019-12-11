@@ -2005,8 +2005,8 @@
         },
         {
             "action": "alt manage ingestion",
-            "description": "mange ingestion details",
-            "verbose": "The format for the datestring should match the format YYYY-MM-DD HH:MM:SS.ZZZZZZ or YYYY-MM-DDTHH:MM:SS.ZZZZZZ. User can provide only date (time will be 00:00:00.000000) or only time (current date will be considered by default).",
+            "description": "Manage ingestion details",
+            "verbose": "The general structure of the state file is {\"app_version\":\"app_version\", \"last_saved_ingest_time\":\"epoch_time_last_fetched_offense\", \"last_ingested_events_data\":{\"offense_id\":\"epoch_time_last_fetched_event_for_offense_id\"}}. <ul><li>The <b>set last saved offense ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the <b>last_saved_ingest_time</b> key in the state file.</li><li>The <b>set last saved events ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the key corresponding to the offense ID value provided in the <b>offense_id</b> in the dictionary structure against the key <b>last_ingested_events_data</b> in the state file. The format for the datestring should match the formats 'YYYY-MM-DD HH:MM:SS.Z', 'YYYY-MM-DDTHH:MM:SS.Z', 'YYYY-MM-DD', or 'HH:MM:SS.Z'. User can provide only date (time will be 00:00:00.000000) or only time (current date will be considered by default). The action considers that the provided value in the <b>datestring</b> parameter represents the date string in the timezone selected in the asset configuration parameter <b>timezone</b> and accordingly stores the epoch time into the state file.</li><li>The <b>delete last saved ingestion time data</b> operation deletes the entire last saved ingestion time data stored in the state file.</li><li>The <b>get last saved ingestion time data</b> operation fetches the entire last saved ingestion time data stored in the state file.</li><li>The parameter <b>offense_id</b> does not support comma-separated values. User has to provide a single non-zero positive integer value of the corresponding Offense ID.</li><li>The parameter <b>offense_id</b> is mandatory for the operation <b>set last saved events ingest time</b>.</li></ul>",
             "type": "generic",
             "identifier": "alt_manage_ingestion",
             "read_only": false,
@@ -2014,21 +2014,30 @@
                 "operation": {
                     "data_type": "string",
                     "order": 0,
-                    "description": "operation to perform",
+                    "description": "Operation to perform on the ingestion data stored in the state file",
                     "value_list": [
-                        "get last saved ingest time",
-                        "delete last saved ingest time",
-                        "set last saved ingest time"
+                        "get last saved ingestion time data",
+                        "delete last saved ingestion time data",
+                        "set last saved offense ingest time",
+                        "set last saved events ingest time"
                     ],
                     "required": true,
                     "primary": false,
-                    "default": "get last saved ingest time"
+                    "default": "get last saved ingestion time data"
                 },
                 "datetime": {
                     "data_type": "string",
                     "order": 1,
-                    "default": false,
-                    "description": "datetime string",
+                    "description": "Datetime string to be stored against the ingestion data in the state file",
+                    "required": false
+                },
+                "offense_id": {
+                    "data_type": "string",
+                    "order": 2,
+                    "description": "Offense ID against which to store the 'datetime' parameter value",
+                    "contains": [
+                        "qradar offense id"
+                    ],
                     "required": false
                 }
             },
@@ -2043,74 +2052,105 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.datetime",
                     "data_type": "string",
                     "example_values": [
-                        "2019-05-27 11:23:20.000000"
+                        "2019-12-09 11:11:11.0001",
+                        "2019-12-09T11:11:11.0001",
+                        "2019-12-09",
+                        "11:11:11.0001"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.offense_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "4"
+                    ],
+                    "contains": [
+                        "qradar offense id"
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.operation",
                     "data_type": "string",
-                    "column_name": "operation",
-                    "column_order": 0,
                     "example_values": [
-                        "get last saved ingest time",
-                        "set last saved ingest time"
+                        "get last saved ingestion time data",
+                        "delete last saved ingestion time data",
+                        "set last saved offense ingest time",
+                        "set last saved events ingest time"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.last_saved_ingest_time",
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time",
                     "data_type": "string",
-                    "column_name": "last saved ingest time",
-                    "column_order": 1,
                     "example_values": [
-                        "Fri May 24 00:00:00 2019 UTC +0000",
-                        "Mon May 27 11:23:20 2019 UTC +0000"
+                        "Offense ID_1=Fri Nov 29 10:05:25 2019 UTC +0000, Offense ID_3=Fri Nov 29 10:01:24 2019 UTC +0000, Offense ID_2=Fri Nov 29 10:03:18 2019 UTC +0000"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.last_saved_ingest_time_as_epoch_date",
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.1",
                     "data_type": "numeric",
-                    "column_name": "as epoch date",
-                    "column_order": 2,
                     "example_values": [
-                        1558656000000,
-                        1558956200000
+                        1575021925702
                     ]
                 },
                 {
-                    "data_path": "action_result.summary.last_saved_ingest_time",
+                    "data_path": "action_result.data.*.last_saved_offense_ingest_time",
                     "data_type": "string",
                     "example_values": [
-                        "Fri May 24 00:00:00 2019 UTC +0000",
-                        "Mon May 27 11:23:20 2019 UTC +0000"
+                        "Mon Dec 09 11:11:11 2019 UTC +0000"
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.last_saved_offense_ingest_time_as_epoch",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1575889871000
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.last_ingested_events_ingest_time",
+                    "data_type": "string",
+                    "example_values": [
+                        "Offense ID_1=Fri Nov 29 10:05:25 2019 UTC +0000, Offense ID_3=Fri Nov 29 10:01:24 2019 UTC +0000, Offense ID_2=Fri Nov 29 10:03:18 2019 UTC +0000"
+                    ],
+                    "column_name": "Last Ingested Events Ingest Time",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.summary.last_saved_offense_ingest_time",
+                    "data_type": "string",
+                    "example_values": [
+                        "Mon Dec 09 11:11:11 2019 UTC +0000"
+                    ],
+                    "column_name": "Last Ingested Offense Ingest Time",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "Last saved ingest time: Fri May 24 00:00:00 2019 UTC +0000",
-                        "Last saved ingest time: Mon May 27 11:23:20 2019 UTC +0000"
+                        "Last saved offense ingest time: Mon Dec 09 11:11:11 2019 UTC +0000, Last ingested events ingest time: Offense ID_1=Fri Nov 29 10:05:25 2019 UTC +0000, Offense ID_3=Fri Nov 29 10:01:24 2019 UTC +0000, Offense ID_2=Fri Nov 29 10:03:18 2019 UTC +0000"
                     ]
                 },
                 {
                     "data_path": "summary.total_objects",
                     "data_type": "numeric",
                     "example_values": [
-                        1
+                        2
                     ]
                 },
                 {
                     "data_path": "summary.total_objects_successful",
                     "data_type": "numeric",
                     "example_values": [
-                        1
+                        2
                     ]
                 }
             ],
@@ -3054,7 +3094,7 @@
                 "artifact_count": {
                     "data_type": "numeric",
                     "order": 4,
-                    "description": "Maximum number of artifact records to query for"
+                    "description": "Parameter ignored for this app"
                 }
             },
             "output": [],
