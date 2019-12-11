@@ -1481,7 +1481,6 @@ class QradarConnector(BaseConnector):
             utc_dt = datetime.utcfromtimestamp(epoch_milli / 1000).replace(tzinfo=pytz.utc)
             to_dt = to_tz.normalize(utc_dt.astimezone(to_tz))
 
-            # return utc_dt.strftime('%Y-%m-%d %H:%M:%S')
             to_dt_str = to_dt.strftime('%Y-%m-%d %H:%M:%S')
         except Exception as e:
             action_result.set_status(phantom.APP_ERROR, "Error occurred while converting epoch value of '{0}' to datetime string. Error: {1}".format(name, str(e)))
@@ -1611,23 +1610,19 @@ class QradarConnector(BaseConnector):
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch('start_time_msecs', start_time_msecs, action_result))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch('end_time_msecs', end_time_msecs, action_result))
 
-        # throw it all away, use alternative query
-        # btw: LIMIT doesn't seem to work for any values > 150 on this version of qradar (7.2.4)
+        # Use the alternate ariel query
         if self._use_alt_ariel_query:
-            if not param.get(QRADAR_JSON_DEF_NUM_DAYS, False):
-                event_start_time = param.get('offense_start_time')
-                if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
-                    event_start_time = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+            event_start_time = None
+            if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
+                event_start_time = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
 
-                if not event_start_time:
-                    event_days = num_days
-                else:
-                    now = self._utcnow()
-                    start = self._datetime(event_start_time)
-                    diff = now - start
-                    event_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
-            else:
+            if not event_start_time:
                 event_days = num_days
+            else:
+                now = self._utcnow()
+                start = self._datetime(event_start_time)
+                diff = now - start
+                event_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
 
             if param.get('total_events_count'):
                 where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, param.get('total_events_count'), event_days)
