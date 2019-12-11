@@ -759,7 +759,8 @@ class QradarConnector(BaseConnector):
         # this one need not be added to the connector run
         # result. It will be used to contain the offenses data
         offenses_action_result = ActionResult(dict(param))
-        if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')):
+        if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')) or \
+                                                                                                    self.get_action_identifier() == 'offense_details':
             param['artifact_count'] = artifact_max
         curr_msecs = int(time.time()) * 1000
         param[phantom.APP_JSON_END_TIME] = curr_msecs
@@ -889,7 +890,8 @@ class QradarConnector(BaseConnector):
             except:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
-            if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')):
+            if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')) or \
+                                                                                                    self.get_action_identifier() == 'offense_details':
                 event_param['total_events_count'] = count
             else:
                 event_param['total_events_count'] = offense.get('event_count', count)
