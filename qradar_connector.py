@@ -606,7 +606,6 @@ class QradarConnector(BaseConnector):
                     else:
                         self._new_last_ingest_time = offenses[-1][self._time_field]
 
-
             # Removing the reverse logic as now the offenses are sorted in the API call itself
             # based on the provision provided in the API for the QRadar instances that we have decided
             # as a minimum QRadar instance version to support v7.3.1
@@ -755,6 +754,15 @@ class QradarConnector(BaseConnector):
             if "'" in config.get('event_fields_for_query'):
                 action_result.set_status(phantom.APP_ERROR, 'Please use double quotes instead of single quotes around event field names in event_fields_for_query')
                 return action_result.get_status()
+
+            # Add the additional fields provided by the user in the '' config param to the cef_event_map to ingest them
+            event_fields = [event_field.strip() for event_field in config.get('event_fields_for_query').split(',')]
+            event_fields = list(filter(None, event_fields))
+
+            for field in event_fields:
+                if UnicodeDammit(field).unicode_markup.encode('utf-8') not in self._cef_event_map.values():
+                    self._cef_event_map[UnicodeDammit(field).unicode_markup.encode('utf-8')] = UnicodeDammit(field).unicode_markup.encode('utf-8')
+
         # Call _list_offenses with a local action result,
         # this one need not be added to the connector run
         # result. It will be used to contain the offenses data
@@ -1528,7 +1536,7 @@ class QradarConnector(BaseConnector):
             event_fields = [event_field.strip() for event_field in config.get('event_fields_for_query').split(',')]
             event_fields = list(filter(None, event_fields))
             event_fields_str = ','.join(event_fields)
-            ariel_query = 'select qid, QidName(qid), ' + event_fields_str + QRADAR_AQL_EVENT_FROM
+            ariel_query = QRADAR_AQL_EVENT_SELECT + ', ' + event_fields_str + QRADAR_AQL_EVENT_FROM
         else:
             ariel_query = QRADAR_AQL_EVENT_SELECT + QRADAR_AQL_EVENT_FROM
 
