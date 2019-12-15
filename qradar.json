@@ -1187,7 +1187,7 @@
                 "fields_filter": {
                     "data_type": "string",
                     "order": 5,
-                    "description": "Filter on flow field values"
+                    "description": "Filter in AQL format on flow field values"
                 }
             },
             "render": {
