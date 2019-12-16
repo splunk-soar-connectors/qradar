@@ -797,9 +797,6 @@ class QradarConnector(BaseConnector):
         len_offenses = len(offenses)
         action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len_offenses})
 
-        self.debug_print("Number of offenses:", len_offenses)
-        self.save_progress("Number of offenses:", len_offenses)
-
         add_offense_id_to_name = self._config.get("add_offense_id_to_name", False)
 
         for i, offense in enumerate(offenses):
@@ -1171,7 +1168,7 @@ class QradarConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _handle_ariel_query(self, ariel_query, action_result, obj_result_key=None, offense_id=None):
+    def _handle_ariel_query(self, ariel_query, action_result, obj_result_key=None, offense_id=None, count=None):
 
         if (obj_result_key):
             self.save_progress("Executing ariel query to get {0} {1}", obj_result_key,
@@ -1282,40 +1279,48 @@ class QradarConnector(BaseConnector):
 
         # Looks like the search is complete, now get the results
 
-        i = 0
-        while True:
-            # Define the range for fetching the items from the search in the QRadar instance
-            start_index = (i * QRADAR_QUERY_HIGH_RANGE)
-            end_index = start_index + QRADAR_QUERY_HIGH_RANGE - 1
-            params = "items={0}-{1}".format(start_index, end_index)
-
-            ret_val = self._fetch_search_results(action_result, offense_id, search_id, obj_result_key, params)
+        if self.get_action_identifier() == 'run_query':
+            ret_val = self._fetch_search_results(action_result, offense_id, search_id, obj_result_key)
 
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
+        else:
+            i = 0
+            headers = dict()
+            to_stop_fetch = 0
+            while True:
+                # Define the range for fetching the items from the search in the QRadar instance
+                start_index = (i * QRADAR_QUERY_HIGH_RANGE)
+                end_index = start_index + QRADAR_QUERY_HIGH_RANGE - 1
+                headers['Range'] = "items={0}-{1}".format(start_index, end_index)
 
-            current_events_count = self._total_events_count
+                ret_val = self._fetch_search_results(action_result, offense_id, search_id, obj_result_key, headers)
 
-            if not self._total_events_count:
-                current_events_count = len(action_result.get_data())
+                if phantom.is_fail(ret_val):
+                    return action_result.get_status()
 
-            to_stop_fetch = current_events_count % QRADAR_QUERY_HIGH_RANGE
+                current_events_count = self._total_events_count
 
-            if current_events_count == 0 or to_stop_fetch != 0:
-                break
+                if not self._total_events_count:
+                    current_events_count = len(action_result.get_data())
 
-            i += 1
+                to_stop_fetch = current_events_count % QRADAR_QUERY_HIGH_RANGE
+
+                if current_events_count == 0 or to_stop_fetch != 0 or (count and current_events_count >= count):
+                    break
+
+                i += 1
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _fetch_search_results(self, action_result, offense_id, search_id, obj_result_key, params=None):
+    def _fetch_search_results(self, action_result, offense_id, search_id, obj_result_key, headers=None):
 
         if ((self._is_on_poll or self.get_action_identifier() == 'offense_details') and self._container_id and self._offense_details) or \
                                                                                                     self.get_action_identifier() == 'get_flows':
             local_events_list = list()
 
         response = self._call_api("{0}/{1}/results".format(QRADAR_ARIEL_SEARCH_ENDPOINT, search_id),
-                'get', action_result, params=params)
+                'get', action_result, headers=headers)
 
         if (phantom.is_fail(action_result.get_status())):
             self.debug_print("call_api failed: ", action_result.get_status())
@@ -1398,7 +1403,7 @@ class QradarConnector(BaseConnector):
 
         # Handling for get flows action
         if self.get_action_identifier() == 'get_flows':
-            self._all_flows_data = local_events_list
+            self._all_flows_data += local_events_list
             self._total_events_count += len(local_events_list)
             return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -1641,7 +1646,20 @@ class QradarConnector(BaseConnector):
 
         ariel_query += " where {0}".format(where_clause)
 
-        ret_val = self._handle_ariel_query(ariel_query, action_result, 'events', offense_id)
+        # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
+        final_count = QRADAR_QUERY_HIGH_RANGE
+        try:
+            extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
+
+            if extracted_limit_list:
+                final_count = int(extracted_limit_list[0])
+        except:
+            self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(ariel_query))
+            self.debug_print('Fetching {} events by default due to failure in fetching the value of the LIMIT value from the query string'.format(QRADAR_QUERY_HIGH_RANGE))
+
+        self.debug_print('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
+
+        ret_val = self._handle_ariel_query(ariel_query, action_result, 'events', offense_id, count=final_count)
 
         if phantom.is_fail(ret_val):
             self.debug_print('Fetching events failed with the ariel query: {0} and offense ID: {1}. Error message: {2}'.format(
@@ -1677,7 +1695,25 @@ class QradarConnector(BaseConnector):
 
         query = param[QRADAR_JSON_QUERY]
 
-        self._handle_ariel_query(query, action_result)
+        # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
+        final_count = None
+        try:
+            extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, query, re.IGNORECASE)
+
+            if extracted_limit_list:
+                final_count = int(extracted_limit_list[0])
+        except:
+            self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(query))
+            self.debug_print('Fetching all results by default due to failure in fetching the value of the LIMIT value from the query string')
+
+        self.debug_print('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
+
+        ret_val = self._handle_ariel_query(query, action_result, count=final_count)
+
+        if phantom.is_fail(ret_val):
+            self.debug_print('Execution of the ariel query: {0}. Error message: {1}'.format(
+                                query, action_result.get_message()))
+            return action_result.get_status()
 
         data = action_result.get_data()
 
@@ -1876,14 +1912,33 @@ class QradarConnector(BaseConnector):
 
             ariel_query += " where {0}".format(where_clause)
 
-            ret_val = self._handle_ariel_query(ariel_query, action_result, 'flows', offense_id)
+            # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
+            final_count = None
+            try:
+                extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
+
+                if extracted_limit_list:
+                    final_count = int(extracted_limit_list[0])
+            except:
+                self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(ariel_query))
+                self.debug_print('Fetching entire data due to failure in fetching the value of the LIMIT value from the query string')
+
+            self.debug_print('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
+
+            # Initiating the all items and all items count to zero for every chunk of data
+            # for fetching same values for every small chunk of data
+            self._total_events_count = 0
+            self._all_flows_data = []
+
+            ret_val = self._handle_ariel_query(ariel_query, action_result, 'flows', offense_id, count=final_count)
 
             if phantom.is_fail(ret_val):
                 self.debug_print('Fetching flows failed with the ariel query: {0}. Error message: {1}'.format(
                                     ariel_query, action_result.get_message()))
                 return action_result.get_status()
 
-            final_flows_data.append(self._all_flows_data)
+            if self._all_flows_data:
+                final_flows_data.append(self._all_flows_data)
 
         total_chunks = len(final_flows_data)
         final_data = list()

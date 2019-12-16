@@ -34,13 +34,13 @@ a:hover {
   border: 1px solid;
 }
 
-.qr-table-horizontal {
+.dataTable {
   width: initial;
   border: 1px solid;
   font-size: 12px;
 }
 
-.qr-table-horizontal th {
+.dataTable th {
   text-align: center;
   border: 1px solid;
   text-transform: uppercase;
@@ -48,7 +48,7 @@ a:hover {
   padding: 5px;
 }
 
-.qr-table-horizontal td {
+.dataTable td {
   border: 1px solid;
   padding: 5px;
   padding-left: 4px;
@@ -96,9 +96,10 @@ a:hover {
 {% for key, key_data in result.data.items %}
 <h4 class="qr-h3-style">{{ key | title }}</h4>
 
-  <table class="qr-table-horizontal">
+  <table class="phantom-table dataTable">
   
     <!------ Create the header for the data ------>
+    <thead>
     <tr>
       {% if key_data.headers %}
         <th>#</th>
@@ -107,7 +108,9 @@ a:hover {
       <th>{{ hdr_item }}</th>
       {% endfor %}
     </tr>
+    </thead>
 
+    <tbody>
     <!------ Add the data rows ------>
     {% for curr_item_data, curr_contains_data in key_data.data %}
       <tr>
@@ -126,6 +129,7 @@ a:hover {
         {% endfor %}
       </tr>
     {% endfor %} <!-- Curr item in data -->
+    </tbody>
 
   </table>
 
@@ -137,6 +141,26 @@ a:hover {
 
 {% endfor %} <!-- loop for each result end -->
 </div> <!-- Main Div -->
+
+<script>
+$.extend(true, $.fn.dataTable.defaults, {
+    "searching": true,
+    "bLengthChange": false,
+    "language": {
+      "paginate": {
+        "previous": "<i class='fa fa-angle-left fa-lg'></i>",
+        "next": "<i class='fa fa-angle-right fa-lg'></i>"
+      },
+      "emptyTable": "No data available"
+    },
+    "dom": '<"top">rt<"bottom"p><"clear">',
+    drawCallback: function(settings) {
+      var pagination = $(this).closest('.dataTables_wrapper').find('.dataTables_paginate');
+      pagination.toggle(this.api().page.info().pages > 1);
+    }
+  });
+  $('.dataTable').DataTable();
+</script>
 
 {% endblock %} <!-- Main Start Block -->
 
