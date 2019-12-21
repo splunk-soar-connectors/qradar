@@ -100,35 +100,35 @@ a:hover {
   
     <!------ Create the header for the data ------>
     <thead>
-    <tr>
-      {% if key_data.headers %}
-        <th>#</th>
-      {% endif %}
-      {% for hdr_item in key_data.headers %}
-      <th>{{ hdr_item }}</th>
-      {% endfor %}
-    </tr>
+      <tr>
+        {% if key_data.headers %}
+          <th>#</th>
+        {% endif %}
+        {% for hdr_item in key_data.headers %}
+        <th>{{ hdr_item }}</th>
+        {% endfor %}
+      </tr>
     </thead>
 
     <tbody>
-    <!------ Add the data rows ------>
-    {% for curr_item_data, curr_contains_data in key_data.data %}
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        {% for hdr_item in key_data.headers %}
-          <td>
-          {% if curr_contains_data|by_key:hdr_item %}
-          <a href="javascript:;" onclick="context_menu(this, [{'contains': {{curr_contains_data|by_key:hdr_item}}, 'value': '{{ curr_item_data|by_key:hdr_item }}' }], 0, {{ container.id }}, null, false);">
-            {{ curr_item_data|by_key:hdr_item }}
-            &nbsp;<span class="fa fa-caret-down" style="font-size: smaller;"></span>
-            </a>
-          {% else %}
-            {{ curr_item_data|by_key:hdr_item }}
-          {% endif %}
-          </td>
-        {% endfor %}
-      </tr>
-    {% endfor %} <!-- Curr item in data -->
+      <!------ Add the data rows ------>
+      {% for curr_item_data, curr_contains_data in key_data.data %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          {% for hdr_item in key_data.headers %}
+            <td>
+            {% if curr_contains_data|by_key:hdr_item %}
+            <a href="javascript:;" onclick="context_menu(this, [{'contains': {{curr_contains_data|by_key:hdr_item}}, 'value': '{{ curr_item_data|by_key:hdr_item }}' }], 0, {{ container.id }}, null, false);">
+              {{ curr_item_data|by_key:hdr_item }}
+              &nbsp;<span class="fa fa-caret-down" style="font-size: smaller;"></span>
+              </a>
+            {% else %}
+              {{ curr_item_data|by_key:hdr_item }}
+            {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %} <!-- Curr item in data -->
     </tbody>
 
   </table>

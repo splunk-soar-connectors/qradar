@@ -242,15 +242,25 @@ class QradarConnector(BaseConnector):
         self._use_alt_ariel_query = self._config.get('alternative_ariel_query', False)
         self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
         self._container_only = self._config.get("containers_only", False)
-        self._cef_value_map = self._config.get('cef_value_map', False)
+        self._cef_value_map = self._config.get('cef_value_map')
         self._server = config[phantom.APP_JSON_DEVICE].encode('utf-8')
         if self._cef_value_map and len(self._cef_value_map) > 1:
             try:
                 self._cef_value_map = json.loads(self._cef_value_map)
-            except Exception:
-                self.save_progress("Error cef_value_map is not valid JSON")
+
+                for key, value in self._cef_value_map.items():
+                    integer_pattern = re.findall(QRADAR_CEF_VALUE_MAP_INT_PATTERN, key, re.IGNORECASE)
+
+                    if integer_pattern:
+                        del self._cef_value_map[key]
+                        self._cef_value_map[float(integer_pattern[0][0])] = value
+            except Exception as e:
+                self.save_progress("Error cef_value_map is not in the valid expected JSON format")
+                self.set_status(phantom.APP_ERROR, "Error cef_value_map is not in the valid expected JSON format. Error message: {}".format(
+                                                            UnicodeDammit(e.message).unicode_markup.encode('utf-8')))
+                return phantom.APP_ERROR
         else:
-            self._cef_value_map = False
+            self._cef_value_map = {}
 
         self._on_poll_action_result = None
 
@@ -904,8 +914,8 @@ class QradarConnector(BaseConnector):
             # Create a action result specifically for the event
             event_action_result = ActionResult(event_param)
             if (phantom.is_fail(self._get_events(event_param, event_action_result))):
-                self.debug_print("Failed to get events for offense", offense_id)
-                self.send_progress("Failed to get events for offense")
+                self.debug_print("Failed to get events for the offense ID: {}. Error message: {}".format(offense, event_action_result.get_message()))
+                self.save_progress("Failed to get events for the offense ID: {}. Error message: {}".format(offense, event_action_result.get_message()))
                 action_result.append_to_message(QRADAR_ERR_GET_EVENTS_FAILED.format(offense_id=offense_id))
                 continue
 
@@ -1184,10 +1194,11 @@ class QradarConnector(BaseConnector):
 
         if (phantom.is_fail(action_result.get_status())):
             self.debug_print("call_api for ariel query failed: ", action_result.get_status())
-            return action_result.get_status()
+            return action_result.set_status(phantom.APP_ERROR, "Error occurred while fetching events for the offense ID: {}. Response code: {}. Response text: {}".format(
+                                                offense_id, response.status_code, UnicodeDammit(response.text).unicode_markup.encode('utf-8')))
 
         self.debug_print("Response Code", response.status_code)
-        self.debug_print("Response Text", response.text)
+        self.debug_print("Response Text", UnicodeDammit(response.text).unicode_markup.encode('utf-8'))
 
         if (response.status_code != 201):
             # Error condition
