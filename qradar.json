@@ -11,7 +11,7 @@
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "4.2.7532",
+    "min_phantom_version": "4.5.15922",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
     "license": "Copyright (c) 2016-2019 Splunk Inc.",
@@ -107,7 +107,7 @@
         "add_offense_id_to_name": {
             "data_type": "boolean",
             "order": 13,
-            "description": "Add offense id to name of containers",
+            "description": "Add offense ID to name of containers",
             "required": false
         },
         "alternative_ariel_query": {
@@ -202,7 +202,7 @@
                 "offense_id": {
                     "data_type": "string",
                     "order": 3,
-                    "description": "Id of offenses to restrict to",
+                    "description": "ID of offenses to restrict to",
                     "contains": [
                         "qradar offense id"
                     ],

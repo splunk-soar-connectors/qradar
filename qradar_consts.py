@@ -23,7 +23,11 @@ QRADAR_JSON_ARTIFACT_MAX_DEF = "artifact_max"
 QRADAR_JSON_ADD_TO_RESOLVED = "add_to_resolved"
 QRADER_JSON_NOTE_TEXT = "note_text"
 QRADER_JSON_ASSIGNEE = "assignee"
-QRADAR_INGEST_RESOLVED = "ingest_resolved"
+# The name of the asset config flag should be ingest_only_open,
+# but due to customers already having playbooks created on earlier versions,
+# keeping the key name as ingest_resolved and changing constant value to
+# logical name of QRADAR_INGEST_ONLY_OPEN.
+QRADAR_INGEST_ONLY_OPEN = "ingest_resolved"
 
 QRADAR_JSON_NAME = "name"
 QRADAR_JSON_OFFENSE_SOURCE = "source"

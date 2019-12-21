@@ -277,7 +277,7 @@ class QradarConnector(BaseConnector):
             return phantom.APP_ERROR
 
         self._add_to_resolved = config.get(QRADAR_JSON_ADD_TO_RESOLVED, False)
-        self._resolved_disabled = config.get(QRADAR_INGEST_RESOLVED, False)
+        self._ingest_only_open = config.get(QRADAR_INGEST_ONLY_OPEN, False)
 
         # Auth details
         if (phantom.is_fail(self._set_auth(config))):
@@ -470,7 +470,7 @@ class QradarConnector(BaseConnector):
                 self.save_progress("start_time: {}".format(self._utcctime(start_time)))
                 self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
             except Exception as e:
-                self.debug_print('Provided time is invalid. Error: {}'.format(str(e)))
+                self.debug_print('For alternate ingestion workflow of fetching offenses, provided time is invalid. Error: {}'.format(str(e)))
 
             # the time_field configuaration parameter determines which time fields are used in the filter,
             #   if missing or unknown value, default to start_time
@@ -491,10 +491,10 @@ class QradarConnector(BaseConnector):
                 self.debug_print('Provided time is invalid. Error: {}'.format(str(e)))
 
         # last requirement, are we listing only opened offenses?
-        if self._resolved_disabled:
+        if self._ingest_only_open:
             reqfilter += ' and status=OPEN'
 
-        self.save_progress("Using filter: {}".format(reqfilter))
+        self.save_progress("For alternate ingestion workflow of fetching offenses, using filter: {}".format(reqfilter))
         return phantom.APP_SUCCESS, start_time, end_time, reqfilter, offense_ids_list
 
     def _alt_list_offenses(self, param, action_result=None):
@@ -516,19 +516,18 @@ class QradarConnector(BaseConnector):
         # prep last saved ingested time to start_time; always start here if not ingested anything
         self._new_last_ingest_time = start_time
 
-        # for now retrieve all fields
-        # reqparams['fields'] = 'id, start_time'
-
-        # there is a list of offenses ids, retrieve these offenses only
+        # Initialize count = None to indicate that all the offenses will be fetched
         count = None
 
         # Update the request parameters based on the sorting order and the time field
         # provided in the asset config for the alternate ariel query
+        # Define the ingestion_order
         ingestion_order = self._config.get('alt_ingestion_order')
 
         if ingestion_order != "latest first" and ingestion_order != "oldest first":
             ingestion_order = "latest first"
 
+        # Define the sorting field on the basis of the 'ingestion_order'
         if ingestion_order == "oldest first":
             self.save_progress("Ingesting the oldest first")
             reqparams['sort'] = "+{}".format(self._time_field)
@@ -646,7 +645,7 @@ class QradarConnector(BaseConnector):
                 status_code = response.status_code
             else:
                 status_code = None
-            self.save_progress("Rest call failed: {}\nResponse code: {}".format(action_result.get_status(), status_code))
+            self.save_progress("For alternate ingestion workflow of fetching offenses, REST call failed: {}\nResponse code: {}".format(action_result.get_status(), status_code))
             return action_result.get_status()
 
         # error with the rest call, either authorization or malformed parameters
@@ -949,11 +948,12 @@ class QradarConnector(BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
 
         if param.get('start_time') and not str(param.get('start_time')).isdigit():
-            return action_result.set_status(phantom.APP_ERROR, "Please provide valid value in the 'start_time' parameter")
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
 
         if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
-            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero value in the 'end_time' parameter")
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
 
+        # This is alternate offense ingestion | fetching workflow
         if self._use_alt_ingest:
             return self._alt_list_offenses(param, action_result)
 
@@ -961,6 +961,7 @@ class QradarConnector(BaseConnector):
         params = dict()
         headers = dict()
 
+        # Validate the start_time and end_time
         ret_val = self._validate_times(param, action_result)
 
         if (phantom.is_fail(ret_val)):
@@ -971,7 +972,8 @@ class QradarConnector(BaseConnector):
         start_time_msecs = 0
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
 
-        resolved_disabled = self._resolved_disabled
+        # Flag for deciding whether to ingest only open offenses or not
+        ingest_only_open = self._ingest_only_open
 
         # 3. Initialize num_days for offense_details and on_poll actions calling list_offenses action
         # a. num_days is used for the offense_details action passing interval_ays in the param
@@ -981,7 +983,7 @@ class QradarConnector(BaseConnector):
         # already set in the ealier steps
         try:
             num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
-            if int(num_days <= 0):
+            if num_days <= 0:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
         except:
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
@@ -989,10 +991,13 @@ class QradarConnector(BaseConnector):
         # a. start_time_msecs will get changed based on the value of num_days
         # b. start_time_msecs will again get changed if it is scheduled | interval
         # polling and the first run in it
-        start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME, end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
-        if self._is_on_poll and not self._is_manual_poll:
-            if self._state.get('last_saved_ingest_time', {}):
-                start_time_msecs = int(self._state['last_saved_ingest_time'])
+        try:
+            start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME, end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
+            if self._is_on_poll and not self._is_manual_poll:
+                if self._state.get('last_saved_ingest_time', {}):
+                    start_time_msecs = int(self._state['last_saved_ingest_time'])
+        except Exception as e:
+            return action_result.set_status(phantom.APP_ERROR, "Error occurred while formation of 'start_time_msecs' for fetching the offenses. Error: {}".format(str(e)))
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
@@ -1004,7 +1009,7 @@ class QradarConnector(BaseConnector):
 
         if self._get_tz_str_from_epoch('start_time_msecs', start_time_msecs, action_result) is None or self._get_tz_str_from_epoch(
                                                                                                                 'end_time_msecs', end_time_msecs, action_result) is None:
-            self.debug_print('Error occurred. Error: {}'.format(action_result.get_message()))
+            self.debug_print("Error occurred in tz_str conversion from epoch for 'start_time_msecs' and 'end_time_msecs'. Error: {}".format(action_result.get_message()))
         else:
             self.save_progress('Getting data from {0} to {1}'.format(self._get_tz_str_from_epoch(
                                 'start_time_msecs', start_time_msecs, action_result), self._get_tz_str_from_epoch('end_time_msecs', end_time_msecs, action_result)))
@@ -1014,15 +1019,15 @@ class QradarConnector(BaseConnector):
             start_time_msecs, end_time_msecs, 'start_time', 'last_updated_time')
 
         # get the list of offenses that we are supposed to query for
-        container_source_ids = str(param.get(phantom.APP_JSON_CONTAINER_ID,
+        offense_ids = str(param.get(phantom.APP_JSON_CONTAINER_ID,
                 param.get(QRADAR_JSON_OFFENSE_ID, None)))
 
-        if (container_source_ids != 'None'):
-            container_source_ids = [x.strip() for x in container_source_ids.split(",")]
-            container_source_ids = list(filter(None, container_source_ids))
+        if (offense_ids != 'None'):
+            offense_ids = [x.strip() for x in offense_ids.split(",")]
+            offense_ids = list(filter(None, offense_ids))
 
             offense_id_list = list()
-            for x in container_source_ids:
+            for x in offense_ids:
                 try:
                     if len(x.strip()) > 0 and int(x.strip()) >= 0:
                         offense_id_list.append('id={}'.format(int(x.strip())))
@@ -1037,14 +1042,13 @@ class QradarConnector(BaseConnector):
                         'and' if len(filter_string) > 0 else '',
                         ' or '.join(offense_id_list))
             else:
-                return action_result.set_status(phantom.APP_ERROR, "Please provide valid offense ID")
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid offense ID|s")
 
         params['filter'] = filter_string
         params['sort'] = "+last_updated_time"
         self.save_progress('Filter is {0}'.format(filter_string))
 
         offenses = list()
-
         start_index = 0
         total_offenses = 0
 
@@ -1065,19 +1069,18 @@ class QradarConnector(BaseConnector):
             if start_index > end_index:
                 break
 
-            # end_index = min((temp * 1000) + count - 1, end_index + (temp * 1000) - 1)
             headers['Range'] = 'items={0}-{1}'.format(start_index, end_index)
             start_index += QRADAR_QUERY_HIGH_RANGE
 
-            if resolved_disabled:
+            if ingest_only_open:
                 offenses_status_msg = 'Fetching all open offenses as the asset configuration parameter for ingest only open is selected. '
                 params['filter'] = filter_string + ' and status=OPEN'
-                self.save_progress('Filter is {0}'.format(params['filter']))
+                self.save_progress("Updated filter due to 'Ingest only open offenses' being True is:  {0}".format(params['filter']))
 
             response = self._call_api('siem/offenses', 'get', action_result, params=params, headers=headers)
 
             if (phantom.is_fail(action_result.get_status())):
-                self.debug_print("call_api failed: ", action_result.get_status())
+                self.debug_print("The 'call_api' for fetching offenses failed: ", action_result.get_status())
                 return action_result.get_status()
 
             self.debug_print("Response Code", response.status_code)
@@ -1095,8 +1098,8 @@ class QradarConnector(BaseConnector):
             try:
                 offenses += response.json()
             except Exception as e:
-                self.debug_print("Unable to parse response as a valid JSON", e)
-                return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
+                self.debug_print("Unable to parse response of 'call_api' for fetching offenses as a valid JSON", e)
+                return action_result.set_status(phantom.APP_ERROR, "Unable to parse response of 'call_api' for fetching offenses as a valid JSON")
 
             total_offenses = len(offenses)
 
@@ -1492,7 +1495,6 @@ class QradarConnector(BaseConnector):
             except:
                 return action_result.set_status(phantom.APP_ERROR, "Invalid {0}".format(phantom.APP_JSON_END_TIME))
 
-        # return utc_dt.strftime('%Y-%m-%d %H:%M:%S')
         return (phantom.APP_SUCCESS)
 
     def _get_tz_str_from_epoch(self, name, epoch_milli, action_result):
@@ -1580,7 +1582,7 @@ class QradarConnector(BaseConnector):
         # the start_time_msecs as set in the below steps
         try:
             num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
-            if int(num_days <= 0):
+            if num_days <= 0:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
         except:
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
@@ -1592,16 +1594,19 @@ class QradarConnector(BaseConnector):
         # end_time_msecs is value against the key 'end_time' in param or curr_epoch_msecs
         curr_epoch_msecs = int(time.time()) * 1000
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
-        start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME,
-                end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
+        start_time_msecs = 0
 
         # 5. Update the start_time_msecs from the state file stored value of last_ingested_events_data
         # in case of only scheduled and interval polling to avoid processing of already ingested events
         # and rather start from the time till what we had already ingested and
         # had stopped ingestion from that point in the last run
-        if self._is_on_poll and not self._is_manual_poll:
-            if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
-                start_time_msecs = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+        try:
+            start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME, end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
+            if self._is_on_poll and not self._is_manual_poll:
+                if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
+                    start_time_msecs = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+        except Exception as e:
+            return action_result.set_status(phantom.APP_ERROR, "Error occurred while formation of 'start_time_msecs' for fetching the events. Error: {}".format(str(e)))
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
@@ -1875,7 +1880,7 @@ class QradarConnector(BaseConnector):
         # the start_time_msecs as set in the below steps
         try:
             num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
-            if int(num_days <= 0):
+            if num_days <= 0:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
         except:
             return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
@@ -1887,8 +1892,12 @@ class QradarConnector(BaseConnector):
         # end_time_msecs is value against the key 'end_time' in param or curr_epoch_msecs
         curr_epoch_msecs = int(time.time()) * 1000
         end_time_msecs = int(param.get(phantom.APP_JSON_END_TIME, curr_epoch_msecs))
-        start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME,
-                end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
+        start_time_msecs = 0
+
+        try:
+            start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME, end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
+        except Exception as e:
+            return action_result.set_status(phantom.APP_ERROR, "Error occurred while formation of 'start_time_msecs' for fetching the flows. Error: {}".format(str(e)))
 
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
