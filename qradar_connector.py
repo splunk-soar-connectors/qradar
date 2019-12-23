@@ -506,7 +506,7 @@ class QradarConnector(BaseConnector):
         offenses = list()
 
         # create the filter to apply to query
-        ret_val, start_time, end_time, reqfilter, offenses_ids_list = self._createfilter(param, action_result)
+        ret_val, start_time, _, reqfilter, offenses_ids_list = self._createfilter(param, action_result)
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -553,9 +553,9 @@ class QradarConnector(BaseConnector):
                 if not self.get_action_identifier() == 'offense_details':
                     count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
                 if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
             except Exception:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
             self.save_progress("Retrieving maximum {} offenses".format(count if count or count == 0 else 'all'))
 
@@ -900,9 +900,9 @@ class QradarConnector(BaseConnector):
             try:
                 count = int(param.get(phantom.APP_JSON_ARTIFACT_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT)))
                 if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
             except:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
             if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')) or \
                                                                                                     self.get_action_identifier() == 'offense_details':
@@ -943,9 +943,9 @@ class QradarConnector(BaseConnector):
             if self.get_action_identifier() == 'list_offenses' or (self._is_on_poll and self._is_manual_poll):
                 count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
             if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
         if param.get('start_time') and not str(param.get('start_time')).isdigit():
             return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
@@ -1036,11 +1036,9 @@ class QradarConnector(BaseConnector):
                     pass
 
             if (len(offense_id_list) > 0):
-
-                # we have data to work on
-                filter_string += ' {0} ({1})'.format(
-                        'and' if len(filter_string) > 0 else '',
-                        ' or '.join(offense_id_list))
+                # I the user is providing the offense IDs to be fetched, irrespective of the
+                # start_time and the end_time, we will be fetching those offenses
+                filter_string = ' ({0})'.format(' or '.join(offense_id_list))
             else:
                 return action_result.set_status(phantom.APP_ERROR, "Please provide valid offense ID|s")
 
@@ -1292,7 +1290,8 @@ class QradarConnector(BaseConnector):
         self.debug_print('response_json', response_json)
 
         # Looks like the search is complete, now get the results
-
+        # If the action is run_query, then, do not use pagination
+        # and simply fetch results else use pagination to fetch the results
         if self.get_action_identifier() == 'run_query':
             ret_val = self._fetch_search_results(action_result, offense_id, search_id, obj_result_key)
 
@@ -1519,29 +1518,31 @@ class QradarConnector(BaseConnector):
     def _get_events(self, param, action_result=None):
 
         if (not action_result):
-            # Create a action result
+            # Create a action result to represent this action
             action_result = self.add_action_result(ActionResult(dict(param)))
 
         # 1. Validation of the input parameters
         try:
+            # We do not fetch all the events as like we fetch all offenses if the count is not provided by the user
+            # The reason for such a logic is that there can be lakhs of events as compared to less number of offenses
             count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT))
             if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
         if param.get('start_time') and not str(param.get('start_time')).isdigit():
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid start_time parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
 
         if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid end_time parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
 
         try:
             offense_id = param.get('offense_id')
             if offense_id == 0 or (offense_id and (not str(offense_id).isdigit() or offense_id <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
 
         ret_val = self._validate_times(param, action_result)
 
@@ -1563,7 +1564,7 @@ class QradarConnector(BaseConnector):
 
         # Get the offense ID
         offense_id = phantom.get_str_val(param, QRADAR_JSON_OFFENSE_ID, None)
-        if (offense_id):
+        if offense_id:
             if (len(where_clause)):
                 where_clause += " and"
             where_clause += " hasOffense='true' and InOffense({0})".format(offense_id)
@@ -1611,15 +1612,15 @@ class QradarConnector(BaseConnector):
         if (end_time_msecs < start_time_msecs):
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
 
-        if (len(where_clause)):
-            where_clause += " and"
-
         # The START clause has to come before the STOP clause, else the query fails
         # The START and STOP clause have to be given, else the results will be for
         # the last 60 seconds or something small like that.
         # We also need to get the events closest to the end time, so add the
         # starttime comparison operators for that
         # The starttime >= and starttime <= clause is required without which the limit clause fails
+        if (len(where_clause)):
+            where_clause += " and"
+
         where_clause += " starttime >= {0} and starttime <= {1}".format(start_time_msecs, end_time_msecs)
         # where_clause += " starttime BETWEEN {0} and {1}".format(start_time_msecs, end_time_msecs)
 
@@ -1673,6 +1674,7 @@ class QradarConnector(BaseConnector):
             self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(ariel_query))
             self.debug_print('Fetching {} events by default due to failure in fetching the value of the LIMIT value from the query string'.format(QRADAR_QUERY_HIGH_RANGE))
 
+        self.save_progress('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
         self.debug_print('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
 
         ret_val = self._handle_ariel_query(ariel_query, action_result, 'events', offense_id, count=final_count)
@@ -1786,22 +1788,24 @@ class QradarConnector(BaseConnector):
         try:
             offense_id = param.get('offense_id')
             if offense_id == 0 or (offense_id and (not str(offense_id).isdigit() or offense_id <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
 
         try:
+            # We do not fetch all the flows as like we fetch all offenses if the count is not provided by the user
+            # The reason for such a logic is that there can be lakhs of flows as compared to less number of offenses
             count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_FLOW_COUNT))
             if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in count parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
         if param.get('start_time') and not str(param.get('start_time')).isdigit():
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid start_time parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
 
         if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide valid end_time parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
 
         ret_val = self._validate_times(param, action_result)
 
@@ -1983,9 +1987,9 @@ class QradarConnector(BaseConnector):
 
         try:
             if int(param.get('offense_id')) <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
 
         params = {
             'note_text': note_text,
@@ -2019,9 +2023,9 @@ class QradarConnector(BaseConnector):
 
         try:
             if int(param.get('offense_id')) <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
 
         params = {
             'assigned_to': assignee,
@@ -2046,9 +2050,9 @@ class QradarConnector(BaseConnector):
         offense_id = param[QRADAR_JSON_OFFENSE_ID]
         try:
             if int(offense_id) <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
 
         # Update the parameter
         action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
@@ -2175,9 +2179,9 @@ class QradarConnector(BaseConnector):
 
         try:
             if int(offense_id) <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in offense_id parameter')
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
 
         try:
             if int(closing_reason_id) < 0:

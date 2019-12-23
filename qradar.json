@@ -26,13 +26,11 @@
         "containers_only": {
             "data_type": "boolean",
             "order": 19,
-            "description": "Ingest only offenses while polling",
-            "required": false
+            "description": "Ingest only offenses while polling"
         },
         "verify_server_cert": {
             "data_type": "boolean",
             "description": "Verify server certificate",
-            "required": true,
             "order": 1,
             "default": false
         },
@@ -64,7 +62,6 @@
             "data_type": "boolean",
             "order": 6,
             "description": "Ingest artifacts into closed/resolved containers",
-            "required": false,
             "default": false
         },
         "artifact_max": {
@@ -72,7 +69,7 @@
             "order": 7,
             "description": "Maximum artifact count",
             "required": false,
-            "default": "1000"
+            "default": 1000
         },
         "ingest_resolved": {
             "data_type": "boolean",
@@ -95,8 +92,7 @@
             "data_type": "boolean",
             "order": 11,
             "description": "Delete the empty CEF fields",
-            "default": false,
-            "required": false
+            "default": false
         },
         "event_fields_for_query": {
             "data_type": "string",
@@ -107,20 +103,17 @@
         "add_offense_id_to_name": {
             "data_type": "boolean",
             "order": 13,
-            "description": "Add offense ID to name of containers",
-            "required": false
+            "description": "Add offense ID to name of containers"
         },
         "alternative_ariel_query": {
             "data_type": "boolean",
             "default": false,
-            "required": false,
             "order": 14,
             "description": "Alternative ariel query"
         },
         "alternative_ingest_algorithm": {
             "data_type": "boolean",
             "default": false,
-            "required": false,
             "order": 15,
             "description": "Alternative ingest algorithm for offenses"
         },
@@ -159,8 +152,8 @@
         "interval_days": {
             "data_type": "numeric",
             "order": 0,
-            "description": "Interval (days) used during Poll Now",
-            "value": "5",
+            "description": "Interval days used in all the offenses, events, and flows related actions",
+            "value": 5,
             "required": false
         }
     },
@@ -178,7 +171,7 @@
         {
             "action": "list offenses",
             "description": "Get a list of offenses",
-            "verbose": "The default start_time is past 5 days. The default end_time is now. The default count is 100 offenses.",
+            "verbose": "The default start_time is the past 5 days. The default end_time is now. The default count is 100 offenses.",
             "type": "investigate",
             "identifier": "list_offenses",
             "read_only": true,
@@ -196,8 +189,7 @@
                 "count": {
                     "data_type": "numeric",
                     "order": 2,
-                    "description": "Number of offenses to retrieve",
-                    "default": 100
+                    "description": "Number of offenses to retrieve"
                 },
                 "offense_id": {
                     "data_type": "string",
@@ -673,7 +665,7 @@
         {
             "action": "get events",
             "description": "Get events belonging to an offense",
-            "verbose": "The default start_time is past 5 days. The default end_time is now. The default count is 100 events. Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'",
+            "verbose": "The default start_time is the past 5 days. The default end_time is now. The default count is 100 events. Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'",
             "type": "investigate",
             "identifier": "get_events",
             "read_only": true,
@@ -704,8 +696,7 @@
                 "count": {
                     "data_type": "numeric",
                     "order": 4,
-                    "description": "Number of events to retrieve",
-                    "default": 100
+                    "description": "Number of events to retrieve"
                 },
                 "fields_filter": {
                     "data_type": "string",
@@ -715,8 +706,7 @@
                 "interval_days": {
                     "data_type": "numeric",
                     "order": 6,
-                    "description": "Interval days used during 'Poll Now'",
-                    "default": 5,
+                    "description": "Interval days",
                     "required": false
                 }
             },
@@ -1144,7 +1134,7 @@
         {
             "action": "get flows",
             "description": "Get flows that make up an offense for a particular IP",
-            "verbose": "The default start_time is past 5 days. The default end_time is now. The default count is 100 flows. Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'.",
+            "verbose": "The default start_time is the past 5 days. The default end_time is now. The default count is 100 flows. Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'.",
             "type": "investigate",
             "identifier": "get_flows",
             "read_only": true,
@@ -1181,8 +1171,7 @@
                 "count": {
                     "data_type": "numeric",
                     "order": 4,
-                    "description": "Number of flows to retrieve",
-                    "default": 100
+                    "description": "Number of flows to retrieve"
                 },
                 "fields_filter": {
                     "data_type": "string",
@@ -1600,14 +1589,13 @@
                     "data_type": "boolean",
                     "order": 2,
                     "default": false,
-                    "description": "Ingest offense into Phantom",
-                    "required": true
+                    "description": "Ingest offense into Phantom"
                 },
                 "interval_days": {
                     "data_type": "numeric",
                     "order": 3,
-                    "description": "Interval (days) used during 'Poll Now'",
-                    "value": "5",
+                    "description": "Interval days",
+                    "default": 5,
                     "required": false
                 }
             },
@@ -2006,7 +1994,7 @@
         {
             "action": "alt manage ingestion",
             "description": "Manage ingestion details",
-            "verbose": "The general structure of the state file is {\"app_version\":\"app_version\", \"last_saved_ingest_time\":\"epoch_time_last_fetched_offense\", \"last_ingested_events_data\":{\"offense_id\":\"epoch_time_last_fetched_event_for_offense_id\"}}. <ul><li>There is no validation for values provided in the <b>offense_id</b> action parameter because this action does not make any API calls to the QRadar instance and it merely provides a way of manipulating the state file. It is requested to please confirm if the offense ID being provided as an input exists on the QRadar instance. Any wrong value provided in the <b>offense_id</b> parameter may corrupt the state file and the functionalities dependent on it.</li><li>No comma-separated values should be provided in any of the action input parameters or else it may corrupt the state file and the functionalities dependent on it.</li><li>The <b>set last saved offense ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the <b>last_saved_ingest_time</b> key in the state file.</li><li>The <b>set last saved events ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the key corresponding to the offense ID value provided in the <b>offense_id</b> in the dictionary structure against the key <b>last_ingested_events_data</b> in the state file. The format for the datestring should match the formats 'YYYY-MM-DD HH:MM:SS.Z', 'YYYY-MM-DDTHH:MM:SS.Z', 'YYYY-MM-DD', or 'HH:MM:SS.Z'. User can provide only date (time will be 00:00:00.000000) or only time (current date will be considered by default). The action considers that the provided value in the <b>datestring</b> parameter represents the date string in the timezone selected in the asset configuration parameter <b>timezone</b> and accordingly stores the epoch time into the state file.</li><li>The <b>delete last saved ingestion time data</b> operation deletes the entire last saved ingestion time data stored in the state file.</li><li>The <b>get last saved ingestion time data</b> operation fetches the entire last saved ingestion time data stored in the state file.</li><li>The parameter <b>offense_id</b> does not support comma-separated values. User has to provide a single non-zero positive integer value of the corresponding Offense ID.</li><li>The parameter <b>offense_id</b> is mandatory for the operation <b>set last saved events ingest time</b>.</li></ul>",
+            "verbose": "The general structure of the state file is {\"app_version\":\"app_version\", \"last_saved_ingest_time\":\"epoch_time_last_fetched_offense\", \"last_ingested_events_data\":{\"offense_id\":\"epoch_time_last_fetched_event_for_offense_id\"}}. <ul><li>There is no validation for values provided in the <b>offense_id</b> action parameter because this action does not make any API calls to the QRadar instance and it merely provides a way of manipulating the state file. It is requested to please confirm if the offense ID being provided as an input exists on the QRadar instance. Any wrong value provided in the <b>offense_id</b> parameter may corrupt the state file and the functionalities dependent on it.</li><li>No comma-separated values should be provided in any of the action input parameters or else it may corrupt the state file and the functionalities dependent on it.</li><li>The <b>set last saved offense ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the <b>last_saved_ingest_time</b> key in the state file.</li><li>The <b>set last saved events ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the key corresponding to the offense ID value provided in the <b>offense_id</b> in the dictionary structure against the key <b>last_ingested_events_data</b> in the state file. The format for the date string should match the formats 'YYYY-MM-DD HH:MM:SS.Z', 'YYYY-MM-DDTHH:MM:SS.Z', 'YYYY-MM-DD', or 'HH:MM:SS.Z'. Users can provide only date (time will be 00:00:00.000000) or only time (current date will be considered by default). The action considers that the provided value in the <b>datestring</b> parameter represents the date string in the timezone selected in the asset configuration parameter <b>timezone</b> and accordingly stores the epoch time into the state file.</li><li>The <b>delete last saved ingestion time data</b> operation deletes the entire last saved ingestion time data stored in the state file.</li><li>The <b>get last saved ingestion time data</b> operation fetches the entire last saved ingestion time data stored in the state file.</li><li>The parameter <b>offense_id</b> does not support comma-separated values. The user has to provide a single non-zero positive integer value of the corresponding Offense ID.</li><li>The parameter <b>offense_id</b> is mandatory for the operation <b>set last saved events ingest time</b>.</li></ul>",
             "type": "generic",
             "identifier": "alt_manage_ingestion",
             "read_only": false,
@@ -2159,7 +2147,7 @@
         {
             "action": "run query",
             "description": "Execute an ariel query on the QRadar device",
-            "verbose": "Use this action to execute queries using AQL on the QRadar device. AQL is a well documented (on the IBM website) query language with quite a few built-in functions.<br>Do note that this action could have a dynamic set of values returned in the data array, since the query can specify the columns to return. This is the main reason for not listing the data paths.",
+            "verbose": "Use this action to execute queries using AQL on the QRadar device. AQL is a well documented (on the IBM website) query language with quite a few built-in functions.<br>Do note that this action could have a dynamic set of values returned in the data array since the query can specify the columns to return. This is the main reason for not listing the data paths.",
             "type": "investigate",
             "identifier": "run_query",
             "read_only": true,
@@ -2969,7 +2957,7 @@
         },
         {
             "action": "assign user",
-            "description": "Assign user to an offense",
+            "description": "Assign the user to an offense",
             "type": "generic",
             "identifier": "assign_user",
             "read_only": false,
@@ -2977,7 +2965,7 @@
                 "offense_id": {
                     "data_type": "numeric",
                     "order": 0,
-                    "description": "Offense ID to assign user to",
+                    "description": "Offense ID to assign the user to",
                     "contains": [
                         "qradar offense id"
                     ],
@@ -3065,7 +3053,7 @@
         {
             "action": "on poll",
             "description": "Callback action for the on_poll ingest functionality",
-            "verbose": "The default start_time is past 5 days. The default end_time is now.",
+            "verbose": "The default start_time is the past 5 days. The default end_time is now.",
             "type": "ingest",
             "identifier": "on_poll",
             "read_only": true,
