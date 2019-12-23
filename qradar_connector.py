@@ -540,62 +540,57 @@ class QradarConnector(BaseConnector):
                 reqparams['sort'] = "-last_updated_time"
 
         # Fetch the list of offenses based on the offenses IDs if provided or
-        # all the offenses based on the count parameter provided
-        if len(offenses_ids_list) > 0:
-            self.save_progress("Retrieving requested offenses only")
-            offenses = self._retrieve_offenses(action_result, reqheaders, reqparams)
+        # all the offenses finally limit by the value provided in the count parameter.
+        # hence, removing the special handling for the offense_ids_list separately and making the
+        # logic uniform for either offense_ids provided or not, in both the cases, the count value will be considered.
+
+        try:
+            if not self.get_action_identifier() == 'offense_details':
+                count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
+            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+        except Exception:
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+
+        self.save_progress("Retrieving maximum {} offenses".format(count if count or count == 0 else 'all'))
+
+        start_index = 0
+        runs = 0
+
+        while True:
+
+            # Removing the error due to the runs concept as now, we are declaring the support
+            # for the QRadar instance starting from v7.3.1 and this instance
+            # does not seem to have the paginations issues with the API now.
+            runs += 1
+
+            # If the action is 'offense_details', fetch all the offenses, and count = None in that case
+            if count:
+                end_index = min(start_index + QRADAR_QUERY_HIGH_RANGE - 1, count - 1)
+            else:
+                end_index = start_index + QRADAR_QUERY_HIGH_RANGE - 1
+
+            if start_index > end_index:
+                break
+
+            # Start at the end of offenses list and retrieve QRADAR_QUERY_HIGH_RANGE number of offenses
+            reqheaders['Range'] = 'items={}-{}'.format(start_index, end_index)
+            self.save_progress("Retrieving index: {} -> {}".format(start_index, end_index))
+
+            new_offenses = self._retrieve_offenses(action_result, reqheaders, reqparams)
 
             if (phantom.is_fail(action_result.get_status())):
                 self.save_progress("error, exiting")
                 return action_result.get_status()
-        else:
-            try:
-                if not self.get_action_identifier() == 'offense_details':
-                    count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
-                if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
-            except Exception:
-                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
-            self.save_progress("Retrieving maximum {} offenses".format(count if count or count == 0 else 'all'))
+            if len(new_offenses) > 0:
+                offenses.extend(new_offenses)
+                self._report_back(new_offenses, runs)
 
-            start_index = 0
-            runs = 0
-
-            while True:
-
-                # Removing the error due to the runs concept as now, we are declaring the support
-                # for the QRadar instance starting from v7.3.1 and this instance
-                # does not seem to have the paginations issues with the API now.
-                runs += 1
-
-                # If the action is 'offense_details', fetch all the offenses, and count = None in that case
-                if count:
-                    end_index = min(start_index + QRADAR_QUERY_HIGH_RANGE - 1, count - 1)
-                else:
-                    end_index = start_index + QRADAR_QUERY_HIGH_RANGE - 1
-
-                if start_index > end_index:
-                    break
-
-                # Start at the end of offenses list and retrieve QRADAR_QUERY_HIGH_RANGE number of offenses
-                reqheaders['Range'] = 'items={}-{}'.format(start_index, end_index)
-                self.save_progress("Retrieving index: {} -> {}".format(start_index, end_index))
-
-                new_offenses = self._retrieve_offenses(action_result, reqheaders, reqparams)
-
-                if (phantom.is_fail(action_result.get_status())):
-                    self.save_progress("error, exiting")
-                    return action_result.get_status()
-
-                if len(new_offenses) > 0:
-                    offenses.extend(new_offenses)
-                    self._report_back(new_offenses, runs)
-
-                # stop if we exhausted the list of possible offenses
-                if len(new_offenses) < QRADAR_QUERY_HIGH_RANGE:
-                    self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=offenses)
-                    break
+            # stop if we exhausted the list of possible offenses
+            if len(new_offenses) < QRADAR_QUERY_HIGH_RANGE:
+                self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=offenses)
+                break
 
         self.save_progress("Total offenses discovered: {}".format(len(offenses)))
 
@@ -1036,7 +1031,7 @@ class QradarConnector(BaseConnector):
                     pass
 
             if (len(offense_id_list) > 0):
-                # I the user is providing the offense IDs to be fetched, irrespective of the
+                # If the user is providing the offense IDs to be fetched, irrespective of the
                 # start_time and the end_time, we will be fetching those offenses
                 filter_string = ' ({0})'.format(' or '.join(offense_id_list))
             else:
@@ -1965,6 +1960,12 @@ class QradarConnector(BaseConnector):
                 final_flows_data.append(self._all_flows_data)
 
         total_chunks = len(final_flows_data)
+
+        # We should get some flows data and also, we should get the same length
+        # set of the flows data as the length of the flow columns chunk list
+        if not final_flows_data or len(flow_columns_chunks) != total_chunks:
+            return action_result.set_status(phantom.APP_ERROR, "No flows found")
+
         final_data = list()
         for i, flow in enumerate(final_flows_data[0]):
             if total_chunks > 1:

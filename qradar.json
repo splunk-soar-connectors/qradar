@@ -1,7 +1,7 @@
 {
     "appid": "6cf34589-6947-409f-b776-e8fa62e01509",
     "name": "QRadar",
-    "description": "This app supports investigative and ingestion actions on an IBM QRadar device",
+    "description": "This app supports generic, investigative and ingestion actions on an IBM QRadar device",
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.pyc",
@@ -194,7 +194,7 @@
                 "offense_id": {
                     "data_type": "string",
                     "order": 3,
-                    "description": "ID of offenses to restrict to",
+                    "description": "Comma-separated list of offense IDs to fetch",
                     "contains": [
                         "qradar offense id"
                     ],
@@ -213,7 +213,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -237,8 +238,7 @@
                         "qradar offense id"
                     ],
                     "example_values": [
-                        "44",
-                        "41,43,44"
+                        "44"
                     ]
                 },
                 {
@@ -273,8 +273,7 @@
                     "data_path": "action_result.data.*.close_time",
                     "data_type": "numeric",
                     "column_name": "Close Time",
-                    "column_order": 9,
-                    "example_values": []
+                    "column_order": 9
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
@@ -283,15 +282,13 @@
                         "qradar offense closing reason id"
                     ],
                     "column_name": "Offense Closing Reason ID",
-                    "column_order": 11,
-                    "example_values": []
+                    "column_order": 11
                 },
                 {
                     "data_path": "action_result.data.*.closing_user",
                     "data_type": "string",
                     "column_name": "Closing User",
-                    "column_order": 10,
-                    "example_values": []
+                    "column_order": 10
                 },
                 {
                     "data_path": "action_result.data.*.credibility",
@@ -329,8 +326,7 @@
                     "column_name": "Event Count",
                     "column_order": 6,
                     "example_values": [
-                        28603163,
-                        45800982
+                        28603163
                     ]
                 },
                 {
@@ -339,7 +335,7 @@
                     "column_name": "Flow Count",
                     "column_order": 7,
                     "example_values": [
-                        0
+                        110
                     ]
                 },
                 {
@@ -380,8 +376,7 @@
                     "column_name": "Last Updated Time",
                     "column_order": 13,
                     "example_values": [
-                        1559194600958,
-                        1559900399633
+                        1559194600958
                     ]
                 },
                 {
@@ -409,7 +404,7 @@
                     ],
                     "column_order": 1,
                     "example_values": [
-                        "10.1.16.50"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -575,7 +570,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -665,7 +661,7 @@
         {
             "action": "get events",
             "description": "Get events belonging to an offense",
-            "verbose": "The default start_time is the past 5 days. The default end_time is now. The default count is 100 events. Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'",
+            "verbose": "Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'. For further details refer the documentation section of the action in the README.",
             "type": "investigate",
             "identifier": "get_events",
             "read_only": true,
@@ -721,15 +717,15 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.count",
                     "data_type": "numeric",
                     "example_values": [
-                        10,
-                        100
+                        10
                     ]
                 },
                 {
@@ -743,15 +739,14 @@
                     "data_path": "action_result.parameter.fields_filter",
                     "data_type": "string",
                     "example_values": [
-                        "sourceip='127.0.0.1'"
+                        "sourceip='122.122.122.122'"
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.interval_days",
                     "data_type": "numeric",
                     "example_values": [
-                        20,
-                        1
+                        20
                     ]
                 },
                 {
@@ -761,8 +756,7 @@
                         "qradar offense id"
                     ],
                     "example_values": [
-                        44,
-                        43
+                        44
                     ]
                 },
                 {
@@ -778,28 +772,23 @@
                     "contains": [
                         "domain",
                         "url"
-                    ],
-                    "example_values": []
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.Application",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Bytes",
-                    "data_type": "numeric",
-                    "example_values": []
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.BytesReceived",
-                    "data_type": "numeric",
-                    "example_values": []
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.BytesSent",
-                    "data_type": "numeric",
-                    "example_values": []
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.Destination Host Name",
@@ -808,33 +797,27 @@
                     "column_order": 4,
                     "contains": [
                         "host name"
-                    ],
-                    "example_values": []
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.EventID",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.File Hash",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.File ID",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.File Path",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Filename",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Hostname",
@@ -847,13 +830,11 @@
                 },
                 {
                     "data_path": "action_result.data.*.Installer Filename",
-                    "data_type": "string",
-                    "example_values": []
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Message",
-                    "data_type": "numeric",
-                    "example_values": []
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.Payload",
@@ -865,12 +846,11 @@
                 {
                     "data_path": "action_result.data.*.Source Host Name",
                     "data_type": "string",
-                    "column_name": "Source host name",
+                    "column_name": "Source Host Name",
                     "column_order": 1,
                     "contains": [
                         "host name"
-                    ],
-                    "example_values": []
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.categoryname_category",
@@ -888,7 +868,7 @@
                         "ip"
                     ],
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -900,7 +880,7 @@
                         "ip"
                     ],
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -928,8 +908,7 @@
                     "column_name": "End Time",
                     "column_order": 10,
                     "example_values": [
-                        "1559194870184",
-                        "1559891174855"
+                        "1559194870184"
                     ]
                 },
                 {
@@ -953,7 +932,7 @@
                     "data_path": "action_result.data.*.hostname_logsourceid",
                     "data_type": "string",
                     "column_name": "Log Source Host Name",
-                    "column_order": 14,
+                    "column_order": 13,
                     "example_values": [
                         "Unknown Host 63"
                     ],
@@ -1016,16 +995,14 @@
                     "data_path": "action_result.data.*.relevance",
                     "data_type": "string",
                     "example_values": [
-                        "8",
-                        "6"
+                        "8"
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.severity",
                     "data_type": "string",
                     "example_values": [
-                        "5",
-                        "6"
+                        "5"
                     ]
                 },
                 {
@@ -1035,8 +1012,7 @@
                         "ip"
                     ],
                     "example_values": [
-                        "10.1.16.50",
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -1048,8 +1024,7 @@
                         "ip"
                     ],
                     "example_values": [
-                        "10.1.16.50",
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -1084,8 +1059,7 @@
                     "column_name": "Start Time",
                     "column_order": 9,
                     "example_values": [
-                        "1559194870184",
-                        "1559891174855"
+                        "1559194870184"
                     ]
                 },
                 {
@@ -1095,23 +1069,20 @@
                         "user name"
                     ],
                     "column_name": "User Name",
-                    "column_order": 13,
-                    "example_values": []
+                    "column_order": 12
                 },
                 {
                     "data_path": "action_result.summary.total_events",
                     "data_type": "numeric",
                     "example_values": [
-                        10,
-                        4
+                        10
                     ]
                 },
                 {
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "Total events: 10",
-                        "Total events: 4"
+                        "Total events: 10"
                     ]
                 },
                 {
@@ -1134,7 +1105,7 @@
         {
             "action": "get flows",
             "description": "Get flows that make up an offense for a particular IP",
-            "verbose": "The default start_time is the past 5 days. The default end_time is now. The default count is 100 flows. Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'.",
+            "verbose": "Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'. For further details refer the documentation section of the action in the README.",
             "type": "investigate",
             "identifier": "get_flows",
             "read_only": true,
@@ -1188,25 +1159,41 @@
             "output": [
                 {
                     "data_path": "action_result.status",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.count",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        100
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.end_time",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1559905203000
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.fields_filter",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "sourceip='127.0.0.1'"
+                    ]
                 },
                 {
                     "data_path": "action_result.parameter.ip",
                     "data_type": "string",
                     "contains": [
                         "ip"
+                    ],
+                    "example_values": [
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -1214,11 +1201,17 @@
                     "data_type": "numeric",
                     "contains": [
                         "qradar offense id"
+                    ],
+                    "example_values": [
+                        41
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.start_time",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1559905201000
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.FTP Pass",
@@ -1288,7 +1281,7 @@
                     "data_path": "action_result.data.*.applicationname_applicationid",
                     "data_type": "string",
                     "column_name": "Application Name",
-                    "column_order": 12
+                    "column_order": 11
                 },
                 {
                     "data_path": "action_result.data.*.category",
@@ -1298,7 +1291,7 @@
                     "data_path": "action_result.data.*.categoryname_category",
                     "data_type": "string",
                     "column_name": "Category Name",
-                    "column_order": 13
+                    "column_order": 12
                 },
                 {
                     "data_path": "action_result.data.*.credibility",
@@ -1311,7 +1304,7 @@
                 {
                     "data_path": "action_result.data.*.destinationbytes",
                     "data_type": "string",
-                    "column_name": "Bytes to dest",
+                    "column_name": "Bytes to Dest",
                     "column_order": 6
                 },
                 {
@@ -1338,7 +1331,7 @@
                 {
                     "data_path": "action_result.data.*.destinationpackets",
                     "data_type": "string",
-                    "column_name": "Packets to dest",
+                    "column_name": "Packets to Dest",
                     "column_order": 5
                 },
                 {
@@ -1362,7 +1355,7 @@
                     "data_path": "action_result.data.*.destinationv6",
                     "data_type": "string",
                     "column_name": "Destination V6",
-                    "column_order": 14
+                    "column_order": 13
                 },
                 {
                     "data_path": "action_result.data.*.firstpackettime",
@@ -1462,7 +1455,7 @@
                     "data_path": "action_result.data.*.qidname_qid",
                     "data_type": "string",
                     "column_name": "QID Name",
-                    "column_order": 16
+                    "column_order": 14
                 },
                 {
                     "data_path": "action_result.data.*.relevance",
@@ -1483,7 +1476,7 @@
                 {
                     "data_path": "action_result.data.*.sourcebytes",
                     "data_type": "string",
-                    "column_name": "Bytes to src",
+                    "column_name": "Bytes to Src",
                     "column_order": 8
                 },
                 {
@@ -1510,7 +1503,7 @@
                 {
                     "data_path": "action_result.data.*.sourcepackets",
                     "data_type": "string",
-                    "column_name": "Packets to src",
+                    "column_name": "Packets to Src",
                     "column_order": 7
                 },
                 {
@@ -1610,7 +1603,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -1635,16 +1629,14 @@
                         "qradar offense id"
                     ],
                     "example_values": [
-                        43,
-                        41
+                        43
                     ]
                 },
                 {
                     "data_path": "action_result.parameter.tenant_id",
                     "data_type": "numeric",
                     "example_values": [
-                        123,
-                        1234
+                        123
                     ]
                 },
                 {
@@ -1672,8 +1664,7 @@
                     "data_path": "action_result.data.*.close_time",
                     "data_type": "numeric",
                     "column_name": "Close Time",
-                    "column_order": 9,
-                    "example_values": []
+                    "column_order": 9
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
@@ -1682,15 +1673,13 @@
                         "qradar offense closing reason id"
                     ],
                     "column_name": "Offense Closing Reason ID",
-                    "column_order": 11,
-                    "example_values": []
+                    "column_order": 11
                 },
                 {
                     "data_path": "action_result.data.*.closing_user",
                     "data_type": "string",
                     "column_name": "Closing User",
-                    "column_order": 10,
-                    "example_values": []
+                    "column_order": 10
                 },
                 {
                     "data_path": "action_result.data.*.credibility",
@@ -1728,8 +1717,7 @@
                     "column_name": "Event Count",
                     "column_order": 6,
                     "example_values": [
-                        1035,
-                        2660
+                        1035
                     ]
                 },
                 {
@@ -1760,8 +1748,7 @@
                     "column_name": "Offense Id",
                     "column_order": 0,
                     "example_values": [
-                        43,
-                        41
+                        43
                     ]
                 },
                 {
@@ -1780,8 +1767,7 @@
                     "column_name": "Last Updated Time",
                     "column_order": 13,
                     "example_values": [
-                        1559125383270,
-                        1557829383413
+                        1559125383270
                     ]
                 },
                 {
@@ -1797,8 +1783,7 @@
                     "column_name": "Magnitude",
                     "column_order": 15,
                     "example_values": [
-                        4,
-                        3
+                        4
                     ]
                 },
                 {
@@ -1810,7 +1795,7 @@
                     ],
                     "column_order": 1,
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -1887,8 +1872,7 @@
                     "column_name": "Start Time",
                     "column_order": 8,
                     "example_values": [
-                        1558008289506,
-                        1554413327061
+                        1558008289506
                     ]
                 },
                 {
@@ -1932,7 +1916,7 @@
                     "data_path": "action_result.summary.source",
                     "data_type": "string",
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ],
                     "contains": [
                         "ip"
@@ -1971,7 +1955,7 @@
                     "data_type": "string",
                     "example_values": [
                         "Total offenses: 1",
-                        "Status: OPEN, Source: 127.0.0.1, Update time: 2019-05-14 10:23:03 UTC, Name: Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks, Flow count: 0, Start time: 2019-04-04 21:28:47 UTC"
+                        "Status: OPEN, Source: 122.122.122.122, Update time: 2019-05-14 10:23:03 UTC, Name: Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks, Flow count: 0, Start time: 2019-04-04 21:28:47 UTC"
                     ]
                 },
                 {
@@ -2010,7 +1994,6 @@
                         "set last saved events ingest time"
                     ],
                     "required": true,
-                    "primary": false,
                     "default": "get last saved ingestion time data"
                 },
                 "datetime": {
@@ -2175,7 +2158,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -2201,7 +2185,7 @@
                     "data_path": "action_result.data.*.events.*.destinationip",
                     "data_type": "string",
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ],
                     "contains": [
                         "ip"
@@ -2225,7 +2209,7 @@
                     "data_path": "action_result.data.*.events.*.identityip",
                     "data_type": "string",
                     "example_values": [
-                        "0.0.0.0"
+                        "122.122.122.122"
                     ],
                     "contains": [
                         "ip"
@@ -2263,7 +2247,7 @@
                     "data_path": "action_result.data.*.events.*.sourceip",
                     "data_type": "string",
                     "example_values": [
-                        "10.1.16.50"
+                        "122.122.122.122"
                     ],
                     "contains": [
                         "ip"
@@ -2288,8 +2272,7 @@
                     "data_type": "string",
                     "contains": [
                         "user name"
-                    ],
-                    "example_values": []
+                    ]
                 },
                 {
                     "data_path": "action_result.summary",
@@ -2330,8 +2313,7 @@
                     "data_type": "string",
                     "order": 0,
                     "description": "Name of reference set to add to",
-                    "required": true,
-                    "primary": false
+                    "required": true
                 },
                 "reference_set_value": {
                     "data_type": "string",
@@ -2351,7 +2333,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -2366,17 +2349,14 @@
                     "data_path": "action_result.parameter.reference_set_value",
                     "data_type": "string",
                     "example_values": [
-                        "127.0.0.2",
-                        "127.0.0.1",
-                        "10.3.5.11"
+                        "122.122.122.122"
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.creation_time",
                     "data_type": "numeric",
                     "example_values": [
-                        1558518483009,
-                        1390246931486
+                        1558518483009
                     ],
                     "column_order": 2,
                     "column_name": "Creation Time"
@@ -2404,8 +2384,7 @@
                     "data_path": "action_result.data.*.number_of_elements",
                     "data_type": "numeric",
                     "example_values": [
-                        3,
-                        1
+                        3
                     ]
                 },
                 {
@@ -2436,8 +2415,7 @@
                     "data_path": "action_result.summary.number_of_elements",
                     "data_type": "numeric",
                     "example_values": [
-                        3,
-                        1
+                        3
                     ]
                 },
                 {
@@ -2504,7 +2482,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -2692,7 +2671,7 @@
                     ],
                     "column_order": 1,
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ]
                 },
                 {
@@ -2813,7 +2792,7 @@
                     "data_path": "action_result.summary.source",
                     "data_type": "string",
                     "example_values": [
-                        "127.0.0.1"
+                        "122.122.122.122"
                     ],
                     "contains": [
                         "ip"
@@ -2844,7 +2823,7 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "Status: CLOSED, Source: 127.0.0.1, Update time: 2019-05-14 10:23:03 UTC, Name: Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks, Flow count: 0, Start time: 2019-04-04 21:28:47 UTC"
+                        "Status: CLOSED, Source: 122.122.122.122, Update time: 2019-05-14 10:23:03 UTC, Name: Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks, Flow count: 0, Start time: 2019-04-04 21:28:47 UTC"
                     ]
                 },
                 {
@@ -2893,7 +2872,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ]
                 },
                 {
@@ -2908,8 +2888,7 @@
                     "data_path": "action_result.parameter.offense_id",
                     "data_type": "string",
                     "example_values": [
-                        "19",
-                        41
+                        "41"
                     ],
                     "contains": [
                         "qradar offense id"
@@ -2984,7 +2963,8 @@
                     "data_path": "action_result.status",
                     "data_type": "string",
                     "example_values": [
-                        "success"
+                        "success",
+                        "failed"
                     ],
                     "column_order": 0,
                     "column_name": "Status"
@@ -2993,7 +2973,6 @@
                     "data_path": "action_result.parameter.assignee",
                     "data_type": "string",
                     "example_values": [
-                        "test_name",
                         "admin"
                     ],
                     "column_order": 1,
@@ -3003,8 +2982,7 @@
                     "data_path": "action_result.parameter.offense_id",
                     "data_type": "string",
                     "example_values": [
-                        "19",
-                        41
+                        "41"
                     ],
                     "contains": [
                         "qradar offense id"
