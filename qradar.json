@@ -1583,13 +1583,6 @@
                     "order": 2,
                     "default": false,
                     "description": "Ingest offense into Phantom"
-                },
-                "interval_days": {
-                    "data_type": "numeric",
-                    "order": 3,
-                    "description": "Interval days",
-                    "default": 5,
-                    "required": false
                 }
             },
             "render": {
@@ -1613,13 +1606,6 @@
                     "example_values": [
                         true,
                         false
-                    ]
-                },
-                {
-                    "data_path": "action_result.parameter.interval_days",
-                    "data_type": "numeric",
-                    "example_values": [
-                        1
                     ]
                 },
                 {

@@ -589,7 +589,7 @@ class QradarConnector(BaseConnector):
 
             # stop if we exhausted the list of possible offenses
             if len(new_offenses) < QRADAR_QUERY_HIGH_RANGE:
-                self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=offenses)
+                self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=len(new_offenses))
                 break
 
         self.save_progress("Total offenses discovered: {}".format(len(offenses)))
@@ -908,8 +908,8 @@ class QradarConnector(BaseConnector):
             # Create a action result specifically for the event
             event_action_result = ActionResult(event_param)
             if (phantom.is_fail(self._get_events(event_param, event_action_result))):
-                self.debug_print("Failed to get events for the offense ID: {}. Error message: {}".format(offense, event_action_result.get_message()))
-                self.save_progress("Failed to get events for the offense ID: {}. Error message: {}".format(offense, event_action_result.get_message()))
+                self.debug_print("Failed to get events for the offense ID: {}. Error message: {}".format(offense_id, event_action_result.get_message()))
+                self.save_progress("Failed to get events for the offense ID: {}. Error message: {}".format(offense_id, event_action_result.get_message()))
                 action_result.append_to_message(QRADAR_ERR_GET_EVENTS_FAILED.format(offense_id=offense_id))
                 continue
 
@@ -979,9 +979,11 @@ class QradarConnector(BaseConnector):
         try:
             num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             if num_days <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+                return action_result.set_status(phantom.APP_ERROR,
+                                                    "Please provide a valid non-zero positive integer value for 'interval_days' parameter in the action and 'app_config' settings")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+            return action_result.set_status(phantom.APP_ERROR,
+                                                    "Please provide a valid non-zero positive integer value for 'interval_days' parameter in the action and 'app_config' settings")
 
         # a. start_time_msecs will get changed based on the value of num_days
         # b. start_time_msecs will again get changed if it is scheduled | interval
@@ -1293,10 +1295,12 @@ class QradarConnector(BaseConnector):
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
         else:
+            self.save_progress('Fetching the events in chunks of {}'.format(QRADAR_QUERY_HIGH_RANGE))
             i = 0
             headers = dict()
             to_stop_fetch = 0
             while True:
+                self.save_progress('Current iteration: {}'.format(i + 1))
                 # Define the range for fetching the items from the search in the QRadar instance
                 start_index = (i * QRADAR_QUERY_HIGH_RANGE)
                 end_index = start_index + QRADAR_QUERY_HIGH_RANGE - 1
@@ -1440,10 +1444,11 @@ class QradarConnector(BaseConnector):
 
         event_index = 0
         len_events = len(events)
-        self.send_progress("Found {} events for offense id {}".format(len_events, offense_id))
         added = 0
         dup = 0
         for j, event in enumerate(events):
+
+            self.send_progress("Started artifacts creation for the fetched events...")
 
             # strip \r, \n and space from the values, qradar does that for the description field atleast
             event = dict([(k, v_strip(v)) for k, v in event.iteritems()])
@@ -1579,9 +1584,11 @@ class QradarConnector(BaseConnector):
         try:
             num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             if num_days <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+                return action_result.set_status(phantom.APP_ERROR,
+                                                    "Please provide a valid non-zero positive integer value for 'interval_days' parameter in the action and 'app_config' settings")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+            return action_result.set_status(phantom.APP_ERROR,
+                                                    "Please provide a valid non-zero positive integer value for 'interval_days' parameter in the action and 'app_config' settings")
 
         # 4. Initialize all time related variables
         # curr_epoch_msecs is current epoch time
@@ -1640,8 +1647,9 @@ class QradarConnector(BaseConnector):
         # Use the alternate ariel query
         if self._use_alt_ariel_query:
             event_start_time = None
-            if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
-                event_start_time = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+            if self._is_on_poll and not self._is_manual_poll:
+                if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
+                    event_start_time = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
 
             if not event_start_time:
                 event_days = num_days
@@ -1656,7 +1664,7 @@ class QradarConnector(BaseConnector):
             else:
                 where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, event_days)
 
-        ariel_query += " where {0}".format(where_clause)
+        ariel_query = "{0} where {1}".format(ariel_query, UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
 
         # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
         final_count = QRADAR_QUERY_HIGH_RANGE
@@ -1669,8 +1677,8 @@ class QradarConnector(BaseConnector):
             self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(ariel_query))
             self.debug_print('Fetching {} events by default due to failure in fetching the value of the LIMIT value from the query string'.format(QRADAR_QUERY_HIGH_RANGE))
 
-        self.save_progress('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
-        self.debug_print('Sending the value {} as count to finally fetch the elemnets using the ariel query'.format(final_count))
+        self.save_progress('Sending the value {} as count to finally fetch the elements using the ariel query'.format(final_count))
+        self.debug_print('Sending the value {} as count to finally fetch the elements using the ariel query'.format(final_count))
 
         ret_val = self._handle_ariel_query(ariel_query, action_result, 'events', offense_id, count=final_count)
 
@@ -1880,9 +1888,11 @@ class QradarConnector(BaseConnector):
         try:
             num_days = int(param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME)))
             if num_days <= 0:
-                return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+                return action_result.set_status(phantom.APP_ERROR,
+                                                    "Please provide a valid non-zero positive integer value for 'interval_days' parameter in the action and 'app_config' settings")
         except:
-            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid non-zero positive integer value in interval_days parameter')
+            return action_result.set_status(phantom.APP_ERROR,
+                                                    "Please provide a valid non-zero positive integer value for 'interval_days' parameter in the action and 'app_config' settings")
 
         # 4. Initialize all time related variables
         # curr_epoch_msecs is current epoch time
@@ -1929,7 +1939,7 @@ class QradarConnector(BaseConnector):
 
             ariel_query = QRADAR_AQL_FLOW_SELECT.format(fields=flow_columns) + QRADAR_AQL_FLOW_FROM
 
-            ariel_query += " where {0}".format(where_clause)
+            ariel_query = "{0} where {1}".format(ariel_query, UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
 
             # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
             final_count = None
