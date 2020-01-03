@@ -1664,7 +1664,7 @@ class QradarConnector(BaseConnector):
             else:
                 where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, event_days)
 
-        ariel_query = "{0} where {1}".format(ariel_query, UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
+        ariel_query = "{0} where {1}".format(UnicodeDammit(ariel_query).unicode_markup.encode('utf-8'), UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
 
         # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
         final_count = QRADAR_QUERY_HIGH_RANGE
@@ -1939,7 +1939,7 @@ class QradarConnector(BaseConnector):
 
             ariel_query = QRADAR_AQL_FLOW_SELECT.format(fields=flow_columns) + QRADAR_AQL_FLOW_FROM
 
-            ariel_query = "{0} where {1}".format(ariel_query, UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
+            ariel_query = "{0} where {1}".format(UnicodeDammit(ariel_query).unicode_markup.encode('utf-8'), UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
 
             # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
             final_count = None
