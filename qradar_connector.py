@@ -58,25 +58,6 @@ class QradarConnector(BaseConnector):
         self._auth = {}
         self._headers = {}
 
-    def _create_authorization_header(self, config):
-
-        try:
-            username = phantom.get_str_val(config, phantom.APP_JSON_USERNAME)
-            password = phantom.get_str_val(config, phantom.APP_JSON_PASSWORD)
-
-            if (not username) or (not password):
-                return self.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_CREDENTIAL_CONFIG)
-
-            user_pass = username + ":" + password
-            auth_string = "Basic {0}".format(base64.b64encode(user_pass.encode('ascii')))
-
-            self._auth['Authorization'] = auth_string
-        except:
-            self.set_status(phantom.APP_ERROR, "Error occurred while generating authorization headers. Please check the credentials in the asset configuration parameters.")
-            return phantom.APP_ERROR
-
-        return phantom.APP_SUCCESS
-
     @staticmethod
     def _process_html_response(response, action_result):
         """ This function is used to process html response.
@@ -167,15 +148,16 @@ class QradarConnector(BaseConnector):
 
             # Both the basic auth and token will be present in the headers
             # 1. Testing the basic auth workflow as here
-            try:
-                r = request_func(url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params)
-                if r.status_code != 200:
-                    result.set_status(phantom.APP_ERROR, "Please provide correct username and password in the asset configuration parameters")
+            if 'Authorization' in headers:
+                try:
+                    r = request_func(url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params)
+                    if r.status_code != 200:
+                        result.set_status(phantom.APP_ERROR, "Please provide correct username and password in the asset configuration parameters")
+                        return r
+                except Exception as e:
+                    result.set_status(phantom.APP_ERROR, "{0}. {1}".format(QRADAR_ERR_REST_API_CALL_FAILED,
+                                        "Please provide correct username and password in the asset configuration parameters."), e)
                     return r
-            except Exception as e:
-                result.set_status(phantom.APP_ERROR, "{0}. {1}".format(QRADAR_ERR_REST_API_CALL_FAILED,
-                                    "Please provide correct username and password in the asset configuration parameters."), e)
-                return r
 
             # 2. Testing the auth token workflow
             if sec_token_header:
@@ -218,11 +200,29 @@ class QradarConnector(BaseConnector):
 
         # First preference is given to auth_token
         auth_token = phantom.get_str_val(config, QRADAR_JSON_AUTH_TOKEN, None)
+        username = phantom.get_str_val(config, phantom.APP_JSON_USERNAME)
+        password = phantom.get_str_val(config, phantom.APP_JSON_PASSWORD)
 
-        if (auth_token):
+        if not auth_token and (not username or not password):
+            self.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_CREDENTIAL_CONFIG)
+            return phantom.APP_ERROR
+
+        # 1. Validation of the auth_token
+        if auth_token:
             self._auth['SEC'] = auth_token
 
-        return self._create_authorization_header(config)
+        # 2. Validation of the basic auth
+        if username and password:
+            try:
+                user_pass = username + ":" + password
+                auth_string = "Basic {0}".format(base64.b64encode(user_pass.encode('ascii')))
+
+                self._auth['Authorization'] = auth_string
+            except:
+                self.set_status(phantom.APP_ERROR, "Error occurred while generating authorization headers. Please check the credentials in the asset configuration parameters.")
+                return phantom.APP_ERROR
+
+        return phantom.APP_SUCCESS
 
     def initialize(self):
 
