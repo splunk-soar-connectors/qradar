@@ -103,6 +103,15 @@
 
 <p><b>Explanation of QRadar Actions' Parameters</b>
 	<ol>
+		<li><b>Test Connectivity (Authentication Details)</b></li>
+			<ul>
+				<li>This action provides 2 modes of providing the authentication: Basic Auth and Auth Token.</li>
+				<li>It expects the user to enter either a valid auth token or a valid pair of username and password both.</li>
+				<li>If none of the 3 configuration parameters for [Username], [Password], and [Auth Token for QRadar REST API calls] is provided, the action fails with an appropriate error.</li>
+				<li>The connectivity gives a higher preference to the auth token than that using the pair of username and password.</li>
+			</ul>
+
+		<br>
 		<li><b>List Offenses</b></li>
 			<ul>
 				<li>Default Offenses Ingestion Workflow</li>
