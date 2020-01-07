@@ -661,7 +661,7 @@
         {
             "action": "get events",
             "description": "Get events belonging to an offense",
-            "verbose": "Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'. For further details refer the documentation section of the action in the README.",
+            "verbose": "Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'. For further details refer to the documentation section of the action in the README.",
             "type": "investigate",
             "identifier": "get_events",
             "read_only": true,
