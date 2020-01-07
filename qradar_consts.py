@@ -42,6 +42,7 @@ QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the off
 QRADAR_ERR_DATETIME_PARSE = "Error occurred while parsing start_time and end_time."
 QRADAR_ERR_DATETIME_PARSE += " Please check the 'start_time' and 'end_time' action parameters or the 'alt_initial_ingest_time' asset configuration parameter."
 QRADAR_ERR_INVALID_CREDENTIAL_CONFIG = "Invalid or incomplete credential configuration. Either an auth_key or username & password should be specified."
+QRADAR_ERR_INCOMPLETE_CREDENTIAL_CONFIG = "Missing value for username or password configuration parameters. Please provide both the username and password values or none of them."
 QRADAR_ERR_REST_API_CALL_FAILED = "Rest API call failed"
 QRADAR_ERR_REST_API_CALL_FAILED_RESPONSE_NONE = "Rest API call failed, HTTP response was 'None'"
 QRADAR_ERR_API_UNSUPPORTED_METHOD = "API call made with unsupported method {method}"

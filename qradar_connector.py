@@ -207,6 +207,10 @@ class QradarConnector(BaseConnector):
             self.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_CREDENTIAL_CONFIG)
             return phantom.APP_ERROR
 
+        if auth_token and ((username and not password) or (password and not username)):
+            self.set_status(phantom.APP_ERROR, QRADAR_ERR_INCOMPLETE_CREDENTIAL_CONFIG)
+            return phantom.APP_ERROR
+
         # 1. Validation of the auth_token
         if auth_token:
             self._auth['SEC'] = auth_token
@@ -719,14 +723,7 @@ class QradarConnector(BaseConnector):
         # cef mapping for events
         # 'deviceDirection' = 0 if eventdirection == L2R else 1
         config = self.get_config()
-        if config.get('cef_event_map', None) is not None:
-            try:
-                self._cef_event_map = json.loads(config.get('cef_event_map'))
-            except Exception as e:
-                action_result.set_status(phantom.APP_ERROR, 'Optional CEF event map is not valid JSON: {}'.format(str(e)))
-                return action_result.get_status()
-        else:
-            self._cef_event_map = {
+        self._cef_event_map = {
                 'signature_id': 'qid',
                 'name': 'qidname_qid',
                 'severity': 'severity',
@@ -749,6 +746,13 @@ class QradarConnector(BaseConnector):
                 'sourceAddress': 'sourceaddress',
                 'startTime': 'starttime',
                 'payload': 'Payload'}
+
+        if config.get('cef_event_map', None) is not None:
+            try:
+                self._cef_event_map.update(json.loads(config.get('cef_event_map')))
+            except Exception as e:
+                action_result.set_status(phantom.APP_ERROR, 'Optional CEF event map is not valid JSON: {}'.format(str(e)))
+                return action_result.get_status()
 
         if config.get('event_fields_for_query', None) is not None:
             bad_chars = set("&^%")
