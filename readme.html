@@ -108,6 +108,8 @@
 				<li>This action provides 2 modes of providing the authentication: Basic Auth and Auth Token.</li>
 				<li>It expects the user to enter either a valid auth token or a valid pair of username and password both.</li>
 				<li>If none of the 3 configuration parameters for [Username], [Password], and [Auth Token for QRadar REST API calls] is provided, the action fails with an appropriate error.</li>
+				<li>If the user provides both the auth token and the pair of username and password, then, the [Test Connectivity] action will validate both the modes of authentication and will throw an appropriate error if any credentials are invalid.</li>
+				<li>If the user provides the auth token and any one of the username and password, the connectivity will fail and will throw an error to provide either both the username and password or none of them as in this case the auth token already exists and has a higher preference than the username and password. If the auth token is not provided, then, the user must provide both the username and password.</li>
 				<li>The connectivity gives a higher preference to the auth token than that using the pair of username and password.</li>
 			</ul>
 
