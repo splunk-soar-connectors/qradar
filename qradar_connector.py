@@ -766,6 +766,7 @@ class QradarConnector(BaseConnector):
             # Add the additional fields provided by the user in the '' config param to the cef_event_map to ingest them
             event_fields = [event_field.strip() for event_field in config.get('event_fields_for_query').split(',')]
             event_fields = list(filter(None, event_fields))
+            event_fields = [field.strip("\"") for field in event_fields]
 
             for field in event_fields:
                 if UnicodeDammit(field).unicode_markup.encode('utf-8') not in self._cef_event_map.values():
