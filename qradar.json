@@ -3015,6 +3015,376 @@
             }
         },
         {
+            "action": "get rule info",
+            "identifier": "get_rule_info",
+            "description": "Retrieve QRadar rule information",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {
+                "rule_id": {
+                    "data_type": "numeric",
+                    "order": 0,
+                    "description": "Rule ID for which information needs to be extracted",
+                    "contains":[
+                        "qradar rule id"
+                    ],
+                    "required": true,
+                    "primary": true
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.rule_id",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1421
+                    ],
+                    "contains":[
+                        "qradar rule id"
+                    ],
+                    "column_name": "Rule ID",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.average_capacity",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3541750
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.base_capacity",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3541750
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.base_host_id",
+                    "data_type": "numeric",
+                    "example_values": [
+                        384
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.capacity_timestamp",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1566896735557
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.creation_date",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1155662266056
+                    ],
+                    "column_name": "Creation date",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.enabled",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ],
+                    "column_name": "Rule Enabled",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1421
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.identifier",
+                    "data_type": "string",
+                    "example_values": [
+                        "SYSTEM-1421"
+                    ],
+                    "column_name": "Identifier",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.linked_rule_identifier",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.modification_date",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1267729985038
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "User:BB:FalsePositives: User Defined Server Type 2 False Positive Categories"
+                    ],
+                    "column_name": "Rule Name",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.origin",
+                    "data_type": "string",
+                    "example_values": [
+                        "SYSTEM"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.owner",
+                    "data_type": "string",
+                    "example_values": [
+                        "admin"
+                    ],
+                    "column_name": "Rule Owner",
+                    "column_order": 6
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "EVENT"
+                    ],
+                    "column_name": "Type",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.summary.id",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1421
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "User:BB:FalsePositives: User Defined Server Type 2 False Positive Categories"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Id: 1421, Name: User:BB:FalsePositives: User Defined Server Type 2 False Positive Categories"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "versions": "EQ(*)",
+            "render": {
+                "width": 12,
+                "title": "Get Rule Info",
+                "type": "table",
+                "height": 5
+            }
+        },
+        {
+            "action": "list rules",
+            "identifier": "list_rules",
+            "description": "List all QRadar rules",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {
+                "count": {
+                    "data_type": "numeric",
+                    "order": 0,
+                    "description": "Number of rules to retrieve"
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.count",
+                    "data_type": "numeric",
+                    "example_values": [
+                        31
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.average_capacity",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3541750
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.base_capacity",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3541750
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.base_host_id",
+                    "data_type": "numeric",
+                    "example_values": [
+                        384
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.capacity_timestamp",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1566896735557
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.creation_date",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1155662266056
+                    ],
+                    "column_name": "Creation date",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.enabled",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ],
+                    "column_name": "Rule Enabled",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1421
+                    ],
+                    "contains":[
+                        "qradar rule id"
+                    ],
+                    "column_name": "Rule ID",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.identifier",
+                    "data_type": "string",
+                    "example_values": [
+                        "SYSTEM-1421"
+                    ],
+                    "column_name": "Identifier",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.linked_rule_identifier",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.modification_date",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1267729985038
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "User:BB:FalsePositives: User Defined Server Type 2 False Positive Categories"
+                    ],
+                    "column_name": "Rule Name",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.origin",
+                    "data_type": "string",
+                    "example_values": [
+                        "SYSTEM"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.owner",
+                    "data_type": "string",
+                    "example_values": [
+                        "admin"
+                    ],
+                    "column_name": "Rule Owner",
+                    "column_order": 6
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "EVENT"
+                    ],
+                    "column_name": "Type",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.summary.num_rules",
+                    "data_type": "numeric",
+                    "example_values": [
+                        135
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Total rules: 135"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "versions": "EQ(*)",
+            "render": {
+                "width": 12,
+                "title": "List Rules",
+                "type": "table",
+                "height": 5
+            }
+        },
+        {
             "action": "on poll",
             "description": "Callback action for the on_poll ingest functionality",
             "verbose": "The default start_time is the past 5 days. The default end_time is now.",

@@ -48,6 +48,8 @@ class QradarConnector(BaseConnector):
     ACTION_ID_ADD_TO_REF_SET = "add_to_reference_set"
     ACTION_ID_ADD_NOTE = "add_note"
     ACTION_ID_ASSIGNE_USER = "assign_user"
+    ACTION_ID_GET_RULE_INFO = "get_rule_info"
+    ACTION_ID_LIST_RULES = "list_rules"
 
     def __init__(self):
 
@@ -1178,6 +1180,113 @@ class QradarConnector(BaseConnector):
 
         summary = action_result.update_summary({})
         summary['total_offense_closing_reasons'] = action_result.get_data_size()
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _get_rule_info(self, param):
+    
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        get_rule_info_response = self._call_api('analytics/rules/{}'.format(param.get('rule_id')), 'get', action_result, params=None, headers=None)
+
+        if (phantom.is_fail(action_result.get_status())):
+            self.debug_print("call_api for get_rule_info failed: ", action_result.get_status())
+            return action_result.get_status()
+
+        if not get_rule_info_response:
+            return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GET_RULE_INFO)
+
+        if (get_rule_info_response.status_code != 200):
+            if 'html' in get_rule_info_response.headers.get('Content-Type', ''):
+                return self._process_html_response(get_rule_info_response, action_result)
+
+            if 'json' in get_rule_info_response.headers.get('Content-Type', ''):
+                status_message = self._get_json_error_message(get_rule_info_response, action_result)
+            else:
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_RULE_INFO, get_rule_info_response.status_code, get_rule_info_response.text)
+
+            return action_result.set_status(phantom.APP_ERROR, status_message)
+
+        try:
+            rule_info = get_rule_info_response.json()
+            action_result.add_data(rule_info)
+        except Exception as e:
+            self.debug_print("Unable to parse response as a valid JSON", e)
+            return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
+
+        summary = action_result.update_summary({})
+        summary['id'] = rule_info.get('id', None)
+        summary['name'] = rule_info.get('name', None)
+
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _list_rules(self, param):
+        
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        # 1. Validation of the input parameters
+        try:
+            count = int(param.get(QRADAR_JSON_COUNT))
+            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
+                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+        except Exception:
+            return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+
+        rules = list()
+        headers = dict()
+        start_index = 0
+        total_rules = 0
+        while True:
+
+            # If the action is 'offense_details', fetch all the offenses, and count = None in that case
+            if count:
+                end_index = min(start_index + QRADAR_QUERY_HIGH_RANGE - 1, count - 1)
+            else:
+                end_index = start_index + QRADAR_QUERY_HIGH_RANGE - 1
+
+            if start_index > end_index:
+                break
+
+            headers['Range'] = 'items={0}-{1}'.format(start_index, end_index)
+            start_index += QRADAR_QUERY_HIGH_RANGE
+
+            list_rules_response = self._call_api('analytics/rules', 'get', action_result, params=None, headers=headers)
+
+            if (phantom.is_fail(action_result.get_status())):
+                self.debug_print("call_api for list rules failed: ", action_result.get_status())
+                return action_result.get_status()
+
+            if not list_rules_response:
+                return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_LIST_RULES)
+
+            if (list_rules_response.status_code != 200):
+                if 'html' in list_rules_response.headers.get('Content-Type', ''):
+                    return self._process_html_response(list_rules_response, action_result)
+
+                if 'json' in list_rules_response.headers.get('Content-Type', ''):
+                    status_message = self._get_json_error_message(list_rules_response, action_result)
+                else:
+                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_RULES, list_rules_response.status_code, list_rules_response.text)
+
+                return action_result.set_status(phantom.APP_ERROR, status_message)
+
+            try:
+                rules += list_rules_response.json()
+            except Exception as e:
+                self.debug_print("Unable to parse response as a valid JSON", e)
+                return action_result.set_status(phantom.APP_ERROR, "Unable to parse response as a valid JSON")
+
+            total_rules = len(rules)
+
+            if len(rules) < QRADAR_QUERY_HIGH_RANGE:
+                self.save_progress(QRADAR_PROG_GOT_X_RULES, total_offenses=total_rules)
+                break
+
+        for rule in rules:
+            action_result.add_data(rule)
+
+        summary = action_result.update_summary({})
+        summary['total_rules'] = action_result.get_data_size()
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
@@ -2382,6 +2491,10 @@ class QradarConnector(BaseConnector):
             result = self._test_connectivity(param)
         elif (action == self.ACTION_ID_ASSIGNE_USER):
             result = self._handle_assign_user(param)
+        elif (action == self.ACTION_ID_GET_RULE_INFO):
+            result = self._get_rule_info(param)
+        elif (action == self.ACTION_ID_LIST_RULES):
+            result = self._list_rules(param)
         else:
             self.unknown_action()
 
