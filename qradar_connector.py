@@ -274,10 +274,12 @@ class QradarConnector(BaseConnector):
         self._base_url = 'https://' + self._server + '/api/'
 
         try:
-            self._artifact_max = int(config.get(QRADAR_JSON_ARTIFACT_MAX_DEF, QRADAR_QUERY_HIGH_RANGE))
-            if (self._artifact_max <= 0):
-                self.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'Maximum artifact count' parameter")
-                return phantom.APP_ERROR
+            self._artifact_max = config.get(QRADAR_JSON_ARTIFACT_MAX_DEF)
+            if self._artifact_max == 0 or self._artifact_max:
+                self._artifact_max = int(self._artifact_max)
+                if (self._artifact_max <= 0):
+                    self.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'Maximum artifact count' parameter")
+                    return phantom.APP_ERROR
         except:
             self.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in the 'Maximum artifact count' parameter")
             return phantom.APP_ERROR
@@ -299,8 +301,13 @@ class QradarConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
     def _get_str_from_epoch(self, epoch_milli):
-        # 2015-07-21T00:27:59Z
-        return datetime.fromtimestamp(long(epoch_milli) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        # Previous line of code was as provided below which was wrong because
+        # it generated the datetime based on the local Phantom timezone,
+        # but was using the format of Z (which represents UTC) at the end
+        # of the datetime string which is incorrect.
+        # Hence, fixing it using an already existing method.
+        # datetime.fromtimestamp(long(epoch_milli) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        return self._datetime(epoch_milli).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
     def _get_artifact(self, event, container_id):
 
@@ -444,30 +451,64 @@ class QradarConnector(BaseConnector):
                 if self._is_on_poll and not self._is_manual_poll:
                     start_time = self._state.get('last_saved_ingest_time',
                         self._config.get('alt_initial_ingest_time', "yesterday"))
-                    self.save_progress("last_saved_ingest_time: {}".format(start_time))
                 else:
                     start_time = param.get('start_time',
                         self._config.get('alt_initial_ingest_time', "yesterday"))
-                    self.save_progress("param start_time: {}".format(start_time))
+
+                self.save_progress("Initial time for fetching the offenses is : {}".format(start_time))
 
                 # datetime string, decode
                 if isinstance(start_time, basestring):
                     if start_time.isdigit():
                         start_time = int(start_time)
+
+                        if start_time < 0:
+                            return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME.format(
+                                    num_type="positive", field_name="Alternative initial ingestion time", field_location="asset configuration parameter")), None, None, None, None
                     else:
-                        self.save_progress("The 'start_time' is derived from string: {}".format(start_time))
-                        start_time = self._epochtime(self._parsedtime(start_time)) * 1000
+                        try:
+                            start_time = int(start_time)
+
+                            if start_time < 0:
+                                return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME.format(
+                                    num_type="positive", field_name="Alternative initial ingestion time", field_location="asset configuration parameter")), None, None, None, None
+                        except:
+                            self.debug_print("Checking for negative integer values failed for 'Alternative initial ingestion time' asset configuration parameter")
+                            self.save_progress("The 'initial time' for fetching the offenses is derived from string: {}".format(start_time))
+                            start_time = self._epochtime(self._parsedtime(start_time)) * 1000
                 else:
                     start_time = int(start_time)
+
+                    if start_time < 0:
+                        return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME.format(
+                                    num_type="positive", field_name="Alternative initial ingestion time", field_location="asset configuration parameter")), None, None, None, None
 
                 # end time is either specified in the param or is now
                 end_time = param.get('end_time', self._epochtime(self._utcnow()) * 1000)
                 if isinstance(end_time, basestring):
                     if end_time.isdigit():
                         end_time = int(end_time)
+
+                        if end_time <= 0:
+                            return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME.format(
+                                                    num_type="non-zero positive", field_name="end_time", field_location="parameter")), None, None, None, None
                     else:
-                        self.save_progress("The 'end_time' is derived from string: {}".format(start_time))
-                        end_time = self._epochtime(self._parsedtime(end_time)) * 1000
+                        try:
+                            end_time = int(end_time)
+
+                            if end_time <= 0:
+                                return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME.format(
+                                                        num_type="non-zero positive", field_name="end_time", field_location="parameter")), None, None, None, None
+                        except:
+                            self.debug_print("Checking for negative integer values failed for 'end_time' parameter")
+                            self.save_progress("The 'end time' for fetching the offenses is derived from string: {}".format(end_time))
+                            end_time = self._epochtime(self._parsedtime(end_time)) * 1000
+                else:
+                    end_time = int(end_time)
+
+                    if end_time <= 0:
+                        return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME.format(
+                                                num_type="non-zero positive", field_name="end_time", field_location="parameter")), None, None, None, None
             except:
                 action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_DATETIME_PARSE)
                 return phantom.APP_ERROR, None, None, None, None
@@ -477,6 +518,9 @@ class QradarConnector(BaseConnector):
                 self.save_progress("end_time:   {}".format(self._utcctime(end_time)))
             except Exception as e:
                 self.debug_print('For alternate ingestion workflow of fetching offenses, provided time is invalid. Error: {}'.format(str(e)))
+
+            if (end_time < start_time):
+                return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE), None, None, None, None
 
             # the time_field configuaration parameter determines which time fields are used in the filter,
             #   if missing or unknown value, default to start_time
@@ -553,8 +597,8 @@ class QradarConnector(BaseConnector):
         try:
             if not self.get_action_identifier() == 'offense_details':
                 count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
-            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+                if count <= 0:
+                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
@@ -696,7 +740,7 @@ class QradarConnector(BaseConnector):
         """
 
         artifact = {}
-        artifact['name'] = 'Artifact'
+        artifact['name'] = 'Offense Artifact'
         artifact['container_id'] = container_id
         artifact['source_data_identifier'] = offense['id']
         artifact['cef'] = offense
@@ -778,9 +822,7 @@ class QradarConnector(BaseConnector):
         # this one need not be added to the connector run
         # result. It will be used to contain the offenses data
         offenses_action_result = ActionResult(dict(param))
-        if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')) or \
-                                                                                                    self.get_action_identifier() == 'offense_details':
-            param['artifact_count'] = artifact_max
+        param['artifact_count'] = artifact_max
         curr_msecs = int(time.time()) * 1000
         param[phantom.APP_JSON_END_TIME] = curr_msecs
 
@@ -838,7 +880,8 @@ class QradarConnector(BaseConnector):
                     return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
 
                 container['tenant_id'] = param['tenant_id']
-            container['name'] = "{} - {}".format(offense['id'], offense['description']) if add_offense_id_to_name else offense['description']
+            container['name'] = "{} - {}".format(offense['id'], UnicodeDammit(
+                        offense['description']).unicode_markup.encode('utf-8')) if add_offense_id_to_name else UnicodeDammit(offense['description']).unicode_markup.encode('utf-8')
             container['data'] = offense
             # Two hard coded lines for testing multi-tenancy adds
             # container['asset_id'] = 44
@@ -890,7 +933,16 @@ class QradarConnector(BaseConnector):
             event_param = dict(param)
             # Add the offense id to the param dict
             event_param['offense_id'] = offense_id
-            event_param['start_time'] = offense['start_time']
+            # We need to fetch even the older events as the events are generated first and then, the offense gets generated.
+            # Hence, in PAPP-4584, it was missing events that were generated earlier than the offense start_time and if all the events
+            # are older than offense start_time, it starts generating the containers with 0 event artifacts. To solve this, we will fetch everything
+            # from the epoch timestamp equivalent for 1 hour past the zero epoch limited by the artifacts count parameter for the ingestion process.
+            # The reason for not fetching it from 0 epoch and rather fetching it from 1 hour past zero epoch is that the API throws error if
+            # we try fetching it from 0 epoch. QRadar API error in that case is:
+            # Response Code=422;
+            # Response Message="The request was well-formed but was unable to be followed due to semantic errors"
+            # Response Detailed Message="Invalid query parameters: Start time(70-01-01,06:29:59) should be greater than one hour since epoch"
+            event_param['start_time'] = QRADAR_MILLIS_ONE_HOUR_PAST_ZERO_EPOCH
             event_param[phantom.APP_JSON_END_TIME] = curr_msecs
 
             # Keep (updating) | (setting to new values) the global values for the
@@ -900,17 +952,18 @@ class QradarConnector(BaseConnector):
             self._total_events_count = 0
 
             try:
-                count = int(param.get(phantom.APP_JSON_ARTIFACT_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT)))
-                if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+                count = param.get(phantom.APP_JSON_ARTIFACT_COUNT)
+                if count == 0 or count:
+                    count = int(count)
+                    if count <= 0:
+                        return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
             except:
                 return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
-            if self._is_manual_poll or (self._is_on_poll and not self._is_manual_poll and not self._state.get('last_saved_ingest_time')) or \
-                                                                                                    self.get_action_identifier() == 'offense_details':
+            if count:
                 event_param['total_events_count'] = count
             else:
-                event_param['total_events_count'] = offense.get('event_count', count)
+                event_param['total_events_count'] = offense.get('event_count', QRADAR_DEFAULT_EVENT_COUNT)
 
             # Create a action result specifically for the event
             event_action_result = ActionResult(event_param)
@@ -944,8 +997,8 @@ class QradarConnector(BaseConnector):
             count = None
             if self.get_action_identifier() == 'list_offenses' or (self._is_on_poll and self._is_manual_poll):
                 count = int(param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)))
-            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+                if count <= 0:
+                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
@@ -1015,7 +1068,7 @@ class QradarConnector(BaseConnector):
                                                                                                                 'end_time_msecs', end_time_msecs, action_result) is None:
             self.debug_print("Error occurred in tz_str conversion from epoch for 'start_time_msecs' and 'end_time_msecs'. Error: {}".format(action_result.get_message()))
         else:
-            self.save_progress('Getting data from {0} to {1}'.format(self._get_tz_str_from_epoch(
+            self.save_progress('Getting offenses data from {0} to {1}'.format(self._get_tz_str_from_epoch(
                                 'start_time_msecs', start_time_msecs, action_result), self._get_tz_str_from_epoch('end_time_msecs', end_time_msecs, action_result)))
 
         # 5. Create the param dictionary for the range
@@ -1048,7 +1101,7 @@ class QradarConnector(BaseConnector):
 
         params['filter'] = filter_string
         params['sort'] = "+last_updated_time"
-        self.save_progress('Filter is {0}'.format(filter_string))
+        self.save_progress('Filter for fetching offenses: {0}'.format(filter_string))
 
         offenses = list()
         start_index = 0
@@ -1184,13 +1237,12 @@ class QradarConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _get_rule_info(self, param):
-    
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         get_rule_info_response = self._call_api('analytics/rules/{}'.format(param.get('rule_id')), 'get', action_result, params=None, headers=None)
 
         if (phantom.is_fail(action_result.get_status())):
-            self.debug_print("call_api for get_rule_info failed: ", action_result.get_status())
+            self.debug_print("Call API for 'get_rule_info' failed: ", action_result.get_status())
             return action_result.get_status()
 
         if not get_rule_info_response:
@@ -1221,14 +1273,15 @@ class QradarConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _list_rules(self, param):
-        
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         # 1. Validation of the input parameters
         try:
-            count = int(param.get(QRADAR_JSON_COUNT))
-            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
-                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
+            count = param.get(QRADAR_JSON_COUNT)
+            if count == 0 or count:
+                count = int(count)
+                if count <= 0:
+                    return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
@@ -1547,6 +1600,9 @@ class QradarConnector(BaseConnector):
 
     def _create_events_artifacts(self, events, offense_id):
 
+        added = 0
+        dup = 0
+
         # To strip \r, \n and space from the values
         v_strip = lambda v: v.strip(' \r\n').replace(u'\u0000', '') if type(v) == str or type(v) == unicode else v
 
@@ -1556,10 +1612,25 @@ class QradarConnector(BaseConnector):
         offense_artifact['label'] = 'offense'
         offense_artifact['cef'] = self._offense_details
 
+        ret_val, message, _ = self.save_artifact(offense_artifact)
+
+        if (phantom.is_fail(ret_val)):
+            self.debug_print('Logging the artifact creation failure for the current offense and continuing with the event artifacts generation for current offense')
+            self.debug_print('Error occurred while offense artifact creation for the offense ID: {0}. Error: {1}'.format(
+                                offense_id, message))
+
+        if message.startswith("Added"):
+            added += 1
+        elif message.startswith("duplicate"):
+            dup += 1
+
+        self.save_progress("Offense id {} - Container {}: added {} offense artifact, duplicated {} offense artifact".format(
+                offense_id, self._container_id, added, dup))
+
         event_index = 0
-        len_events = len(events)
         added = 0
         dup = 0
+        len_events = len(events)
         for j, event in enumerate(events):
 
             self.send_progress("Started artifacts creation for the fetched events...")
@@ -1640,7 +1711,7 @@ class QradarConnector(BaseConnector):
             # We do not fetch all the events as like we fetch all offenses if the count is not provided by the user
             # The reason for such a logic is that there can be lakhs of events as compared to less number of offenses
             count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_EVENT_COUNT))
-            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
+            if count <= 0:
                 return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
@@ -1774,7 +1845,7 @@ class QradarConnector(BaseConnector):
                 event_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
 
             if param.get('total_events_count'):
-                where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, param.get('total_events_count'), event_days)
+                where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, int(param.get('total_events_count')), event_days)
             else:
                 where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, event_days)
 
@@ -1793,6 +1864,9 @@ class QradarConnector(BaseConnector):
 
         self.save_progress('Sending the value {} as count to finally fetch the elements using the ariel query'.format(final_count))
         self.debug_print('Sending the value {} as count to finally fetch the elements using the ariel query'.format(final_count))
+
+        self.debug_print('Ariel query for fetching events: {0}'.format(ariel_query))
+        self.save_progress('Ariel query for fetching events: {0}'.format(ariel_query))
 
         ret_val = self._handle_ariel_query(ariel_query, action_result, 'events', offense_id, count=final_count)
 
@@ -1913,7 +1987,7 @@ class QradarConnector(BaseConnector):
             # We do not fetch all the flows as like we fetch all offenses if the count is not provided by the user
             # The reason for such a logic is that there can be lakhs of flows as compared to less number of offenses
             count = int(param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_FLOW_COUNT))
-            if count == 0 or (count and (not str(count).isdigit() or count <= 0)):
+            if count <= 0:
                 return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
@@ -2412,7 +2486,7 @@ class QradarConnector(BaseConnector):
 
             try:
                 int(offense_id)
-                if not offense_id.isdigit() or int(offense_id) <= 0:
+                if int(offense_id) <= 0:
                     return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
             except:
                 return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")

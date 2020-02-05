@@ -6,6 +6,9 @@
     "publisher": "Splunk",
     "main_module": "qradar_connector.pyc",
     "app_version": "1.2.66",
+    "latest_tested_versions": [
+        "On-premise v7.3.1"
+    ],
     "utctime_updated": "2019-10-31T00:51:20.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
@@ -67,7 +70,7 @@
         "artifact_max": {
             "data_type": "numeric",
             "order": 7,
-            "description": "Maximum artifact count",
+            "description": "Maximum event artifacts count (default is 1000) (excluding the default generated offense artifact)",
             "required": false,
             "default": 1000
         },
