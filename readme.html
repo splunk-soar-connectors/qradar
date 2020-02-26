@@ -31,7 +31,7 @@
 		<li><b>Asset Configuration Parameters</b></li>
 			<ul>
 				<li>
-					<b>artifact_max - </b> Maximum number of event artifacts to ingest for the [On Poll] (both manual and scheduled) action and [Offense Details] action with [ingest_offense] action parameter set to TRUE. This count excludes the default generated offense artifact. The default value is 1000.
+					<b>artifact_max - </b> Maximum number of event artifacts to ingest for the [On Poll] (both manual and scheduled) action and [Offense Details] action with [ingest_offense] action parameter set to TRUE. This count excludes the default generated offense artifact.
 				</li>
 				<li>
 					<b>cef_event_map - </b> JSON formatted string of key-value pairs for CEF mapping - use double-quotes. CEF values are the keys, Qradar fields are the values. QRadar fields are the internal names of the fields for the events data exported in the JSON format. These internal names can be obtained from the JSON data obtained by running the [Get Events] action. If the cef_data_map is provided by the user, the fields mentioned in this mapping and the default CEF mapping fields along with the extra fields provided in the [Event fields to include while querying] configuration parameter will be included in the CEF data of the artifact created for ingestion. If the cef_data_map is not provided by the user, then, the default event fields along with the extra fields provided in the [Event fields to include while querying] configuration parameter will be included in the CEF data of the artifacts created for ingestion. If the mapping provided in the [CEF event map] configuration field consists of the fields which are already covered by the default CEF mapping, then, the provided CEF mapping in the configuration parameter will override the fields in the default CEF mapping.<br><br>
@@ -106,6 +106,9 @@
 				</li>
 				<li>
 					<b>alternative_ingest_algorithm - </b> This parameter is optional and if not set to true then, the app will ignore the values kept in the [alt_ingest_order] and [alt_time_field]. If the parameter [alternative_ingest_algorithm] is set to true then, the offenses will be fetched according to [alt_ingest_order] and [alt_time_field] parameters. This configuration parameter is used in the List Offenses, Offense Details as well as in the On Poll action.
+				</li>
+				<li>
+					<b>events_ingest_start_time - </b> This parameter is optional and the default value is 60. This parameter defines the relative number of minutes (in milliseconds) to back-date the offense's 'starttime' to start fetching the events for that particular offense. e.g. if events_ingest_start_time = 25 and offense's starttime = 1582618635661, then, after back-date, the final timestamp from which we will start fetching the events for that particular offense is 1582618635661 - (25 * 60 * 1000) = 1582617135661. NOTE - This parameter is applicable only for the manual POLL NOW, the first run of the SCHEDULED | INTERVAL polling, and other actions like [Offense Details] which are involved in the events ingestion.
 				</li>
 				<li>
 					<b>containers_only - </b> This parameter is optional and if not set to true then, the offenses will be created as containers and the events of the offenses will be created as the artifacts. If this parameter is set to true then, the offenses will be created as containers and the details of the offenses will be created as the artifacts in those containers respectively. This configuration parameter is used in the Offense Details and On Poll actions.
