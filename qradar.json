@@ -2005,6 +2005,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
+                    "primary": true,
                     "required": false
                 }
             },

@@ -81,7 +81,7 @@ class QradarConnector(BaseConnector):
         except:
             error_text = "Cannot parse error details"
 
-        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
+        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, UnicodeDammit(error_text).unicode_markup.encode('utf-8'))
 
         message = message.replace('{', '{{').replace('}', '}}')
 
@@ -185,7 +185,17 @@ class QradarConnector(BaseConnector):
             try:
                 r = request_func(url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params)
             except Exception as e:
-                result.set_status(phantom.APP_ERROR, QRADAR_ERR_REST_API_CALL_FAILED, e)
+                if e.message:
+                    if isinstance(e.message, basestring):
+                        error_msg = UnicodeDammit(e.message).unicode_markup.encode('UTF-8')
+                    else:
+                        try:
+                            error_msg = UnicodeDammit(e.message).unicode_markup.encode('utf-8')
+                        except:
+                            error_msg = "Unknown error occurred. Please check the asset configuration and|or action parameters."
+                else:
+                    error_msg = "Unknown error occurred. Please check the asset configuration and|or action parameters."
+                result.set_status(phantom.APP_ERROR, '{}. {}'.format(QRADAR_ERR_REST_API_CALL_FAILED, error_msg))
 
         # Set the status to error
         if (phantom.is_success(result.get_status())):
@@ -446,6 +456,17 @@ class QradarConnector(BaseConnector):
         if offense_ids_list:
             offense_ids_list = [x.strip() for x in offense_ids_list.split(",")]
             offense_ids_list = list(filter(None, offense_ids_list))
+
+            interim_offense_ids_list = list()
+            for x in offense_ids_list:
+                try:
+                    if len(x.strip()) > 0 and int(x.strip()) >= 0:
+                        interim_offense_ids_list.append('{}'.format(int(x.strip())))
+                except Exception as e:
+                    self.debug_print("In Alternate Ingestion workflow for fetching offenses, the provided offense: {} is not valid".format(x))
+                    pass
+
+            offense_ids_list = interim_offense_ids_list
 
         if len(offense_ids_list) > 0:
             reqfilter = "({})".format(" or ".join([ "id=" + str(x) for x in offense_ids_list]))
@@ -910,7 +931,8 @@ class QradarConnector(BaseConnector):
             if (phantom.is_fail(ret_val)):
                 error_message = 'Error occurred while container creation for Offense ID: {0}. Error: {1}'.format(offense_id, message)
                 self.debug_print(error_message)
-                if message and 'Tenant "{0}" was not found or is not enabled'.format(param.get('tenant_id')) in message:
+                if message and ('Tenant {0} was not found or is not enabled'.format(param.get('tenant_id')) in message \
+                    or 'Tenant "{0}" was not found or is not enabled'.format(param.get('tenant_id')) in message):
                     self.save_progress('Aborting the polling process')
                     return action_result.set_status(phantom.APP_ERROR, error_message)
                 continue
@@ -1002,6 +1024,22 @@ class QradarConnector(BaseConnector):
             # Create a action result to represent this action
             action_result = self.add_action_result(ActionResult(dict(param)))
 
+        # Validation for the Offense ID|s
+        try:
+            offense_ids_str = param.get(QRADAR_JSON_OFFENSE_ID, "")
+
+            if isinstance(offense_ids_str, basestring):
+                offense_ids_interim = [x.strip() for x in offense_ids_str.split(",")]
+                offense_ids_interim = list(filter(None, offense_ids_interim))
+                for x in offense_ids_interim:
+                    if int(x) <= 0:
+                        return action_result.set_status(phantom.APP_ERROR, "Please provide all non-zero positive integer values in the 'offense_id' parameter")
+            else:
+                if int(offense_ids_str) <= 0:
+                    return action_result.set_status(phantom.APP_ERROR, "Please provide all non-zero positive integer values in the 'offense_id' parameter")
+        except:
+            return action_result.set_status(phantom.APP_ERROR, "Please provide all non-zero positive integer values in the 'offense_id' parameter")
+
         # 1. Validation of the input parameters
         try:
             count = None
@@ -1012,10 +1050,16 @@ class QradarConnector(BaseConnector):
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
-        if param.get('start_time') and not str(param.get('start_time')).isdigit():
-            return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
+        try:
+            if param.get('start_time') and not str(param.get('start_time')).isdigit():
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
+        except:
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'start_time' parameter")
 
-        if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+        try:
+            if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
+        except:
             return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
 
         # This is alternate offense ingestion | fetching workflow
@@ -1228,8 +1272,8 @@ class QradarConnector(BaseConnector):
             if 'json' in closing_reasons_response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(closing_reasons_response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(
-                                            QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS, closing_reasons_response.status_code, closing_reasons_response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS, closing_reasons_response.status_code,
+                                    UnicodeDammit(closing_reasons_response.text).unicode_markup.encode('utf-8') if closing_reasons_response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         try:
@@ -1265,7 +1309,8 @@ class QradarConnector(BaseConnector):
             if 'json' in get_rule_info_response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(get_rule_info_response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_RULE_INFO, get_rule_info_response.status_code, get_rule_info_response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_RULE_INFO, get_rule_info_response.status_code,
+                                    UnicodeDammit(get_rule_info_response.text).unicode_markup.encode('utf-8') if get_rule_info_response.text else "Unknown error occurred.")
 
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
@@ -1329,7 +1374,8 @@ class QradarConnector(BaseConnector):
                 if 'json' in list_rules_response.headers.get('Content-Type', ''):
                     status_message = self._get_json_error_message(list_rules_response, action_result)
                 else:
-                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_RULES, list_rules_response.status_code, list_rules_response.text)
+                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_RULES, list_rules_response.status_code,
+                                        UnicodeDammit(list_rules_response.text).unicode_markup.encode('utf-8') if list_rules_response.text else "Unknown error occurred.")
 
                 return action_result.set_status(phantom.APP_ERROR, status_message)
 
@@ -1367,19 +1413,24 @@ class QradarConnector(BaseConnector):
 
         response = self._call_api(QRADAR_ARIEL_SEARCH_ENDPOINT, 'post', action_result, params=params)
 
+        if response and response.text:
+            response_text = UnicodeDammit(response.text).unicode_markup.encode('utf-8')
+        else:
+            response_text = "Unknown response returned."
+
         if (phantom.is_fail(action_result.get_status())):
             self.debug_print("call_api for ariel query failed: ", action_result.get_status())
             return action_result.set_status(phantom.APP_ERROR, "Error occurred while fetching events for the offense ID: {}. Response code: {}. Response text: {}".format(
-                                                offense_id, response.status_code, UnicodeDammit(response.text).unicode_markup.encode('utf-8')))
+                                                offense_id, response.status_code, response_text))
 
         self.debug_print("Response Code", response.status_code)
-        self.debug_print("Response Text", UnicodeDammit(response.text).unicode_markup.encode('utf-8'))
+        self.debug_print("Response Text", response_text)
 
         if (response.status_code != 201):
             # Error condition
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ARIEL_QUERY_FAILED)
             try:
-                resp_text = response.text
+                resp_text = UnicodeDammit(response.text).unicode_markup.encode('utf-8')
             except:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide valid input')
 
@@ -1435,7 +1486,8 @@ class QradarConnector(BaseConnector):
                 if 'json' in response.headers.get('Content-Type', ''):
                     status_message = self._get_json_error_message(response, action_result)
                 else:
-                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_ARIEL_QUERY_STATUS_CHECK_FAILED, response.status_code, response.text)
+                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_ARIEL_QUERY_STATUS_CHECK_FAILED, response.status_code,
+                                                UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
                 got_error = True
                 return action_result.set_status(phantom.APP_ERROR, status_message)
 
@@ -1522,7 +1574,8 @@ class QradarConnector(BaseConnector):
             if 'json' in response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_ARIEL_QUERY_RESULTS_FAILED, response.status_code, response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_ARIEL_QUERY_RESULTS_FAILED, response.status_code,
+                                            UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         try:
@@ -1726,10 +1779,16 @@ class QradarConnector(BaseConnector):
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
-        if param.get('start_time') and not str(param.get('start_time')).isdigit():
-            return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
+        try:
+            if param.get('start_time') and not str(param.get('start_time')).isdigit():
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
+        except:
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'start_time' parameter")
 
-        if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+        try:
+            if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
+        except:
             return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
 
         try:
@@ -1767,7 +1826,7 @@ class QradarConnector(BaseConnector):
             action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 
         # Get the fields where part
-        fields_filter = phantom.get_str_val(param, QRADAR_JSON_FIELDS_FILTER, None)
+        fields_filter = UnicodeDammit(phantom.get_str_val(param, QRADAR_JSON_FIELDS_FILTER, "")).unicode_markup.encode('utf-8')
         if (fields_filter):
             if (len(where_clause)):
                 where_clause += " and"
@@ -1912,7 +1971,7 @@ class QradarConnector(BaseConnector):
         # Create a action result
         action_result = self.add_action_result(ActionResult(dict(param)))
 
-        query = param[QRADAR_JSON_QUERY]
+        query = UnicodeDammit(param[QRADAR_JSON_QUERY]).unicode_markup.encode('UTF-8')
 
         # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
         final_count = None
@@ -2002,10 +2061,16 @@ class QradarConnector(BaseConnector):
         except Exception:
             return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'count' parameter")
 
-        if param.get('start_time') and not str(param.get('start_time')).isdigit():
-            return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
+        try:
+            if param.get('start_time') and not str(param.get('start_time')).isdigit():
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid epoch value (milliseconds) in the 'start_time' parameter")
+        except:
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'start_time' parameter")
 
-        if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+        try:
+            if (param.get('end_time') and not str(param.get('end_time')).isdigit()) or param.get('end_time') == 0:
+                return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
+        except:
             return action_result.set_status(phantom.APP_ERROR, "Please provide valid non-zero epoch value (milliseconds) in the 'end_time' parameter")
 
         ret_val = self._validate_times(param, action_result)
@@ -2033,7 +2098,8 @@ class QradarConnector(BaseConnector):
             if 'json' in response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED, response.status_code, response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED, response.status_code,
+                                    UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         try:
@@ -2042,7 +2108,7 @@ class QradarConnector(BaseConnector):
             # Many times when QRadar crashes, it gives back the status code as 200, but the reponse
             # in an html saying that an application error occurred. Bail out when this happens
             # The debug_print of response should help in debugging this
-            self.debug_print("response", response.text)
+            self.debug_print("response", UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GOT_INVALID_RESPONSE)
 
         flow_columns_json = event_columns_json
@@ -2074,7 +2140,7 @@ class QradarConnector(BaseConnector):
             action_result.update_param({QRADAR_JSON_IP: ip_to_query})
 
         # Get the fields where part
-        fields_filter = phantom.get_str_val(param, QRADAR_JSON_FIELDS_FILTER, None)
+        fields_filter = UnicodeDammit(phantom.get_str_val(param, QRADAR_JSON_FIELDS_FILTER, "")).unicode_markup.encode('UTF-8')
         if (fields_filter):
             if (len(where_clause)):
                 where_clause += " and"
@@ -2213,7 +2279,7 @@ class QradarConnector(BaseConnector):
 
         if not response:
             # REST Call Failed
-            reason = json.loads(response.text)
+            reason = json.loads(UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else '{"message": "Unknown error occurred."}')
             if reason.get('message'):
                 err_reason = reason.get('message')
             else:
@@ -2247,7 +2313,7 @@ class QradarConnector(BaseConnector):
             return action_result.get_status()
 
         if response.status_code not in [200, 399]:
-            reason = json.loads(response.text)
+            reason = json.loads(UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else '{"message": "Unknown error occurred."}')
             return action_result.set_status(phantom.APP_ERROR, reason.get('message'))
 
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully assigned user to offense")
@@ -2257,6 +2323,14 @@ class QradarConnector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
         # Get the list of offense ids
         offense_id = param[QRADAR_JSON_OFFENSE_ID]
+
+        try:
+            if param.get('tenant_id', None) is not None:
+                if int(param.get('tenant_id')) < 0:
+                    return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
+        except:
+            return action_result.set_status(phantom.APP_ERROR, 'Please provide a valid integer value in tenant ID')
+
         try:
             if int(offense_id) <= 0:
                 return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-zero positive integer value in 'offense_id' parameter")
@@ -2266,7 +2340,7 @@ class QradarConnector(BaseConnector):
         # Update the parameter
         action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 
-        if param["ingest_offense"]:
+        if param.get("ingest_offense", False):
             self._on_poll_action_result = action_result
             result = self._on_poll(param)
 
@@ -2292,7 +2366,8 @@ class QradarConnector(BaseConnector):
             if 'json' in response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code, response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code,
+                                        UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         # Parse the output, which is details of an offense
@@ -2324,7 +2399,7 @@ class QradarConnector(BaseConnector):
     def _post_add_to_reference_set(self, param):
 
         # Get the list of offense ids
-        reference_set_name = param[QRADAR_JSON_REFSET_NAME]
+        reference_set_name = UnicodeDammit(param[QRADAR_JSON_REFSET_NAME]).unicode_markup.encode('utf-8')
         reference_set_value = param[QRADAR_JSON_REFSET_VALUE]
 
         # Create a action result
@@ -2351,7 +2426,8 @@ class QradarConnector(BaseConnector):
             if 'json' in response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code, response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code,
+                                        UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         self.debug_print("content-type", response.headers['content-type'])
@@ -2420,7 +2496,8 @@ class QradarConnector(BaseConnector):
             if 'json' in response.headers.get('Content-Type', ''):
                 status_message = self._get_json_error_message(response, action_result)
             else:
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code, response.text)
+                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_OFFENSE_DETAIL_API_FAILED, response.status_code,
+                                        UnicodeDammit(response.text).unicode_markup.encode('utf-8') if response.text else "Unknown error occurred.")
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
         self.debug_print("content-type", response.headers['content-type'])
