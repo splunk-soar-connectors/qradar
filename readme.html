@@ -118,7 +118,7 @@
 </p>
 
 <p><b>Explanation of QRadar Actions' Parameters</b>
-	<ol>
+	<ul>
 		<li><b>Test Connectivity (Authentication Details)</b></li>
 			<ul>
 				<li>This action provides 2 modes of providing the authentication: Basic Auth and Auth Token.</li>
@@ -184,7 +184,7 @@
 					<ul>
 						<li>This action will behave similarly to a manual On Poll action run if [ingest_offense] flag is checked and it will ingest all the events as artifacts for the provided offense ID.</li>
 						<li><b>Tenant ID - </b>This field expects a valid tenant ID of the Phantom server for saving the container.</li>
-						<li><b>Offense ID - </b>This field expects a unique offense ID whose details are to be fetched.</li>
+						<li><b>Offense ID - </b>This field expects a unique offense ID whose details are to be fetched. If the value is provided, it will fetch the data for that offense ID irrespective of whether it falls in the range of days specified in the [interval_days] parameter of the app settings.</li>
 						<li><b>Ingest Offense - </b>This flag if checked, the action ingests all the offense and events details. The parameters [interval_days] and [tenant_id] will be accounted for if the [ingest_offense] parameter is checked.</li>
 					</ul>
 				<br>
@@ -213,7 +213,7 @@
 		<br>
 		<li><b>Alt Manage Ingestion</b></li>
 			<ul>
-				<li>This action provides a provision to alter the state file associated with the corresponding asset. For more details please refer to the specific documentation for this action.</li>
+				<li>This action provides a provision to alter the state file associated with the corresponding asset. For more details, please refer to the specific documentation for this action.</li>
 				<li>This action does not make any REST call to the QRadar instance. It simply fetches or manipulates the state file of the Phantom server for the corresponding asset.</li>
 				<li>Please change the state file with great care because if the standard format of the state file goes wrong, then, all the actions which are dependent on the state file e.g. On Poll, Offense Details with [ingest_offense] value True will start working incorrectly</li>
 			</ul>
@@ -261,7 +261,7 @@
 						</ul>
 				</ul>
 			</ul>
-	</ol>
+	</ul>
 </p>
 
 <p><b>General Notes</b>

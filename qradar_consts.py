@@ -38,6 +38,8 @@ QRADAR_JSON_UPDATETIME = "update_time"
 QRADAR_JSON_DEF_NUM_DAYS = "interval_days"
 QRADAR_JSON_QUERY = "query"
 
+TENANT_NOT_FOUND_4_8 = "Tenant {tid} was not found or is not enabled"
+TENANT_NOT_FOUND_4_5 = 'Tenant "{tid}" was not found or is not enabled'
 QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the offense closing reasons details"
 QRADAR_ERR_DATETIME_PARSE = "Error occurred while parsing start_time and end_time."
 QRADAR_ERR_DATETIME_PARSE += " Please check the 'start_time' and 'end_time' action parameters or the 'Alternative initial ingestion time' asset configuration parameter."

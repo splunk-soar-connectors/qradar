@@ -931,8 +931,7 @@ class QradarConnector(BaseConnector):
             if (phantom.is_fail(ret_val)):
                 error_message = 'Error occurred while container creation for Offense ID: {0}. Error: {1}'.format(offense_id, message)
                 self.debug_print(error_message)
-                if message and ('Tenant {0} was not found or is not enabled'.format(param.get('tenant_id')) in message \
-                    or 'Tenant "{0}" was not found or is not enabled'.format(param.get('tenant_id')) in message):
+                if message and (TENANT_NOT_FOUND_4_8.format(tid=param.get('tenant_id')) in message or TENANT_NOT_FOUND_4_5.format(tid=param.get('tenant_id')) in message):
                     self.save_progress('Aborting the polling process')
                     return action_result.set_status(phantom.APP_ERROR, error_message)
                 continue
@@ -1900,6 +1899,16 @@ class QradarConnector(BaseConnector):
 
         # Use the alternate ariel query
         if self._use_alt_ariel_query:
+            where_clause = ''
+            if (fields_filter):
+                where_clause += " {0} ".format(fields_filter)
+                action_result.update_param({QRADAR_JSON_FIELDS_FILTER: fields_filter})
+
+            if offense_id:
+                if (len(where_clause)):
+                    where_clause += " and"
+                where_clause += " InOffense({}) ".format(offense_id)
+
             event_start_time = None
             if self._is_on_poll and not self._is_manual_poll:
                 if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
@@ -1914,11 +1923,14 @@ class QradarConnector(BaseConnector):
                 event_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
 
             if param.get('total_events_count'):
-                where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, int(param.get('total_events_count')), event_days)
+                where_clause += "ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(int(param.get('total_events_count')), event_days)
             else:
-                where_clause = "InOffense({}) ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(offense_id, count, event_days)
+                where_clause += "ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(count, event_days)
 
-        ariel_query = "{0} where {1}".format(UnicodeDammit(ariel_query).unicode_markup.encode('utf-8'), UnicodeDammit(where_clause).unicode_markup.encode('utf-8'))
+        if self._use_alt_ariel_query and where_clause.startswith("ORDER BY"):
+            ariel_query = "{0} {1}".format(UnicodeDammit(ariel_query).unicode_markup.encode('utf-8'), UnicodeDammit(where_clause.strip()).unicode_markup.encode('utf-8'))
+        else:
+            ariel_query = "{0} where {1}".format(UnicodeDammit(ariel_query).unicode_markup.encode('utf-8'), UnicodeDammit(where_clause.strip()).unicode_markup.encode('utf-8'))
 
         # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
         final_count = QRADAR_QUERY_HIGH_RANGE

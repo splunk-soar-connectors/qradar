@@ -1115,7 +1115,7 @@
         {
             "action": "get flows",
             "description": "Get flows that make up an offense for a particular IP",
-            "verbose": "Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'. For further details refer the documentation section of the action in the README.",
+            "verbose": "Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'. For further details refer to the documentation section of the action in the README.",
             "type": "investigate",
             "identifier": "get_flows",
             "read_only": true,
