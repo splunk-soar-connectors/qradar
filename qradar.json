@@ -1,7 +1,7 @@
 {
     "appid": "6cf34589-6947-409f-b776-e8fa62e01509",
     "name": "QRadar",
-    "description": "This app supports generic, investigative and ingestion actions on an IBM QRadar device",
+    "description": "This app supports generic, investigative, and ingestion actions on an IBM QRadar device",
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.pyc",
