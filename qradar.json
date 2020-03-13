@@ -5,11 +5,11 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.66",
+    "app_version": "1.2.67",
     "latest_tested_versions": [
         "On-premise v7.3.1"
     ],
-    "utctime_updated": "2019-10-31T00:51:20.000000Z",
+    "utctime_updated": "2020-03-13T22:25:27.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
@@ -3036,7 +3036,7 @@
                     "data_type": "numeric",
                     "order": 0,
                     "description": "Rule ID for which information needs to be extracted",
-                    "contains":[
+                    "contains": [
                         "qradar rule id"
                     ],
                     "required": true,
@@ -3058,7 +3058,7 @@
                     "example_values": [
                         1421
                     ],
-                    "contains":[
+                    "contains": [
                         "qradar rule id"
                     ],
                     "column_name": "Rule ID",
@@ -3298,7 +3298,7 @@
                     "example_values": [
                         1421
                     ],
-                    "contains":[
+                    "contains": [
                         "qradar rule id"
                     ],
                     "column_name": "Rule ID",
