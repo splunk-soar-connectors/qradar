@@ -1,5 +1,5 @@
 # File: qradar_view.py
-# Copyright (c) 2016-2019 Splunk Inc.
+# Copyright (c) 2016-2020 Splunk Inc.
 #
 # SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
 # without a valid written license from Splunk Inc. is PROHIBITED.
@@ -24,7 +24,8 @@ def _get_contains(value):
         if (contain not in interested_contains):
             continue
 
-        if (validator(value)):
+        # This validation is because the Phantom validators are expecting string or buffer value as input
+        if (validator(value if not isinstance(value, int) and not isinstance(value, long) and not isinstance(value, float) else str(value))):
             contains.append(contain)
 
     return contains
