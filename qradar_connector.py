@@ -1673,6 +1673,9 @@ class QradarConnector(BaseConnector):
         offense_artifact['name'] = 'Offense Artifact'
         offense_artifact['label'] = 'offense'
         offense_artifact['cef'] = self._offense_details
+        len_events = len(events)
+        if len_events == 0:
+            offense_artifact['run_automation'] = True
 
         ret_val, message, _ = self.save_artifact(offense_artifact)
 
@@ -1692,7 +1695,6 @@ class QradarConnector(BaseConnector):
         event_index = 0
         added = 0
         dup = 0
-        len_events = len(events)
         for j, event in enumerate(events):
 
             self.send_progress("Started artifacts creation for the fetched events...")
