@@ -504,7 +504,7 @@ class QradarConnector(BaseConnector):
     def _utc_string(self, et):
         return datetime.utcfromtimestamp(float(et) / 1000).replace(tzinfo=dateutil.tz.tzutc()).strftime("%Y-%m-%d %H:%M:%S%z")
 
-    def _createfilter(self, param, action_result):
+    def _createfilter(self, param, action_result):  # noqa: C901
 
         start_time = None
         end_time = None
@@ -692,7 +692,10 @@ class QradarConnector(BaseConnector):
 
         if not self.get_action_identifier() == 'offense_details':
             # Validate 'count' action parameter
-            ret_val, count = self._validate_integer(action_result,param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)),QRADAR_COUNT_KEY)
+            ret_val, count = self._validate_integer(
+                action_result,
+                param.get(phantom.APP_JSON_CONTAINER_COUNT, param.get(QRADAR_JSON_COUNT, QRADAR_DEFAULT_OFFENSE_COUNT)),
+                QRADAR_COUNT_KEY)
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
 
@@ -763,7 +766,8 @@ class QradarConnector(BaseConnector):
                 try:
                     self.save_progress("Queuing offense id: {} start_time({}, {}) last_updated_time({}, {})".format(offense['id'],
                                                                                                                     offense['start_time'], self._utcctime(offense['start_time']),
-                                                                                                                    offense['last_updated_time'], self._utcctime(offense['last_updated_time'])))
+                                                                                                                    offense['last_updated_time'],
+                                                                                                                    self._utcctime(offense['last_updated_time'])))
                 except Exception as e:
                     error_msg = self._get_error_message_from_exception(e)
                     self.debug_print('Error occurred: {}'.format(error_msg))
@@ -851,7 +855,7 @@ class QradarConnector(BaseConnector):
 
         return phantom.APP_SUCCESS, 'Artifacts created successfully'
 
-    def _on_poll(self, param):
+    def _on_poll(self, param):  # noqa: C901
 
         self._is_on_poll = self.get_action_identifier() == "on_poll"
         self._is_manual_poll = self.is_poll_now()
@@ -1088,7 +1092,7 @@ class QradarConnector(BaseConnector):
         self.send_progress(" ")
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _list_offenses(self, param, action_result=None):
+    def _list_offenses(self, param, action_result=None):  # noqa: C901
 
         if not action_result:
             # Create a action result to represent this action
@@ -1371,7 +1375,11 @@ class QradarConnector(BaseConnector):
     def _get_rule_info(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
 
-        get_rule_info_response = self._call_api('analytics/rules/{}'.format(param.get('rule_id')), 'get', action_result, params=None, headers=None)
+        rule_id = param.get('rule_id')
+        ret_val, _ = self._validate_integer(action_result, rule_id, QRADAR_RULE_ID_KEY)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        get_rule_info_response = self._call_api('analytics/rules/{}'.format(rule_id), 'get', action_result, params=None, headers=None)
 
         if phantom.is_fail(action_result.get_status()):
             self.debug_print("Call API for 'get_rule_info' failed: ", action_result.get_status())
@@ -1858,7 +1866,7 @@ class QradarConnector(BaseConnector):
 
         return to_dt_str
 
-    def _get_events(self, param, action_result=None):
+    def _get_events(self, param, action_result=None):  # noqa: C901
 
         if not action_result:
             # Create a action result to represent this action
@@ -2149,7 +2157,7 @@ class QradarConnector(BaseConnector):
 
         return columns_chunk_list
 
-    def _get_flows(self, param):
+    def _get_flows(self, param):  # noqa: C901
 
         # Create a action result
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -2260,7 +2268,7 @@ class QradarConnector(BaseConnector):
         # the start_time_msecs as set in the below steps
 
         # Validate 'interval_days' action parameter
-        num_days = param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS,QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
+        num_days = param.get(QRADAR_JSON_DEF_NUM_DAYS, self.get_app_config().get(QRADAR_JSON_DEF_NUM_DAYS, QRADAR_NUMBER_OF_DAYS_BEFORE_ENDTIME))
         ret_val, num_days = self._validate_integer(action_result, num_days, QRADAR_INTERVAL_DAYS_KEY)
         if phantom.is_fail(ret_val):
             return action_result.get_status()

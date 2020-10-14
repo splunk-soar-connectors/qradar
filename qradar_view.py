@@ -13,7 +13,7 @@ def _get_contains(value):
 
     contains = []
 
-    if (not value):
+    if not value:
         return contains
 
     for contain, validator in ph_utils.CONTAINS_VALIDATORS.iteritems():
@@ -21,11 +21,11 @@ def _get_contains(value):
         if (not contain) or (not validator):
             continue
 
-        if (contain not in interested_contains):
+        if contain not in interested_contains:
             continue
 
         # This validation is because the Phantom validators are expecting string or buffer value as input
-        if (validator(value if not isinstance(value, int) and not isinstance(value, long) and not isinstance(value, float) else str(value))):
+        if validator(str(value)):
             contains.append(contain)
 
     return contains
@@ -35,7 +35,7 @@ def _process_item(item_name, ctx_result):
 
     item_data_list = ctx_result['data'][item_name]
 
-    if (not item_data_list):
+    if not item_data_list:
         return
 
     # get the 1st item on the item list
