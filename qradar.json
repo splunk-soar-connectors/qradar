@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "1.2.68",
+    "app_version": "2.0.0",
     "latest_tested_versions": [
         "On-premise v7.3.1"
     ],
@@ -41,20 +41,17 @@
         "username": {
             "data_type": "string",
             "order": 2,
-            "description": "Username",
-            "required": false
+            "description": "Username"
         },
         "password": {
             "data_type": "password",
             "order": 3,
-            "description": "Password",
-            "required": false
+            "description": "Password"
         },
         "authorization_token": {
             "data_type": "password",
             "order": 4,
-            "description": "Auth Token for QRadar REST API calls",
-            "required": false
+            "description": "Auth Token for QRadar REST API calls"
         },
         "timezone": {
             "data_type": "timezone",
@@ -72,7 +69,6 @@
             "data_type": "numeric",
             "order": 7,
             "description": "Maximum event artifacts count (excluding the default generated offense artifact)",
-            "required": false,
             "default": 1000
         },
         "ingest_resolved": {
@@ -83,14 +79,12 @@
         "cef_event_map": {
             "data_type": "string",
             "order": 9,
-            "description": "CEF event map",
-            "required": false
+            "description": "CEF event map"
         },
         "cef_value_map": {
             "data_type": "string",
             "order": 10,
-            "description": "CEF value map",
-            "required": false
+            "description": "CEF value map"
         },
         "delete_empty_cef_fields": {
             "data_type": "boolean",
@@ -101,8 +95,7 @@
         "event_fields_for_query": {
             "data_type": "string",
             "order": 12,
-            "description": "Event fields to include while querying",
-            "required": false
+            "description": "Event fields to include while querying"
         },
         "add_offense_id_to_name": {
             "data_type": "boolean",
@@ -124,7 +117,6 @@
         "alt_time_field": {
             "data_type": "string",
             "default": "start_time",
-            "required": false,
             "order": 16,
             "value_list": [
                 "start_time",
@@ -136,14 +128,12 @@
         "alt_initial_ingest_time": {
             "data_type": "string",
             "default": "yesterday",
-            "required": false,
             "order": 17,
             "description": "Alternative initial ingestion time"
         },
         "alt_ingestion_order": {
             "data_type": "string",
             "default": "oldest first",
-            "required": false,
             "order": 18,
             "value_list": [
                 "oldest first",
@@ -154,7 +144,6 @@
         "events_ingest_start_time": {
             "data_type": "numeric",
             "default": 60,
-            "required": false,
             "order": 19,
             "description": "Events ingestion initial time relative to offense start time (default is 60 min)"
         }
@@ -249,7 +238,7 @@
                         "qradar offense id"
                     ],
                     "example_values": [
-                        "44"
+                        44
                     ]
                 },
                 {
@@ -365,7 +354,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "column_name": "Offense Id",
+                    "column_name": "Offense ID",
                     "column_order": 0,
                     "example_values": [
                         44
@@ -713,8 +702,7 @@
                 "interval_days": {
                     "data_type": "numeric",
                     "order": 6,
-                    "description": "Interval days",
-                    "required": false
+                    "description": "Interval days"
                 }
             },
             "render": {
@@ -1126,7 +1114,6 @@
                     "order": 0,
                     "description": "IP to get all the flows of",
                     "primary": true,
-                    "required": false,
                     "contains": [
                         "ip"
                     ]
@@ -1315,7 +1302,7 @@
                 {
                     "data_path": "action_result.data.*.destinationbytes",
                     "data_type": "string",
-                    "column_name": "Bytes to Dest",
+                    "column_name": "Bytes To Dest",
                     "column_order": 6
                 },
                 {
@@ -1342,7 +1329,7 @@
                 {
                     "data_path": "action_result.data.*.destinationpackets",
                     "data_type": "string",
-                    "column_name": "Packets to Dest",
+                    "column_name": "Packets To Dest",
                     "column_order": 5
                 },
                 {
@@ -1487,7 +1474,7 @@
                 {
                     "data_path": "action_result.data.*.sourcebytes",
                     "data_type": "string",
-                    "column_name": "Bytes to Src",
+                    "column_name": "Bytes To Src",
                     "column_order": 8
                 },
                 {
@@ -1514,7 +1501,7 @@
                 {
                     "data_path": "action_result.data.*.sourcepackets",
                     "data_type": "string",
-                    "column_name": "Packets to Src",
+                    "column_name": "Packets To Src",
                     "column_order": 7
                 },
                 {
@@ -1586,8 +1573,7 @@
                 "tenant_id": {
                     "data_type": "numeric",
                     "order": 1,
-                    "description": "Tenant ID for saving container",
-                    "required": false
+                    "description": "Tenant ID for saving container"
                 },
                 "ingest_offense": {
                     "data_type": "boolean",
@@ -1742,7 +1728,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "column_name": "Offense Id",
+                    "column_name": "Offense ID",
                     "column_order": 0,
                     "example_values": [
                         43
@@ -1996,8 +1982,7 @@
                 "datetime": {
                     "data_type": "string",
                     "order": 1,
-                    "description": "Datetime string to be stored against the ingestion data in the state file",
-                    "required": false
+                    "description": "Datetime string to be stored against the ingestion data in the state file"
                 },
                 "offense_id": {
                     "data_type": "string",
@@ -2006,8 +1991,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "primary": true,
-                    "required": false
+                    "primary": true
                 }
             },
             "render": {
@@ -2619,7 +2603,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "column_name": "Offense Id",
+                    "column_name": "Offense ID",
                     "column_order": 0,
                     "example_values": [
                         41
@@ -3099,7 +3083,7 @@
                     "example_values": [
                         1155662266056
                     ],
-                    "column_name": "Creation date",
+                    "column_name": "Creation Date",
                     "column_order": 4
                 },
                 {
@@ -3280,7 +3264,7 @@
                     "example_values": [
                         1155662266056
                     ],
-                    "column_name": "Creation date",
+                    "column_name": "Creation Date",
                     "column_order": 4
                 },
                 {
