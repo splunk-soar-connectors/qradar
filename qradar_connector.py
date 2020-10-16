@@ -326,6 +326,7 @@ class QradarConnector(BaseConnector):
         self._delete_empty_cef_fields = self._config.get("delete_empty_cef_fields", False)
         self._container_only = self._config.get("containers_only", False)
         self._cef_value_map = self._config.get('cef_value_map')
+        self._has_offense = self._config.get('has_offense', True)
         self._server = self._handle_py_ver_compat_for_input_str(config[phantom.APP_JSON_DEVICE])
 
         # Validate 'events_ingest_start_time" configuration parameter
@@ -1924,7 +1925,10 @@ class QradarConnector(BaseConnector):
         if offense_id:
             if len(where_clause):
                 where_clause += " and"
-            where_clause += " hasOffense='true' and InOffense({0})".format(offense_id)
+            if self._has_offense:
+                where_clause += " hasOffense='true' and InOffense({0})".format(offense_id)
+            else:
+                where_clause += " InOffense({0})".format(offense_id)
             # Update the parameter
             action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 
@@ -2244,7 +2248,10 @@ class QradarConnector(BaseConnector):
         if offense_id:
             if len(where_clause):
                 where_clause += " and"
-            where_clause += " hasoffense='true' and InOffense({0})".format(offense_id)
+            if self._has_offense:
+                where_clause += " hasOffense='true' and InOffense({0})".format(offense_id)
+            else:
+                where_clause += " InOffense({0})".format(offense_id)
             # Update the parameter
             action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 

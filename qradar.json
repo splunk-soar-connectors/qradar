@@ -32,6 +32,12 @@
             "order": 20,
             "description": "Ingest only offenses while polling"
         },
+        "has_offense": {
+            "data_type": "boolean",
+            "order": 21,
+            "description": "Fetch only events and flows associated with the offense",
+            "default": true
+        },
         "verify_server_cert": {
             "data_type": "boolean",
             "description": "Verify server certificate",
