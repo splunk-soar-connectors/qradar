@@ -848,7 +848,7 @@ class QradarConnector(BaseConnector):
         artifact['container_id'] = container_id
         artifact['source_data_identifier'] = offense['id']
         artifact['cef'] = offense
-
+        artifact['label'] = 'offense'
         create_artifact_status, create_artifact_msg, _ = self.save_artifacts([artifact])
 
         if phantom.is_fail(create_artifact_status):
@@ -1773,6 +1773,7 @@ class QradarConnector(BaseConnector):
         offense_artifact['container_id'] = self._container_id
         offense_artifact['name'] = 'Offense Artifact'
         offense_artifact['label'] = 'offense'
+        offense_artifact['source_data_identifier'] = offense_id
         offense_artifact['cef'] = self._offense_details
         len_events = len(events)
         if len_events == 0:
