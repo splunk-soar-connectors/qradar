@@ -1522,6 +1522,8 @@ class QradarConnector(BaseConnector):
             action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_ARIEL_QUERY_FAILED)
             try:
                 resp_text = self._handle_py_ver_compat_for_input_str(response.text)
+                if response.json().get("description"):
+                    resp_text = response.json().get("description", "Please provide valid input")
             except:
                 return action_result.set_status(phantom.APP_ERROR, 'Please provide valid input')
 
@@ -1934,7 +1936,7 @@ class QradarConnector(BaseConnector):
             action_result.update_param({QRADAR_JSON_OFFENSE_ID: offense_id})
 
         # Get the fields where part
-        fields_filter = self._handle_py_ver_compat_for_input_str(phantom.get_str_val(param, QRADAR_JSON_FIELDS_FILTER, ""))
+        fields_filter = self._handle_py_ver_compat_for_input_str(param.get(QRADAR_JSON_FIELDS_FILTER, ""))
         if fields_filter:
             if len(where_clause):
                 where_clause += " and"
@@ -2265,7 +2267,7 @@ class QradarConnector(BaseConnector):
             action_result.update_param({QRADAR_JSON_IP: ip_to_query})
 
         # Get the fields where part
-        fields_filter = self._handle_py_ver_compat_for_input_str(phantom.get_str_val(param, QRADAR_JSON_FIELDS_FILTER, ""))
+        fields_filter = self._handle_py_ver_compat_for_input_str(param.get(QRADAR_JSON_FIELDS_FILTER, ""))
         if fields_filter:
             if len(where_clause):
                 where_clause += " and"
@@ -2318,62 +2320,48 @@ class QradarConnector(BaseConnector):
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch('start_time_msecs', start_time_msecs, action_result))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch('end_time_msecs', end_time_msecs, action_result))
 
-        final_flows_data = list()
+        mixed_columns = []
+        for i in flow_columns_chunks:
+            mixed_columns.extend(i)
+        flow_columns = ','.join(mixed_columns)
 
-        for chunk in flow_columns_chunks:
-            flow_columns = ','.join(chunk)
+        self.debug_print("flow_columns", flow_columns)
 
-            self.debug_print("flow_columns", flow_columns)
+        ariel_query = QRADAR_AQL_FLOW_SELECT.format(fields=flow_columns) + QRADAR_AQL_FLOW_FROM
+        ariel_query = self._handle_py_ver_compat_for_input_str(ariel_query)
+        where_clause = self._handle_py_ver_compat_for_input_str(where_clause)
 
-            ariel_query = QRADAR_AQL_FLOW_SELECT.format(fields=flow_columns) + QRADAR_AQL_FLOW_FROM
-            ariel_query = self._handle_py_ver_compat_for_input_str(ariel_query)
-            where_clause = self._handle_py_ver_compat_for_input_str(where_clause)
+        ariel_query = "{0} where {1}".format(ariel_query, where_clause)
 
-            ariel_query = "{0} where {1}".format(ariel_query, where_clause)
+        # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
+        final_count = None
+        try:
+            extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
 
-            # Sent the final count which is inserted in the ariel_query to the _handle_ariel_query method
-            final_count = None
-            try:
-                extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
+            if extracted_limit_list:
+                final_count = int(extracted_limit_list[0])
+        except:
+            self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(ariel_query))
+            self.debug_print('Fetching entire data due to failure in fetching the value of the LIMIT value from the query string')
 
-                if extracted_limit_list:
-                    final_count = int(extracted_limit_list[0])
-            except:
-                self.debug_print('Error occurred while extracting the LIMIT value from the ariel query string: {}'.format(ariel_query))
-                self.debug_print('Fetching entire data due to failure in fetching the value of the LIMIT value from the query string')
+        self.debug_print('Sending the value {} as count to finally fetch the elements using the ariel query'.format(final_count))
 
-            self.debug_print('Sending the value {} as count to finally fetch the elements using the ariel query'.format(final_count))
+        # Initiating the all items and all items count to zero for every chunk of data
+        # for fetching same values for every small chunk of data
+        self._total_events_count = 0
+        self._all_flows_data = []
 
-            # Initiating the all items and all items count to zero for every chunk of data
-            # for fetching same values for every small chunk of data
-            self._total_events_count = 0
-            self._all_flows_data = []
+        ret_val = self._handle_ariel_query(ariel_query, action_result, 'flows', offense_id, count=final_count)
 
-            ret_val = self._handle_ariel_query(ariel_query, action_result, 'flows', offense_id, count=final_count)
+        if phantom.is_fail(ret_val):
+            self.debug_print('Fetching flows failed with the ariel query: {0}. Error message: {1}'.format(
+                                ariel_query, action_result.get_message()))
+            return action_result.get_status()
 
-            if phantom.is_fail(ret_val):
-                self.debug_print('Fetching flows failed with the ariel query: {0}. Error message: {1}'.format(
-                                    ariel_query, action_result.get_message()))
-                return action_result.get_status()
-
-            if self._all_flows_data:
-                final_flows_data.append(self._all_flows_data)
-
-        total_chunks = len(final_flows_data)
-
-        # We should get some flows data and also, we should get the same length
-        # set of the flows data as the length of the flow columns chunk list
-        if not final_flows_data or len(flow_columns_chunks) != total_chunks:
+        if not self._all_flows_data:
             return action_result.set_status(phantom.APP_ERROR, "No flows found")
 
-        final_data = list()
-        for i, flow in enumerate(final_flows_data[0]):
-            if total_chunks > 1:
-                for j in range(1, total_chunks):
-                    flow.update(final_flows_data[j][i])
-            final_data.append(flow)
-
-        for data in final_data:
+        for data in self._all_flows_data:
             action_result.add_data(data)
 
         action_result.update_summary({QRADAR_JSON_TOTAL_FLOWS: action_result.get_data_size()})
