@@ -2710,7 +2710,9 @@ class QradarConnector(BaseConnector):
                 self._state['last_ingested_events_data'] = events_data
             except:
                 return action_result.set_status(phantom.APP_ERROR, "Invalid datetime parameter")
-
+        else:
+            if(not operation == "get last saved ingestion time data"):
+                return action_result.set_status(phantom.APP_ERROR, "Please select a valid operation in the 'operation' action parameter")
         last_saved_offense_ingest_time = self._state.get('last_saved_ingest_time')
         last_ingested_events_ingest_time_as_epoch = self._state.get('last_ingested_events_data', {})
         last_ingested_events_ingest_time_as_datetime = {}
