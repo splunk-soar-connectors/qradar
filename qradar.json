@@ -204,8 +204,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "primary": true,
-                    "allow_list": true
+                    "primary": true
                 }
             },
             "render": {

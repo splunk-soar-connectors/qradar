@@ -1210,7 +1210,7 @@ class QradarConnector(BaseConnector):
 
         # get the list of offenses that we are supposed to query for
         offense_ids = str(param.get(phantom.APP_JSON_CONTAINER_ID, param.get(QRADAR_JSON_OFFENSE_ID, None)))
-
+        
         if offense_ids != 'None':
             offense_ids = [x.strip() for x in offense_ids.split(",")]
             offense_ids = list(filter(None, offense_ids))
@@ -1297,6 +1297,8 @@ class QradarConnector(BaseConnector):
 
         # Parse the output, which is an array of offenses
         # Update the summary
+        if(total_offenses == 0 and offense_ids != 'None'):
+            return action_result.set_status(phantom.APP_ERROR, "Please provide valid offense ID|s")
         action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len(offenses)})
 
         for offense in offenses:
