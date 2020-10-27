@@ -114,7 +114,7 @@
 					<b>containers_only - </b> This parameter is optional and if not set to true then, the offenses will be created as containers and the events of the offenses will be created as the artifacts. If this parameter is set to true then, the offenses will be created as containers and the details of the offenses will be created as the artifacts in those containers respectively. This configuration parameter is used in the Offense Details and On Poll actions.
 				</li>
 				<li>
-					<b>has_offense - </b> This parameter is optional and by default will be checked as true. This parameter describes whether the events and flows should be associated with the offense or not while fetching the events and flows. If this is set to true, then the events and flows associated with the offense will only be considered. This configuration parameter is used in the Get Events, Get Flows as well as in the On Poll action.
+					<b>has_offense - </b> This parameter is optional and by default will be checked as true. This parameter describes whether the events and flows should be associated with the offense or not while fetching the events and flows. If this is set to true, then the events and flows associated with the offense will only be considered. This configuration parameter is used in the Get Events, Get Flows as well as in the On Poll action. For Get Events and Get Flows Action, 'has_offense' will only be considered if the user has passed the 'offense_id' while running these actions.
 				</li>
 			</ul>
    </ul>
@@ -156,7 +156,7 @@
 						<li>This workflow provides a provision to fetch the offenses in the sorted order based on the QRadar offense time fields [starttime] and [last_updated_time]. Based on the above-mentioned time field selected, the offenses whose time field fall in the time range (inclusive of boundaries) defined by [start_time] and [end_time] action parameters are fetched. If the time field selected is [either], then, the offenses whose either [starttime] or [last_updated_time] falls in the time range (inclusive of boundaries) defined by [start_time] and [end_time] action parameters are fetched. For the time field [either], for the On Poll actions (scheduled | interval polling) the maximum of the [starttime] or [last_updated_time] for the last fetched offense is stored in the state file against the key [last_saved_ingest_time].</li>
 					</ul>
 			</ul>
-			
+
 		<br>
 		<li><b>Get Events</b></li>
 			<ul>
@@ -179,7 +179,7 @@
 						<li>This workflow performs the same functionality as the default ingestion workflow, but with a different form of the Ariel query. The time based filtering in this workflow is applied based on the granularity of days instead of applying it based on the granularity of epoch and Datetime formats.</li>
 					</ul>
 			</ul>
-			
+
 		<br>
 		<li><b>Offense Details</b></li>
 			<ul>
