@@ -18,7 +18,7 @@
 	<ul>
 		<li>The existing action parameters have been modified in the actions given below. Hence, it is requested to the end-user to please update their existing playbooks by re-inserting the corresponding action blocks or by providing appropriate values to these action parameters to ensure the correct functioning of the playbooks created on the earlier versions of the app.</li>
 		<ul>
-			<li>Alt Manage Ingestion - The new drop-down values in the [operation] parameter have been added and the existing ones modified.</li>
+			<li>Alt Manage Ingestion - The new drop-down values in the [operation] parameter have been added and the existing ones are modified.</li>
 			<li>Get Flows - This action was not working correctly and we have updated the logic for this action's functionality.</li>
 			<li>Offense Details - The action parameter for [interval_days] has been removed as it was not getting used in the action.</li>
 		</ul>
@@ -71,7 +71,7 @@
 					</ul>
 				</li>
 				<li>
-					<b>cef_value_map - </b> JSON formatted string representation of a dictionary used to map CEF field values to new values. Similar to cef_event_map. Replace the value of any CEF field with another value. For example, to replace the value of cef.requestURL of \"nourl\", with null value, provide { \"nourl\": null }. If the user wants to replace a numeric (integer|float) value to some other value, due to the SDK issue, the user has to provide the key-value map in this format. e.g. if user wants to replace value 4 with 10 and 5.3 with 6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}<br>
+					<b>cef_value_map - </b> JSON formatted string representation of a dictionary used to map CEF field values to new values. Similar to cef_event_map. Replace the value of any CEF field with another value. For example, to replace the value of cef.requestURL of \"nourl\", with null value, provide { \"nourl\": null }. If the user wants to replace a numeric (integer|float) value with some other value, due to the SDK issue, the user has to provide the key-value map in this format. e.g. if user wants to replace value 4 with 10 and 5.3 with 6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}<br>
 					<b>Sample [CEF Value Map] values</b><br>
 					<ul>
 						<li>To replace integer|float values; value 4 with 10 and 5.3 with 6.7, provide below CEF value mapping</li>
@@ -138,18 +138,16 @@
 				<li>Default Offenses Ingestion Workflow</li>
 					<ul>
 						<li>The offenses are fetched based on the logic that either their [start_time] or their [last_updated_time] is between the time range defined by [start_time] and [end_time].</li>
-						<li><b>Start Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is internally derived by substracting the [interval_days] from the [end_time]. This field is having a higher preference over the [interval_days] action parameter if both are specified.</li>
+						<li><b>Start Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is internally derived by subtracting the [interval_days] from the [end_time]. This field is having a higher preference over the [interval_days] action parameter if both are specified.</li>
 						<li><b>End Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is equal to the current epoch value in milliseconds.</li>
 						<li><b>Count - </b>This field expects a valid non-zero integer value or empty value. If provided, offenses equal to the provided value are fetched. If left empty, the default 100 offenses matching the filter criteria are fetched. If the user wants to fetch all the offenses, provide a value greater than the total offenses that exist on the QRadar server.</li>
-						<li><b>Interval Days - </b>This field expects a valid non-zero integer value or empty value. If provided, offenses within the last n days (n is equal to the value provided in [interval_days] parameter) are fetched. If left empty, the value provided in the [App Config Settings] is considered in the [interval_days] parameter. If [App Config Settings] is also left empty, the default value of 5 days is considered in the [interval_days] parameter.</li>
-						<li><b>Fields Filter - </b>This field expects a filter string in the valid AQL query syntax.</li>
 						<li><b>Offense ID - </b>This field expects a comma-separated string containing valid offense IDs. If this is provided, irrespective of the start_time or end_time, the offenses corresponding to all the offense IDs provided here will be fetched based on the value provided in the [count] parameter.</li>
 					</ul>
 				<br>
 				<li>Alternate Offenses Ingestion Workflow</li>
 					<ul>
 						<li>This workflow has the functionalities similar to the default ingestion workflow with the below-mentioned points getting considered while ingestion.</li>
-						<li>This workflow considers the value stored against the key [last_saved_ingest_time] in the state file (only for On Poll and Ingest Offense action with ingest_offense set to TRUE) as start time to fetch the offenses. If the key is not found in the state file, it considers the value mentioned in the [Alternative initial ingestion time] asset configuration parameter as the start time to fetch the offenses. If none of the above-mentioned values are found, it considers the default value as yesterday. It does not consider the [interval_days] parameter mentioned in the [app_config] settings.</li>
+						<li>This workflow considers the value stored against the key [last_saved_ingest_time] in the state file (only for On Poll and Ingest Offense action with ingest_offense set to TRUE) as the start time to fetch the offenses. If the key is not found in the state file, it considers the value mentioned in the [Alternative initial ingestion time] asset configuration parameter as the start time to fetch the offenses. If none of the above-mentioned values are found, it considers the default value as yesterday. It does not consider the [interval_days] parameter mentioned in the [app_config] settings.</li>
 						<li>This workflow is considered only if the [Alternative ingest algorithm for offenses] configuration parameter is checked.</li>
 						<li>The configuration parameters [Alternative ingestion time field] and [Alternative ingestion order for offenses] are applicable for this workflow only if the [Alternative ingest algorithm for offenses] config parameter is checked.</li>
 						<li>This workflow provides a provision to fetch the offenses in the [latest first] and the [oldest first] order.</li>
@@ -163,7 +161,7 @@
 				<li>Default Ariel Query Events Ingestion Workflow</li>
 					<ul>
 						<li>The events are fetched in the descending order of the values in the [starttime] field.</li>
-						<li><b>Start Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is internally derived by substracting the [interval_days] from the [end_time]. This field is having a higher preference over the [interval_days] action parameter if both are specified.</li>
+						<li><b>Start Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is internally derived by subtracting the [interval_days] from the [end_time]. This field is having a higher preference over the [interval_days] action parameter if both are specified.</li>
 						<li><b>End Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is equal to the current epoch value in milliseconds.</li>
 						<li><b>Count - </b>This field expects a valid non-zero integer value or empty value. If provided, events equal to the provided value are fetched. If left empty, default 100 events matching the filter criteria are fetched. If the user wants to fetch all the events, provide a value greater than the total events that exist on the QRadar server.</li>
 						<li><b>Interval Days - </b>This field expects a valid non-zero integer value or empty value. If provided, events within the last n days (n is equal to the value provided in [interval_days] parameter) are fetched. If left empty, the value provided in the [App Config Settings] is considered in the [interval_days] parameter. If [App Config Settings] is also left empty, the default value of 5 days is considered in the [interval_days] parameter.</li>
@@ -183,18 +181,21 @@
 		<br>
 		<li><b>Offense Details</b></li>
 			<ul>
-				<li>To enable Multi-Tenancy</li>
-				<ul>
-				<li>Go to the Administration section and there inside the Product section you will need to enable the multi-tenancy.</li>
-				<li>Now go to asset configurations and select the Tenants tab. Now from the available list of tenants select any tenant to map with the asset.</li>
-				<li>If multi-tenancy is enabled and no tenant is mapped with the asset then no container will be created.</li>
-				<li>If multi-tenancy is not enabled then the events will be ingested with the default tenant.</li>
-				</ul>
 				<br>
 				<li>Default Offenses Ingestion Workflow</li>
 					<ul>
-						<li>This action will behave similarly to a manual On Poll action run if [ingest_offense] flag is checked and it will ingest all the events as artifacts for the provided offense ID.</li>
+						<li>This action will behave similarly to a manual On Poll action run if the [ingest_offense] flag is checked and it will ingest all the events as artifacts for the provided offense ID.</li>
 						<li><b>Tenant ID - </b>This field expects a valid tenant ID of the Phantom server for saving the container.</li>
+						<ul>
+							<li><b>To enable Multi-Tenancy</b></li>
+							<ul>
+								<li>Go to the Administration section and there inside the Product section you will need to enable the multi-tenancy.</li>
+								<li>Now go to asset configurations and select the Tenants tab.</li>
+								<li>Now from the available list of tenants select any tenant to map with the asset.</li>
+								<li>If multi-tenancy is enabled and no tenant is mapped with the asset then no container will be created.</li>
+								<li>If multi-tenancy is not enabled then the events will be ingested with the default tenant.</li>
+							</ul>
+						</ul>
 						<li><b>Offense ID - </b>This field expects a unique offense ID whose details are to be fetched. If the value is provided, it will fetch the data for that offense ID irrespective of whether it falls in the range of days specified in the [interval_days] parameter of the app settings.</li>
 						<li><b>Ingest Offense - </b>This flag if checked, the action ingests all the offense and events details. The parameters [interval_days] and [tenant_id] will be accounted for if the [ingest_offense] parameter is checked.</li>
 					</ul>
@@ -214,7 +215,7 @@
 		<br>
 		<li><b>Get Flows</b></li>
 			<ul>
-				<li><b>Start Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is internally derived by substracting the [interval_days] from the [end_time].</li>
+				<li><b>Start Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is internally derived by subtracting the [interval_days] from the [end_time].</li>
 				<li><b>End Time - </b>This field expects an epoch value in milliseconds. If not provided, this value is equal to the current epoch value in milliseconds.</li>
 				<li><b>Count - </b>This field expects a valid non-zero integer value or empty value. If provided, flows equal to the provided value are fetched. If left empty, default 100 flows matching the filter criteria are fetched. If the user wants to fetch all the flows, provide a value greater than the total flows that exist on the QRadar server.</li>
 				<li><b>IP - </b>IP to match against [Source Destination IP] and [Target Destination IP] for fetching all the flows.</li>
@@ -256,7 +257,7 @@
 					<br>
 					<li>Scheduled polling</li>
 						<ul>
-							<li>Scheduled polling fetches all the data every time (for the first run only) based on the asset and app configurations. It is recommended to keep very high value in [container_count] and [artifact_max] parameters to ensure all the required data gets ingested (in the first run itself and gets in sync with the QRadar current state) and avoids any data loss.</li>
+							<li>Scheduled polling fetches all the data every time (for the first run only) based on the asset and app configurations. It is recommended to keep a very high value in [container_count] and [artifact_max] parameters to ensure all the required data gets ingested (in the first run itself and gets in sync with the QRadar current state) and avoids any data loss.</li>
 							<li>It is recommended to keep scheduled polling interval of more than 30 minutes or an hour (for the first time so that all the initial offenses and events data get ingested quickly and correctly) if the number of events to be ingested is large in number (e.g. > 50,000 events collectively to be ingested for all offenses). The reason for doing this is due to the Phantom core's inherent behavior of killing the previous scheduled poll or interval poll run if it does not get completed within a definite time which is x times (x is internally defined specific to the Phantom server) multiple of the current polling interval. e.g. If there are 10 offenses with each offense having 5000 events (total 50,000 events), configure the scheduled polling for 30 minutes or an hour or more and wait until all the initial data gets ingested. Once it is completed, change the polling interval to the required time and then, the scheduled polling will work correctly, keeping the Phantom ingested data in sync with the QRadar data.</li>
 							<li>For the consecutive runs, the offenses are fetched starting from the epoch value in milliseconds stored in the [last_saved_ingest_time] key of the state file.</li>
 							<li>Fetch the offenses</li>

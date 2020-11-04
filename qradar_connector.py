@@ -1210,7 +1210,7 @@ class QradarConnector(BaseConnector):
 
         # get the list of offenses that we are supposed to query for
         offense_ids = str(param.get(phantom.APP_JSON_CONTAINER_ID, param.get(QRADAR_JSON_OFFENSE_ID, None)))
-        
+
         if offense_ids != 'None':
             offense_ids = [x.strip() for x in offense_ids.split(",")]
             offense_ids = list(filter(None, offense_ids))
@@ -2361,7 +2361,7 @@ class QradarConnector(BaseConnector):
             return action_result.get_status()
 
         if not self._all_flows_data:
-            return action_result.set_status(phantom.APP_ERROR, "No flows found")
+            return action_result.set_status(phantom.APP_SUCCESS, "No flows found")
 
         for data in self._all_flows_data:
             action_result.add_data(data)
