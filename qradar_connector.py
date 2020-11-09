@@ -376,7 +376,7 @@ class QradarConnector(BaseConnector):
         # default is json, if any action needs to change then let them
         self._headers['Accept'] = QRADAR_JSON_ACCEPT_HDR_JSON
 
-        # Don't specify the version, so the latest api installed on the device will be used.
+        # Don't specify the version, so the latest API installed on the device will be used.
         # There seems to be _no_ change in the contents or endpoints of the API only the version!!
         self._headers.update(self._auth)
 
@@ -2000,7 +2000,7 @@ class QradarConnector(BaseConnector):
             where_clause += " order by STARTTIME desc limit {0}".format(count)
 
         # From testing queries, it was noticed that the START and STOP are required else the default
-        # result returned by the REST api is of 60 seconds or so. Also the time format needs to be in
+        # result returned by the REST API is of 60 seconds or so. Also, the time format needs to be in
         # the device's timezone.
         if self._get_tz_str_from_epoch('start_time_msecs', start_time_msecs, action_result) is None or self._get_tz_str_from_epoch(
                                                                                                                 'end_time_msecs', end_time_msecs, action_result) is None:
@@ -2312,7 +2312,7 @@ class QradarConnector(BaseConnector):
         where_clause += " ORDER BY starttime DESC LIMIT {0}".format(count)
 
         # From testing queries, it was noticed that the START and STOP are required else the default
-        # result returned by the REST api is of 60 seconds or so. Also the time format needs to be in
+        # result returned by the REST API is of 60 seconds or so. Also, the time format needs to be in
         # the device's timezone.
 
         if self._get_tz_str_from_epoch('start_time_msecs', start_time_msecs, action_result) is None or self._get_tz_str_from_epoch(

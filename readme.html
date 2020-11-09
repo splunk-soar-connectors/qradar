@@ -185,15 +185,15 @@
 				<li>Default Offenses Ingestion Workflow</li>
 					<ul>
 						<li>This action will behave similarly to a manual On Poll action run if the [ingest_offense] flag is checked and it will ingest all the events as artifacts for the provided offense ID.</li>
-						<li><b>Tenant ID - </b>This field expects a valid tenant ID of the Phantom server for saving the container.</li>
+						<li><b>Tenant ID - </b>This field expects a valid tenant ID of the Phantom server for saving the container. If multi-tenancy is not enabled, then the events will be ingested with the default tenant. But if multi-tenancy is enabled and this field is left blank and no tenant is mapped with the asset then containers will not be created.</li>
 						<ul>
 							<li><b>To enable Multi-Tenancy</b></li>
 							<ul>
-								<li>Go to the Administration section and there inside the Product section you will need to enable the multi-tenancy.</li>
-								<li>Now go to asset configurations and select the Tenants tab.</li>
-								<li>Now from the available list of tenants select any tenant to map with the asset.</li>
-								<li>If multi-tenancy is enabled and no tenant is mapped with the asset then no container will be created.</li>
-								<li>If multi-tenancy is not enabled then the events will be ingested with the default tenant.</li>
+								<li> Go to the Administration section and under Product settings select Multi-tenancy and enable it.</li>
+							</ul>
+							<li><b>To map a tenant with asset</b></li>
+							<ul>
+								<li>After enabling Multi-tenancy go-to asset configurations and select the Tenants tab. From the available list of tenants, select the tenant to map with the asset.</li>
 							</ul>
 						</ul>
 						<li><b>Offense ID - </b>This field expects a unique offense ID whose details are to be fetched. If the value is provided, it will fetch the data for that offense ID irrespective of whether it falls in the range of days specified in the [interval_days] parameter of the app settings.</li>
