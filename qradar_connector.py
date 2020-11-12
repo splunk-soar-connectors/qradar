@@ -333,26 +333,23 @@ class QradarConnector(BaseConnector):
         ret_val, self._events_ingest_start_time = self._validate_integer(self, self._events_ingest_start_time, QRADAR_EVENTS_INGEST_START_TIME_KEY)
         if phantom.is_fail(ret_val):
             return self.get_status()
-
-        if self._cef_value_map and len(self._cef_value_map) > 1:
-            try:
-                self._cef_value_map = json.loads(self._cef_value_map)
-
-                for key, value in self._cef_value_map.items():
+        try:
+            if self._cef_value_map:
+                self._cef_value_map = json.loads(self._cef_value_map, strict=False)
+                cef_value_map = self._cef_value_map.copy()
+                for key, value in cef_value_map.items():
                     integer_pattern = re.findall(QRADAR_CEF_VALUE_MAP_INT_PATTERN, key, re.IGNORECASE)
-
                     if integer_pattern:
                         del self._cef_value_map[key]
                         self._cef_value_map[float(integer_pattern[0][0])] = value
-            except Exception as e:
-                cef_map_error_message = "Error cef_value_map is not in the valid expected JSON format"
-                self.save_progress(cef_map_error_message)
-
-                error_msg = self._get_error_message_from_exception(e)
-                self.set_status(phantom.APP_ERROR, "{}. Error message: {}".format(cef_map_error_message, error_msg))
-                return phantom.APP_ERROR
-        else:
-            self._cef_value_map = {}
+            else:
+                self._cef_value_map = {}
+        except Exception as e:
+            cef_map_error_message = "Error cef_value_map is not in the valid expected JSON format"
+            self.save_progress(cef_map_error_message)
+            error_msg = self._get_error_message_from_exception(e)
+            self.set_status(phantom.APP_ERROR, "{}. Error message: {}".format(cef_map_error_message, error_msg))
+            return phantom.APP_ERROR
 
         self._on_poll_action_result = None
 
