@@ -3751,7 +3751,7 @@
                 "container_id": {
                     "data_type": "string",
                     "order": 0,
-                    "description": "Container IDs to limit the ingestion to"
+                    "description": "Parameter ignored for this app"
                 },
                 "start_time": {
                     "data_type": "numeric",

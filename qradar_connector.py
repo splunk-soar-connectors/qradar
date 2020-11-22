@@ -339,7 +339,7 @@ class QradarConnector(BaseConnector):
             if self._cef_value_map:
                 self._cef_value_map = json.loads(self._cef_value_map, strict=False)
                 cef_value_map = self._cef_value_map.copy()
-                for key, value in cef_value_map.items():
+                for key, value in list(cef_value_map.items()):
                     integer_pattern = re.findall(QRADAR_CEF_VALUE_MAP_INT_PATTERN, key, re.IGNORECASE)
                     if integer_pattern:
                         del self._cef_value_map[key]
@@ -395,12 +395,12 @@ class QradarConnector(BaseConnector):
         cef = phantom.get_cef_data(event, self._cef_event_map)
 
         if self._cef_value_map:
-            for k, v in cef.items():
+            for k, v in list(cef.items()):
                 if v in self._cef_value_map:
                     cef[k] = self._cef_value_map[v]
 
         if self._delete_empty_cef_fields:
-            cef = {k: v for k, v in cef.items() if v}
+            cef = {k: v for k, v in list(cef.items()) if v}
 
         self.debug_print("event: ", event)
         self.debug_print("cef: ", cef)
@@ -920,7 +920,7 @@ class QradarConnector(BaseConnector):
 
             for field in event_fields:
                 field = self._handle_py_ver_compat_for_input_str(field)
-                if field not in self._cef_event_map.values():
+                if field not in list(self._cef_event_map.values()):
                     self._cef_event_map[field] = field
 
         # Call _list_offenses with a local action result,
@@ -966,14 +966,14 @@ class QradarConnector(BaseConnector):
                     phantom.SEVERITY_MEDIUM if x <= 7 else phantom.SEVERITY_HIGH)
 
             # Replace the 'null' string to None if any
-            offense = dict([(x[0], None if x[1] == 'null' else x[1]) for x in offense.items()])
+            offense = dict([(x[0], None if x[1] == 'null' else x[1]) for x in list(offense.items())])
 
             # Strip \r, \n and space from the values, QRadar does that for the description field atleast
             if self._python_version == 2:
                 v_strip = lambda v: v.strip(' \r\n').replace(u'\u0000', '') if type(v) == str or type(v) == unicode else v
             else:
                 v_strip = lambda v: v.strip(' \r\n').replace('\u0000', '') if type(v) == str else v
-            offense = dict([(k, v_strip(v)) for k, v in offense.items()])
+            offense = dict([(k, v_strip(v)) for k, v in list(offense.items())])
 
             # Don't want dumping non None
             self.debug_print('Offense', phantom.remove_none_values(offense))
@@ -984,7 +984,7 @@ class QradarConnector(BaseConnector):
             # Validate 'tenant_id' action parameter
             tenant_id = param.get('tenant_id', None)
             if tenant_id:
-                ret_val, _ = self._validate_integer(action_result, tenant_id, QRADAR_TENANT_ID_KEY)
+                ret_val, tenant_id = self._validate_integer(action_result, tenant_id, QRADAR_TENANT_ID_KEY)
                 if phantom.is_fail(ret_val):
                     return action_result.get_status()
                 container['tenant_id'] = tenant_id
@@ -1719,7 +1719,7 @@ class QradarConnector(BaseConnector):
 
             for obj in objs:
                 # Replace the 'null' string to None if any
-                obj = dict([(x[0], None if x[1] == 'null' else x[1]) for x in obj.items()])
+                obj = dict([(x[0], None if x[1] == 'null' else x[1]) for x in list(obj.items())])
                 if self._is_on_poll or self.get_action_identifier() == 'offense_details' or self.get_action_identifier() == 'get_flows':
                     local_events_list.append(obj)
                 else:
@@ -1805,7 +1805,7 @@ class QradarConnector(BaseConnector):
             self.send_progress("Started artifacts creation for the fetched events...")
 
             # strip \r, \n and space from the values, QRadar does that for the description field atleast
-            event = dict([(k, v_strip(v)) for k, v in event.items()])
+            event = dict([(k, v_strip(v)) for k, v in list(event.items())])
 
             artifact = self._get_artifact(event, self._container_id)
 
@@ -2129,14 +2129,14 @@ class QradarConnector(BaseConnector):
             return action_result.get_status()
 
         # loop for the event, flows items
-        for curr_item, v in items.items():
+        for curr_item, v in list(items.items()):
 
             if type(v) != list:
                 items[curr_item] = [v]
 
             for i, curr_obj in enumerate(items[curr_item]):
                 # Replace the 'null' string to None if any
-                curr_obj = dict([(x[0], None if x[1] == 'null' else x[1]) for x in curr_obj.items()])
+                curr_obj = dict([(x[0], None if x[1] == 'null' else x[1]) for x in list(curr_obj.items())])
                 items[curr_item][i] = curr_obj
 
         return action_result.set_status(phantom.APP_SUCCESS, QRADAR_SUCC_RUN_QUERY)
@@ -2709,13 +2709,13 @@ class QradarConnector(BaseConnector):
         last_ingested_events_ingest_time_as_epoch = self._state.get('last_ingested_events_data', {})
         last_ingested_events_ingest_time_as_datetime = {}
 
-        for key, value in last_ingested_events_ingest_time_as_epoch.items():
+        for key, value in list(last_ingested_events_ingest_time_as_epoch.items()):
             last_ingested_events_ingest_time_as_datetime[str(key)] = self._utcctime(value) if value or value == 0 else None
 
         last_ingested_events_ingest_time_as_datetime_str = None
         if last_ingested_events_ingest_time_as_datetime:
             last_ingested_events_ingest_time_as_datetime_str = ", ".join(
-                                                        ["=".join(['Offense ID_{}'.format(key), val]) for key, val in last_ingested_events_ingest_time_as_datetime.items()])
+                                                        ["=".join(['Offense ID_{}'.format(key), val]) for key, val in list(last_ingested_events_ingest_time_as_datetime.items())])
 
         try:
             action_result.update_summary({
