@@ -834,22 +834,31 @@ class QradarConnector(BaseConnector):
             error_msg = self._get_error_message_from_exception(e)
             self.debug_print('Error occurred: {}'.format(error_msg))
 
-    def _create_offense_artifacts(self, offense, container_id):
+    def _create_offense_artifacts(self, offense, container_id, offense_id, is_events_artifact=False, is_events=True):
         """ This function is used to create artifacts in given container using finding data.
 
         :param offense: Data of single finding
         :param container_id: ID of container in which we have to create the artifacts
+        :param offense_id: ID of the offense
+        :param is_events_artifact: Boolean flag to verify the calling method
+        :param is_events: Boolean flag to check the length of events
         :return: status(success/failure), message
         """
 
         artifact = {}
         artifact['name'] = 'Offense Artifact'
         artifact['container_id'] = container_id
-        artifact['source_data_identifier'] = offense['id']
+        artifact['source_data_identifier'] = offense_id
         artifact['cef'] = offense
         artifact['label'] = 'offense'
-        create_artifact_status, create_artifact_msg, _ = self.save_artifacts([artifact])
-
+        create_artifact_status = None
+        create_artifact_msg = None
+        if is_events_artifact:
+            if not is_events:
+                artifact['run_automation'] = True
+            create_artifact_status, create_artifact_msg, _ = self.save_artifact(artifact)
+        else:
+            create_artifact_status, create_artifact_msg, _ = self.save_artifacts([artifact])
         if phantom.is_fail(create_artifact_status):
             return phantom.APP_ERROR, create_artifact_msg
 
@@ -1028,7 +1037,7 @@ class QradarConnector(BaseConnector):
                     continue
 
             if self._container_only:
-                artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id)
+                artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id, offense_id=offense['id'])
 
                 if phantom.is_fail(artifacts_creation_status):
                     self.debug_print('Logging the artifact creation failure for the current offense and continuing with the next offense')
@@ -1765,26 +1774,20 @@ class QradarConnector(BaseConnector):
 
         added = 0
         dup = 0
-
+        is_events_artifact = True
+        is_events = True
         # To strip \r, \n and space from the values
         if self._python_version == 2:
             v_strip = lambda v: v.strip(' \r\n').replace(u'\u0000', '') if type(v) == str or type(v) == unicode else v
         else:
             v_strip = lambda v: v.strip(' \r\n').replace('\u0000', '') if type(v) == str else v
-
-        offense_artifact = {}
-        offense_artifact['container_id'] = self._container_id
-        offense_artifact['name'] = 'Offense Artifact'
-        offense_artifact['label'] = 'offense'
-        offense_artifact['source_data_identifier'] = offense_id
-        offense_artifact['cef'] = self._offense_details
         len_events = len(events)
         if len_events == 0:
-            offense_artifact['run_automation'] = True
+            is_events = False
+        artifacts_creation_status, message = self._create_offense_artifacts(
+            offense=self._offense_details, container_id=self._container_id, offense_id=offense_id, is_events_artifact=is_events_artifact, is_events=is_events)
 
-        ret_val, message, _ = self.save_artifact(offense_artifact)
-
-        if phantom.is_fail(ret_val):
+        if phantom.is_fail(artifacts_creation_status):
             self.debug_print('Logging the artifact creation failure for the current offense and continuing with the event artifacts generation for current offense')
             self.debug_print('Error occurred while offense artifact creation for the offense ID: {0}. Error: {1}'.format(
                                 offense_id, message))
