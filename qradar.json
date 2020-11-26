@@ -62,7 +62,7 @@
         "timezone": {
             "data_type": "timezone",
             "order": 5,
-            "description": "Qradar timezone",
+            "description": "QRadar timezone",
             "required": true
         },
         "add_to_resolved": {
@@ -2638,7 +2638,7 @@
         },
         {
             "action": "add listitem",
-            "description": "Add an item to a reference set in Qradar",
+            "description": "Add an item to a reference set in QRadar",
             "type": "generic",
             "identifier": "add_to_reference_set",
             "read_only": false,
