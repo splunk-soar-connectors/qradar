@@ -4,8 +4,8 @@
     "description": "This app supports generic, investigative, and ingestion actions on an IBM QRadar device",
     "type": "siem",
     "publisher": "Splunk",
-    "main_module": "qradar_connector.pyc",
-    "app_version": "1.2.68",
+    "main_module": "qradar_connector.py",
+    "app_version": "2.0.0",
     "latest_tested_versions": [
         "On-premise v7.3.1"
     ],
@@ -14,7 +14,8 @@
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "4.6.19142",
+    "min_phantom_version": "4.8.24304",
+    "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
     "license": "Copyright (c) 2016-2020 Splunk Inc.",
@@ -31,6 +32,12 @@
             "order": 20,
             "description": "Ingest only offenses while polling"
         },
+        "has_offense": {
+            "data_type": "boolean",
+            "order": 21,
+            "description": "Fetch only events and flows associated with the offense",
+            "default": true
+        },
         "verify_server_cert": {
             "data_type": "boolean",
             "description": "Verify server certificate",
@@ -40,25 +47,22 @@
         "username": {
             "data_type": "string",
             "order": 2,
-            "description": "Username",
-            "required": false
+            "description": "Username"
         },
         "password": {
             "data_type": "password",
             "order": 3,
-            "description": "Password",
-            "required": false
+            "description": "Password"
         },
         "authorization_token": {
             "data_type": "password",
             "order": 4,
-            "description": "Auth Token for QRadar REST API calls",
-            "required": false
+            "description": "Auth Token for QRadar REST API calls"
         },
         "timezone": {
             "data_type": "timezone",
             "order": 5,
-            "description": "Qradar timezone",
+            "description": "QRadar timezone",
             "required": true
         },
         "add_to_resolved": {
@@ -71,7 +75,6 @@
             "data_type": "numeric",
             "order": 7,
             "description": "Maximum event artifacts count (excluding the default generated offense artifact)",
-            "required": false,
             "default": 1000
         },
         "ingest_resolved": {
@@ -82,14 +85,12 @@
         "cef_event_map": {
             "data_type": "string",
             "order": 9,
-            "description": "CEF event map",
-            "required": false
+            "description": "CEF event map"
         },
         "cef_value_map": {
             "data_type": "string",
             "order": 10,
-            "description": "CEF value map",
-            "required": false
+            "description": "CEF value map"
         },
         "delete_empty_cef_fields": {
             "data_type": "boolean",
@@ -100,8 +101,7 @@
         "event_fields_for_query": {
             "data_type": "string",
             "order": 12,
-            "description": "Event fields to include while querying",
-            "required": false
+            "description": "Event fields to include while querying"
         },
         "add_offense_id_to_name": {
             "data_type": "boolean",
@@ -123,7 +123,6 @@
         "alt_time_field": {
             "data_type": "string",
             "default": "start_time",
-            "required": false,
             "order": 16,
             "value_list": [
                 "start_time",
@@ -135,14 +134,12 @@
         "alt_initial_ingest_time": {
             "data_type": "string",
             "default": "yesterday",
-            "required": false,
             "order": 17,
             "description": "Alternative initial ingestion time"
         },
         "alt_ingestion_order": {
             "data_type": "string",
             "default": "oldest first",
-            "required": false,
             "order": 18,
             "value_list": [
                 "oldest first",
@@ -153,7 +150,6 @@
         "events_ingest_start_time": {
             "data_type": "numeric",
             "default": 60,
-            "required": false,
             "order": 19,
             "description": "Events ingestion initial time relative to offense start time (default is 60 min)"
         }
@@ -208,8 +204,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "primary": true,
-                    "allow_list": true
+                    "primary": true
                 }
             },
             "render": {
@@ -248,7 +243,7 @@
                         "qradar offense id"
                     ],
                     "example_values": [
-                        "44"
+                        44
                     ]
                 },
                 {
@@ -281,13 +276,13 @@
                 },
                 {
                     "data_path": "action_result.data.*.close_time",
-                    "data_type": "numeric",
+                    "data_type": "string",
                     "column_name": "Close Time",
                     "column_order": 9
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
-                    "data_type": "numeric",
+                    "data_type": "string",
                     "contains": [
                         "qradar offense closing reason id"
                     ],
@@ -331,6 +326,10 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.domain_id",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.data.*.event_count",
                     "data_type": "numeric",
                     "column_name": "Event Count",
@@ -364,7 +363,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "column_name": "Offense Id",
+                    "column_name": "Offense ID",
                     "column_order": 0,
                     "example_values": [
                         44
@@ -452,6 +451,14 @@
                     "example_values": [
                         1
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.rules.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.rules.*.type",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.security_category_count",
@@ -712,8 +719,7 @@
                 "interval_days": {
                     "data_type": "numeric",
                     "order": 6,
-                    "description": "Interval days",
-                    "required": false
+                    "description": "Interval days"
                 }
             },
             "render": {
@@ -902,14 +908,14 @@
                 },
                 {
                     "data_path": "action_result.data.*.destinationport",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "column_name": "Destination Port",
                     "column_order": 5,
                     "contains": [
                         "port"
                     ],
                     "example_values": [
-                        "0"
+                        0
                     ]
                 },
                 {
@@ -987,9 +993,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.qid",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "70750119"
+                        70750119
                     ]
                 },
                 {
@@ -1046,14 +1052,14 @@
                 },
                 {
                     "data_path": "action_result.data.*.sourceport",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "column_name": "Source Port",
                     "column_order": 2,
                     "contains": [
                         "port"
                     ],
                     "example_values": [
-                        "0"
+                        0
                     ]
                 },
                 {
@@ -1065,11 +1071,11 @@
                 },
                 {
                     "data_path": "action_result.data.*.starttime",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "column_name": "Start Time",
                     "column_order": 9,
                     "example_values": [
-                        "1559194870184"
+                        1559194870184
                     ]
                 },
                 {
@@ -1125,7 +1131,6 @@
                     "order": 0,
                     "description": "IP to get all the flows of",
                     "primary": true,
-                    "required": false,
                     "contains": [
                         "ip"
                     ]
@@ -1224,6 +1229,22 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.Action",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Application Determination Algorithm",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.Content Subject",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Content Type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.FTP Pass",
                     "data_type": "string"
                 },
@@ -1234,6 +1255,26 @@
                 {
                     "data_path": "action_result.data.*.FTP User",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.File Entropy",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.File Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.File Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.File Size",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Flow Direction Algorithm",
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.Google Search Terms",
@@ -1256,11 +1297,19 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.HTTP Referrer",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.HTTP Response Code",
                     "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.HTTP Server",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.HTTP User Agent",
                     "data_type": "string"
                 },
                 {
@@ -1272,6 +1321,18 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Originating User",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Password",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Request URL",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.SMTP From",
                     "data_type": "string"
                 },
@@ -1280,12 +1341,27 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.SMTP Hello",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.SMTP To",
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.applicationid",
+                    "data_path": "action_result.data.*.Search Arguments",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.VLAN Tag",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.applicationid",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1011
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.applicationname_applicationid",
@@ -1295,7 +1371,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.category",
-                    "data_type": "string"
+                    "data_type": "numeric",
+                    "example_values": [
+                        18448
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.categoryname_category",
@@ -1305,7 +1384,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.credibility",
-                    "data_type": "string"
+                    "data_type": "numeric",
+                    "example_values": [
+                        10
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationasn",
@@ -1313,17 +1395,20 @@
                 },
                 {
                     "data_path": "action_result.data.*.destinationbytes",
-                    "data_type": "string",
-                    "column_name": "Bytes to Dest",
-                    "column_order": 6
+                    "data_type": "numeric",
+                    "column_name": "Bytes To Dest",
+                    "column_order": 6,
+                    "example_values": [
+                        11567
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationdscp",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.destinationflags",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.destinationifindex",
@@ -1336,13 +1421,19 @@
                         "ip"
                     ],
                     "column_name": "Destination IP",
-                    "column_order": 3
+                    "column_order": 3,
+                    "example_values": [
+                        "10.1.16.15"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationpackets",
-                    "data_type": "string",
-                    "column_name": "Packets to Dest",
-                    "column_order": 5
+                    "data_type": "numeric",
+                    "column_name": "Packets To Dest",
+                    "column_order": 5,
+                    "example_values": [
+                        108
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationpayload",
@@ -1355,23 +1446,36 @@
                         "port"
                     ],
                     "column_name": "Destination Port",
-                    "column_order": 4
+                    "column_order": 4,
+                    "example_values": [
+                        "3365"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationprecedence",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.destinationv6",
                     "data_type": "string",
                     "column_name": "Destination V6",
-                    "column_order": 13
+                    "column_order": 13,
+                    "example_values": [
+                        "0:0:0:0:0:0:0:0"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.domainid",
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.firstpackettime",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "column_name": "First Packet Time",
-                    "column_order": 9
+                    "column_order": 9,
+                    "example_values": [
+                        1559905202000
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.flowbias",
@@ -1379,7 +1483,14 @@
                 },
                 {
                     "data_path": "action_result.data.*.flowdirection",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "L2R"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.flowid",
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.flowinterface",
@@ -1387,7 +1498,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.flowinterfaceid",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "5"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.flowsource",
@@ -1395,7 +1509,7 @@
                 },
                 {
                     "data_path": "action_result.data.*.flowtype",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.fullmatchlist",
@@ -1403,41 +1517,60 @@
                 },
                 {
                     "data_path": "action_result.data.*.geographic",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "NorthAmerica.UnitedStates"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.hasdestinationpayload",
-                    "data_type": "string"
+                    "data_type": "boolean"
                 },
                 {
                     "data_path": "action_result.data.*.hasoffense",
-                    "data_type": "string"
+                    "data_type": "boolean",
+                    "example_values": [
+                        true
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.hassourcepayload",
-                    "data_type": "string"
+                    "data_type": "boolean",
+                    "example_values": [
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.hastlv",
+                    "data_type": "boolean"
                 },
                 {
                     "data_path": "action_result.data.*.icmpcode",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.icmptype",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.intervalid",
-                    "data_type": "string"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1603463820
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.isduplicate",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.lastpackettime",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "column_name": "Last Packet Time",
-                    "column_order": 10
+                    "column_order": 10,
+                    "example_values": [
+                        1559905202999
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.partialmatchlist",
@@ -1445,11 +1578,14 @@
                 },
                 {
                     "data_path": "action_result.data.*.processorid",
-                    "data_type": "string"
+                    "data_type": "numeric",
+                    "example_values": [
+                        8
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.protocolid",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.protocolname_protocolid",
@@ -1459,17 +1595,23 @@
                 },
                 {
                     "data_path": "action_result.data.*.qid",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "53250087"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.qidname_qid",
                     "data_type": "string",
                     "column_name": "QID Name",
-                    "column_order": 14
+                    "column_order": 14,
+                    "example_values": [
+                        "Test.Securetest"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.relevance",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.retentionbucket",
@@ -1477,7 +1619,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.severity",
-                    "data_type": "string"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourceasn",
@@ -1485,17 +1630,20 @@
                 },
                 {
                     "data_path": "action_result.data.*.sourcebytes",
-                    "data_type": "string",
-                    "column_name": "Bytes to Src",
-                    "column_order": 8
+                    "data_type": "numeric",
+                    "column_name": "Bytes To Src",
+                    "column_order": 8,
+                    "example_values": [
+                        1031681
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourcedscp",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.sourceflags",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.sourceifindex",
@@ -1508,13 +1656,19 @@
                         "ip"
                     ],
                     "column_name": "Source IP",
-                    "column_order": 0
+                    "column_order": 0,
+                    "example_values": [
+                        "127.0.0.1"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourcepackets",
-                    "data_type": "string",
-                    "column_name": "Packets to Src",
-                    "column_order": 7
+                    "data_type": "numeric",
+                    "column_name": "Packets To Src",
+                    "column_order": 7,
+                    "example_values": [
+                        783
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourcepayload",
@@ -1524,22 +1678,31 @@
                     "data_path": "action_result.data.*.sourceport",
                     "data_type": "string",
                     "column_name": "Source Port",
-                    "column_order": 1
+                    "column_order": 1,
+                    "example_values": [
+                        "4806"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourceprecedence",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.sourcev6",
                     "data_type": "string",
                     "contains": [
                         "ipv6"
+                    ],
+                    "example_values": [
+                        "0:0:0:0:0:0:0:0"
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.starttime",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "1559905201000"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.viewobjectpair",
@@ -1547,19 +1710,31 @@
                 },
                 {
                     "data_path": "action_result.summary.total_flows",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        33
+                    ]
                 },
                 {
                     "data_path": "action_result.message",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "Total flows: 33"
+                    ]
                 },
                 {
                     "data_path": "summary.total_objects",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
                 },
                 {
                     "data_path": "summary.total_objects_successful",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
                 }
             ],
             "versions": "EQ(*)"
@@ -1585,8 +1760,7 @@
                 "tenant_id": {
                     "data_type": "numeric",
                     "order": 1,
-                    "description": "Tenant ID for saving container",
-                    "required": false
+                    "description": "Tenant ID for saving container"
                 },
                 "ingest_offense": {
                     "data_type": "boolean",
@@ -1658,24 +1832,33 @@
                 },
                 {
                     "data_path": "action_result.data.*.close_time",
-                    "data_type": "numeric",
+                    "data_type": "string",
                     "column_name": "Close Time",
-                    "column_order": 9
+                    "column_order": 9,
+                    "example_values": [
+                        "1602888300000"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
-                    "data_type": "numeric",
+                    "data_type": "string",
                     "contains": [
                         "qradar offense closing reason id"
                     ],
                     "column_name": "Offense Closing Reason ID",
-                    "column_order": 11
+                    "column_order": 11,
+                    "example_values": [
+                        "3"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.closing_user",
                     "data_type": "string",
                     "column_name": "Closing User",
-                    "column_order": 10
+                    "column_order": 10,
+                    "example_values": [
+                        "root"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.credibility",
@@ -1706,6 +1889,10 @@
                     "example_values": [
                         3
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.domain_id",
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.event_count",
@@ -1741,7 +1928,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "column_name": "Offense Id",
+                    "column_name": "Offense ID",
                     "column_order": 0,
                     "example_values": [
                         43
@@ -1831,6 +2018,14 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.rules.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.rules.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.security_category_count",
                     "data_type": "numeric",
                     "example_values": [
@@ -1889,10 +2084,6 @@
                     "contains": [
                         "user name"
                     ]
-                },
-                {
-                    "data_path": "action_result.summary",
-                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.summary.flow_count",
@@ -1995,8 +2186,7 @@
                 "datetime": {
                     "data_type": "string",
                     "order": 1,
-                    "description": "Datetime string to be stored against the ingestion data in the state file",
-                    "required": false
+                    "description": "Datetime string to be stored against the ingestion data in the state file"
                 },
                 "offense_id": {
                     "data_type": "string",
@@ -2005,8 +2195,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "primary": true,
-                    "required": false
+                    "primary": true
                 }
             },
             "render": {
@@ -2036,9 +2225,9 @@
                 },
                 {
                     "data_path": "action_result.parameter.offense_id",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "4"
+                        4
                     ],
                     "contains": [
                         "qradar offense id"
@@ -2069,6 +2258,34 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.10",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.19",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.20",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.21",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.22",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.23",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.24",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.data.*.last_saved_offense_ingest_time",
                     "data_type": "string",
                     "example_values": [
@@ -2077,9 +2294,9 @@
                 },
                 {
                     "data_path": "action_result.data.*.last_saved_offense_ingest_time_as_epoch",
-                    "data_type": "numeric",
+                    "data_type": "string",
                     "example_values": [
-                        1575889871000
+                        "1575889871000"
                     ]
                 },
                 {
@@ -2172,11 +2389,79 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.AccountDomain",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Application",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Bytes",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.BytesReceived",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.BytesSent",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Destination Host Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.EventID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.File Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.File ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.File Path",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Filename",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Installer Filename",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Payload",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.Source Host Name",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.category",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "38750003"
+                        38750003
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.categoryname_category",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.destinationaddress",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.events.*.destinationip",
@@ -2189,18 +2474,34 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.destinationmac",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.destinationport",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "0"
+                        0
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.endtime",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.eventcount",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "1"
+                        1
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.eventdirection",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.hostname_logsourceid",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.events.*.identityip",
@@ -2213,32 +2514,64 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.logsourcegroupname_logsourceid",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.logsourceid",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "65"
+                        65
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.logsourcename_logsourceid",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.magnitude",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "5"
+                        5
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.events.*.protocolid",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "255"
+                        255
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.protocolname_protocolid",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.qid",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "38750003"
+                        38750003
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.qidname_qid",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.queid",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.relevance",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.severity",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.sourceaddress",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.events.*.sourceip",
@@ -2251,17 +2584,21 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.events.*.sourcemac",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.events.*.sourceport",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "0"
+                        0
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.events.*.starttime",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "1559907060001"
+                        1559907060001
                     ]
                 },
                 {
@@ -2301,7 +2638,7 @@
         },
         {
             "action": "add listitem",
-            "description": "Add an item to a reference set in Qradar",
+            "description": "Add an item to a reference set in QRadar",
             "type": "generic",
             "identifier": "add_to_reference_set",
             "read_only": false,
@@ -2585,6 +2922,10 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.domain_id",
+                    "data_type": "numeric"
+                },
+                {
                     "data_path": "action_result.data.*.event_count",
                     "data_type": "numeric",
                     "column_name": "Event Count",
@@ -2618,7 +2959,7 @@
                     "contains": [
                         "qradar offense id"
                     ],
-                    "column_name": "Offense Id",
+                    "column_name": "Offense ID",
                     "column_order": 0,
                     "example_values": [
                         41
@@ -2708,6 +3049,14 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.rules.*.id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.rules.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.security_category_count",
                     "data_type": "numeric",
                     "example_values": [
@@ -2766,10 +3115,6 @@
                     "contains": [
                         "user name"
                     ]
-                },
-                {
-                    "data_path": "action_result.summary",
-                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.summary.flow_count",
@@ -2883,9 +3228,9 @@
                 },
                 {
                     "data_path": "action_result.parameter.offense_id",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "41"
+                        41
                     ],
                     "contains": [
                         "qradar offense id"
@@ -2977,9 +3322,9 @@
                 },
                 {
                     "data_path": "action_result.parameter.offense_id",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "example_values": [
-                        "41"
+                        41
                     ],
                     "contains": [
                         "qradar offense id"
@@ -3098,7 +3443,7 @@
                     "example_values": [
                         1155662266056
                     ],
-                    "column_name": "Creation date",
+                    "column_name": "Creation Date",
                     "column_order": 4
                 },
                 {
@@ -3279,7 +3624,7 @@
                     "example_values": [
                         1155662266056
                     ],
-                    "column_name": "Creation date",
+                    "column_name": "Creation Date",
                     "column_order": 4
                 },
                 {
@@ -3359,7 +3704,7 @@
                     "column_order": 3
                 },
                 {
-                    "data_path": "action_result.summary.num_rules",
+                    "data_path": "action_result.summary.total_rules",
                     "data_type": "numeric",
                     "example_values": [
                         135
@@ -3406,8 +3751,7 @@
                 "container_id": {
                     "data_type": "string",
                     "order": 0,
-                    "description": "Container IDs to limit the ingestion to",
-                    "allow_list": true
+                    "description": "Parameter ignored for this app"
                 },
                 "start_time": {
                     "data_type": "numeric",

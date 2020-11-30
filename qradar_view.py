@@ -13,19 +13,19 @@ def _get_contains(value):
 
     contains = []
 
-    if (not value):
+    if not value:
         return contains
 
-    for contain, validator in ph_utils.CONTAINS_VALIDATORS.iteritems():
+    for contain, validator in list(ph_utils.CONTAINS_VALIDATORS.items()):
 
         if (not contain) or (not validator):
             continue
 
-        if (contain not in interested_contains):
+        if contain not in interested_contains:
             continue
 
         # This validation is because the Phantom validators are expecting string or buffer value as input
-        if (validator(value if not isinstance(value, int) and not isinstance(value, long) and not isinstance(value, float) else str(value))):
+        if validator(str(value)):
             contains.append(contain)
 
     return contains
@@ -35,11 +35,11 @@ def _process_item(item_name, ctx_result):
 
     item_data_list = ctx_result['data'][item_name]
 
-    if (not item_data_list):
+    if not item_data_list:
         return
 
     # get the 1st item on the item list
-    headers = item_data_list[0].keys()
+    headers = list(item_data_list[0].keys())
 
     output_dict = {}
     output_dict['headers'] = headers
@@ -49,12 +49,12 @@ def _process_item(item_name, ctx_result):
 
         contains_item = {}
         # data_item_contains = {}
-        for k, v in curr_item_data.iteritems():
+        for k, v in list(curr_item_data.items()):
             contains = _get_contains(v)
             contains_item.update({k: contains})
         contains_data_list.append(contains_item)
 
-    output_dict['data'] = zip(item_data_list, contains_data_list)
+    output_dict['data'] = list(zip(item_data_list, contains_data_list))
     ctx_result['data'][item_name] = output_dict
 
 
@@ -80,7 +80,7 @@ def get_ctx_result(result):
     if (not items):
         return ctx_result
 
-    item_keys = items.keys()
+    item_keys = list(items.keys())
 
     # events, flows etc
     for curr_item in item_keys:

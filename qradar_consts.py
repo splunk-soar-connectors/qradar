@@ -100,3 +100,22 @@ QRADAR_CEF_VALUE_MAP_INT_PATTERN = r'numeric\((\d+(\.\d+)?)\)'
 
 # This value is set by trial and error by quering qradar
 QRADAR_QUERY_HIGH_RANGE = 1000
+QRADAR_BASIC_AUTH_ERROR_MESSAGE = "Please provide correct username and password in the asset configuration parameters"
+QRADAR_AUTH_TOKEN_ERROR_MESSAGE = "Please provide correct authorization token in the asset configuration parameters"
+QRADAR_ERR_INVALID_PARAM = "Please provide non-zero positive integer in {param}"
+QRADAR_ERR_MSG_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters."
+QRADAR_ERR_CODE_UNAVAILABLE = "Error code unavailable"
+QRADAR_UNICODE_DAMMIT_TYPE_ERROR_MESSAGE = "Error occurred while connecting to the QRadar server. Please check the asset configuration and|or the action parameters."
+QRADAR_EXCEPTION_ERROR_MESSAGE = "{msg}. Error Code: {error_code}. Error Message: {error_msg}"
+
+# Integer Validation Keys
+QRADAR_EVENTS_INGEST_START_TIME_KEY = "'events_ingest_start_time' configuration parameter"
+QRADAR_ARTIFACT_MAX_KEY = "'artifact_max' configuration parameter"
+QRADAR_COUNT_KEY = "'count' action parameter"
+QRADAR_TENANT_ID_KEY = "'tenant_id' action parameter"
+QRADAR_OFFENSE_ID_KEY = "'offense_id' action parameter"
+QRADAR_RULE_ID_KEY = "'rule_id' action parameter"
+QRADAR_INTERVAL_DAYS_KEY = "'interval_days' parameter in the action and 'app_config' settings"
+QRADAR_CLOSING_REASON_ID_KEY = "'closing_reason_id' action parameter"
+QRADAR_VALIDATE_INTEGER = "Please provide a valid integer value in the {param}"
+QRADAR_START_TIME = "Please provide valid non-zero epoch value (milliseconds) in the 'start_time' parameter"
