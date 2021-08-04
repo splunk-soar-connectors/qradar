@@ -1,5 +1,5 @@
 # File: qradar_consts.py
-# Copyright (c) 2016-2020 Splunk Inc.
+# Copyright (c) 2016-2021 Splunk Inc.
 #
 # SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
 # without a valid written license from Splunk Inc. is PROHIBITED.
@@ -118,4 +118,8 @@ QRADAR_RULE_ID_KEY = "'rule_id' action parameter"
 QRADAR_INTERVAL_DAYS_KEY = "'interval_days' parameter in the action and 'app_config' settings"
 QRADAR_CLOSING_REASON_ID_KEY = "'closing_reason_id' action parameter"
 QRADAR_VALIDATE_INTEGER = "Please provide a valid integer value in the {param}"
+QRADAR_VALIDATE_INTEGER_NEGETIVE_ERR = "Please provide a valid non-negative integer value in the {param}"
 QRADAR_START_TIME = "Please provide valid non-zero epoch value (milliseconds) in the 'start_time' parameter"
+QRADAR_MAX_EVENTS_PER_OFFENSE = "'max_events_per_offense' configuration parameter"
+QRADAR_OFFENSE_INGEST_START_TIME = "'offense_ingest_start_time' configuration parameter"
+QRADAR_EVENT_INGEST_END_TIME = "'event_ingest_end_time' configuration parameter"
