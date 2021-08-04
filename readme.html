@@ -1,5 +1,5 @@
 <!-- File: readme.html
- Copyright (c) 2016-2020 Splunk Inc.
+ Copyright (c) 2016-2021 Splunk Inc.
 
  SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
  without a valid written license from Splunk Inc. is PROHIBITED.
@@ -22,6 +22,31 @@
 			<li>Get Flows - This action was not working correctly and we have updated the logic for this action's functionality.</li>
 			<li>Offense Details - The action parameter for [interval_days] has been removed as it was not getting used in the action.</li>
 		</ul>
+	</ul>
+</p>
+
+<p><b>Explanation of App Settings Parameter</b>
+	<ul>
+		<li>
+			<b>interval_days</b>
+			<ul>
+				<li>
+					For List Offenses and Get Events action if the [start_time] is specified, it will be given priority, if not provided, this value is internally derived by subtracting the [interval_days] from the [end_time]. For the Get Events action, this field is having a higher preference over the [interval_days] action parameter if both are specified. If [interval_days] is not specified in the app settings it will take the default value which is 5.
+				</li>
+				<li>
+					If [Alternative ariel query] configuration parameter is checked, for On Poll and Get Events action to fetch the events, the time based filtering in this workflow is applied based on the granularity of days instead of applying it based on the granularity of epoch and Datetime formats.
+				</li>
+				<li>	
+					For On Poll, to fetch the offenses, if there is time stored in the state file it will be given priority, if not provided, this value is internally derived by subtracting the [interval_days] from the [end_time]. If [interval_days] is not specified in the app settings it will take the default value which is 5.
+				</li>
+				<li>	
+					For On Poll, to fetch the events, if there is time stored in the state file it will be given priority, if not provided, the [start_time] will be calculated by back-dating offense's [start_time] by the value of [events_ingest_start_time] configuration parameter.
+				</li>
+				<li>
+					[interval_days] parameter is not used in the alternative ingestion algorithm.
+				</li>
+			</ul>
+		</li>
 	</ul>
 </p>
 
@@ -116,6 +141,29 @@
 				<li>
 					<b>has_offense - </b> This parameter is optional and by default will be checked as true. This parameter describes whether the events and flows should be associated with the offense or not while fetching the events and flows. If this is set to true, then only the events and flows associated with the offense will be considered. This configuration parameter is used in the Get Events, Get Flows as well as in the On Poll action. For Get Events and Get Flows Action, 'has_offense' will only be considered if the user has passed the 'offense_id' while running these actions.
 				</li>
+				<li>
+					<b>offense_ingest_start_time - </b> This parameter is optional and the default will be 0. This parameter defines the relative number of minutes (in milliseconds) to back-date the offense's 'start_time' to start fetching the offenses. e.g. if offense_ingest_start_time = 25 and the time to start fetching offenses is 1582618635661, then after back-date, the final timestamp from which we will start fetching the offenses would be 1582618635661 - (25 * 60 * 1000) = 1582617135661. This parameter is applicable for each type of polling.
+				</li>
+				<li>
+					<b>event_ingest_end_time - </b> This parameter is optional and the default will be 0. This parameter defines the relative number of minutes (in milliseconds) to modify the event ingestion 'end_time' by after-dating event ingestion 'start_time'. The 'start_time' will be [offense's start_time - events_ingest_start_time] for manual polling and the first run of scheduled | interval polling and for the next runs, it will take time stored in the state file against last_ingested_events_data for a particular offense. e.g. if event_ingest_end_time = 25 and the 'start_time' to fetch events is 1582618635661, then after modification, the final 'end_time' to stop fetching events would be 1582618635661 + (25 * 60 * 1000) = 1582620135661. If the modified 'end_time' exceeds the current time then it will consider the current time as 'end_time'. This parameter is applicable for each type of polling.
+				</li>
+				<li>
+					<b>max_events_per_offense - </b> This parameter is optional and the default will be None. This parameter defines the maximum accumulated artifacts to be ingested per offense, including the default generated offense artifact. e.g. if max_events_per_offense = 100, then maximum artifacts to be ingested in each container should not be greater than 100, considering all polling cycles. 'artifact_max' parameter can affect the functionality of the 'max_events_per_offense' parameter based on its value as mentioned below.
+					<ul>
+						<li>
+							If artifact_max is less than max_events_per_offense, then it will ingest artifact_max number of artifacts per cycle and once the total artifacts count in a container equals or exceeds the max_events_per_offense count it will not collect artifacts. e.g. If artifact_max = 20 and max_events_per_offense = 30, then in first polling cycle it will ingest 21 artifacts (one default generated offense artifact). In the next polling cycle, it will ingest 9 more artifacts. As the total artifacts in the container get equal to the max_events_per_offense it will not collect artifacts from the next cycle.
+						</li>
+						<li>
+							If max_events_per_offense is less than artifact_max, then it will ingest max_events_per_offense number of artifacts. e.g. if max_events_per_offense = 10 and artifact_max = 15, then it will ingest 10 artifacts.
+						</li>
+						<li>
+							If max_events_per_offense = 1, then irrespective of any value provided in 'artifact_max', it will ingest only one artifact (default generated offense artifact).
+						</li>
+						<li>
+							NOTE - If offense will get updated while Qradar event creation, accordingly offense artifacts will also be ingested in phantom with updated parameters. This can affect the functionality of max_events_per_offense. e.g. if artifact_max = 5 and max_events_per_offense = 8, then in first cycle it will ingest 6 artifacts (one default generated offense artifact). In the next polling cycle, it will ingest 2 more event artifacts but if the offense is updated then it will also ingest one more offense artifact and the total artifact count will be one more than max_events_per_offense.
+						</li>		
+					</ul>
+				</li>
 			</ul>
    </ul>
 </p>
@@ -175,6 +223,7 @@
 						<li>This workflow is considered only if the [Alternative ariel query] configuration parameter is checked.</li>
 						<li>The configuration parameter [Alternative initial ingestion time] is applicable for this workflow only if the [Alternative ariel query] config parameter is checked.</li>
 						<li>This workflow performs the same functionality as the default ingestion workflow, but with a different form of the Ariel query. The time based filtering in this workflow is applied based on the granularity of days instead of applying it based on the granularity of epoch and Datetime formats.</li>
+						<li>As the time based filtering in this workflow is applied based on the granularity of days, back-dating event fetching 'start_time' and after-dating event fetching 'end_time' does not work with this workflow.</li>
 					</ul>
 			</ul>
 
