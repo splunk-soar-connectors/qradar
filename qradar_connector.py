@@ -1,5 +1,5 @@
 # File: qradar_connector.py
-# Copyright (c) 2016-2020 Splunk Inc.
+# Copyright (c) 2016-2021 Splunk Inc.
 #
 # SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
 # without a valid written license from Splunk Inc. is PROHIBITED.
@@ -120,7 +120,7 @@ class QradarConnector(BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, QRADAR_VALIDATE_INTEGER.format(param=key)), None
 
             if parameter < 0:
-                return action_result.set_status(phantom.APP_ERROR, "Please provide a valid non-negative integer value in the {}".format(key)), None
+                return action_result.set_status(phantom.APP_ERROR, QRADAR_VALIDATE_INTEGER_NEGETIVE_ERR.format(param=key)), None
             if not allow_zero and parameter == 0:
                 return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_PARAM.format(param=key)), None
 
@@ -330,11 +330,26 @@ class QradarConnector(BaseConnector):
         self._cef_value_map = self._config.get('cef_value_map')
         self._has_offense = self._config.get('has_offense', True)
         self._server = self._handle_py_ver_compat_for_input_str(config[phantom.APP_JSON_DEVICE])
+        self._max_events_per_offense = self._config.get('max_events_per_offense')
+        self._offense_ingest_start_time = self._config.get('offense_ingest_start_time', 0)
+        self._event_ingest_end_time = self._config.get('event_ingest_end_time', 0)
 
-        # Validate 'events_ingest_start_time" configuration parameter
+        # Validate 'events_ingest_start_time' configuration parameter
         ret_val, self._events_ingest_start_time = self._validate_integer(self, self._events_ingest_start_time, QRADAR_EVENTS_INGEST_START_TIME_KEY)
         if phantom.is_fail(ret_val):
             return self.get_status()
+
+        # Validate 'offense_ingest_start_time', 'event_ingest_end_time' and 'max_events_per_offense' configuration parameters
+        ret_val, self._max_events_per_offense = self._validate_integer(self, self._max_events_per_offense, QRADAR_MAX_EVENTS_PER_OFFENSE)
+        if phantom.is_fail(ret_val):
+            return self.get_status()
+        ret_val, self._offense_ingest_start_time = self._validate_integer(self, self._offense_ingest_start_time, QRADAR_OFFENSE_INGEST_START_TIME, True)
+        if phantom.is_fail(ret_val):
+            return self.get_status()
+        ret_val, self._event_ingest_end_time = self._validate_integer(self, self._event_ingest_end_time, QRADAR_EVENT_INGEST_END_TIME, True)
+        if phantom.is_fail(ret_val):
+            return self.get_status()
+
         try:
             if self._cef_value_map:
                 self._cef_value_map = json.loads(self._cef_value_map, strict=False)
@@ -617,8 +632,17 @@ class QradarConnector(BaseConnector):
             if end_time < start_time:
                 return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE), None, None, None, None
 
+            # Backdate the offense ingestion start time by offense_ingest_start_time configuration parameter
+            # for alternative ingestion algorithm
+
+            if self._is_on_poll and self._offense_ingest_start_time > 0:
+                self.save_progress('Original start_time is: {}'.format(start_time))
+                start_time = start_time - self._offense_ingest_start_time * 60 * 1000
+                self.save_progress('Back-dating the offense start time by {} minutes'.format(self._offense_ingest_start_time))
+                self.save_progress('The modified start_time is: {}'.format(start_time))
+
             # the time_field configuration parameter determines which time fields are used in the filter,
-            #   if missing or unknown value, default to start_time
+            # if missing or unknown value, default to start_time
             if self._time_field == "last_updated_time":
                 reqfilter = "(last_updated_time >= {} and last_updated_time <= {})".format(start_time, end_time)
             elif self._time_field == "either":
@@ -968,6 +992,9 @@ class QradarConnector(BaseConnector):
 
         for i, offense in enumerate(offenses):
 
+            # Clear the events list per an offense
+            self._events_starttime_list = []
+
             self.debug_print('Offense ID:{}'.format(offense['id']), offense)
             self.save_progress('Offense ID:{}'.format(offense['id']))
 
@@ -993,7 +1020,7 @@ class QradarConnector(BaseConnector):
             # Validate 'tenant_id' action parameter
             tenant_id = param.get('tenant_id', None)
             if tenant_id:
-                ret_val, tenant_id = self._validate_integer(action_result, tenant_id, QRADAR_TENANT_ID_KEY)
+                ret_val, tenant_id = self._validate_integer(action_result, tenant_id, QRADAR_TENANT_ID_KEY, True)
                 if phantom.is_fail(ret_val):
                     return action_result.get_status()
                 container['tenant_id'] = tenant_id
@@ -1015,6 +1042,7 @@ class QradarConnector(BaseConnector):
 
             self.save_progress("Save container returns, ret_val: {0}, message: {1}, id: {2}".format(ret_val, message, container_id))
 
+            # if there seems an error in saving container, continue from the next offense
             if phantom.is_fail(ret_val):
                 error_message = 'Error occurred while container creation for Offense ID: {0}. Error: {1}'.format(offense_id, message)
                 self.debug_print(error_message)
@@ -1046,6 +1074,33 @@ class QradarConnector(BaseConnector):
 
                 continue
 
+            # If the current container's artifact count exceeds the maximum accumulated artifact count, the phantom won't collect artifacts
+            # for a particular container and continue from the next container
+            # If _max_events_per_offense is 1 then it will only ingest offense artifact
+            if self._max_events_per_offense:
+                container_data = self.get_container_info(container_id)[1]
+                container_artifact_count = container_data.get('artifact_count')
+                self.save_progress("container id({0})'s artifact count : {1}".format(
+                    container_id, container_artifact_count))
+
+                if container_artifact_count >= self._max_events_per_offense:
+                    self.save_progress("container id({0})'s artifact count({1}) is more than maximum accumulated artifacts count, phantom won't collect artifacts".format(
+                        container_id, container_artifact_count))
+                    continue
+
+                if self._max_events_per_offense == 1:
+                    artifacts_creation_status, artifacts_creation_msg = self._create_offense_artifacts(offense=offense, container_id=container_id, offense_id=offense['id'])
+                    if phantom.is_fail(artifacts_creation_status):
+                        self.debug_print('Logging the artifact creation failure for the current offense and continuing with the next offense')
+                        self.debug_print('Error while creating artifacts for the Offense ID: {0} and Container ID {1}. Error: {2}'
+                                        .format(offense_id, container_id, artifacts_creation_msg))
+                    continue
+
+                if self._max_events_per_offense <= self._artifact_max:
+                    param['artifact_count'] = self._max_events_per_offense - 1
+                else:
+                    param['artifact_count'] = min(int(self._max_events_per_offense) - container_artifact_count, self._artifact_max)
+
             # set the event params same as that of the input poll params
             # since the time range should be the same
             event_param = dict(param)
@@ -1057,7 +1112,7 @@ class QradarConnector(BaseConnector):
             # from the resultant epoch timestamp that gets generated by back-dating the offense's starttime by the number of minutes (default is 60 min)
             # mentioned in the asset configuration parameter 'events_ingest_start_time'
             self.save_progress('Offense start time is: {}'.format(int(offense['start_time'])))
-            self.save_progress('Back-dating the offense start time by {} minutes'.format(self._events_ingest_start_time))
+            self.save_progress('Back-dating the event fetching start time relative to offense start time by {} minutes'.format(self._events_ingest_start_time))
             self.save_progress('The modified initial epoch is: {} for fetching the events for the offense ID: {}'.format(
                                     int(offense['start_time']) - self._events_ingest_start_time * 60 * 1000, offense_id))
             event_param['start_time'] = int(offense['start_time']) - self._events_ingest_start_time * 60 * 1000
@@ -1211,6 +1266,15 @@ class QradarConnector(BaseConnector):
         else:
             self.save_progress('Getting offenses data from {0} to {1}'.format(self._get_tz_str_from_epoch(
                                 'start_time_msecs', start_time_msecs, action_result), self._get_tz_str_from_epoch('end_time_msecs', end_time_msecs, action_result)))
+
+        # Backdate the offense ingestion start time by offense_ingest_start_time configuration parameter
+        # for default ingestion algorithm
+
+        if self._is_on_poll and self._offense_ingest_start_time > 0:
+            self.save_progress('Original start time is: {}'.format(start_time_msecs))
+            start_time_msecs = start_time_msecs - self._offense_ingest_start_time * 60 * 1000
+            self.save_progress('Back-dating the offense start time by {} minutes'.format(self._offense_ingest_start_time))
+            self.save_progress('The modified start_time is: {}'.format(start_time_msecs))
 
         # 5. Create the param dictionary for the range
         filter_string += '(({2} >= {0} and {2} <= {1}) or ({3} >= {0} and {3} <= {1}))'.format(
@@ -1973,13 +2037,25 @@ class QradarConnector(BaseConnector):
             start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME, end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
             if self._is_on_poll and not self._is_manual_poll:
                 if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
-                    start_time_msecs = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+                    start_time_msecs = int(self._state['last_ingested_events_data'].get(str(param.get('offense_id'))))
         except Exception as e:
             error_msg = self._get_error_message_from_exception(e)
             return action_result.set_status(phantom.APP_ERROR, "Error occurred while formation of 'start_time_msecs' for fetching the events. Error: {}".format(error_msg))
 
         if end_time_msecs < start_time_msecs:
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_INVALID_TIME_RANGE)
+
+        # After-date the event ingestion end time by event_ingest_end_time configuration parameter
+        # if it exceeds the current time, consider current time as end time
+
+        if self._is_on_poll and self._event_ingest_end_time > 0:
+            self.save_progress('Original end_time_msecs is: {0} and start_time_msecs is : {1}'.format(end_time_msecs, start_time_msecs))
+            self.save_progress('After-dating the event end time by {} minutes'.format(self._event_ingest_end_time))
+            end_time_msecs = start_time_msecs + self._event_ingest_end_time * 60 * 1000
+            if(end_time_msecs > curr_epoch_msecs):
+                self.debug_print("The modified end_time_msecs to fetch events exceeded the current time so the current time is taken as end_time_msecs")
+                end_time_msecs = curr_epoch_msecs
+            self.save_progress('The modified end_time_msecs is: {}'.format(end_time_msecs))
 
         # The START clause has to come before the STOP clause, else the query fails
         # The START and STOP clause have to be given, else the results will be for
@@ -2026,7 +2102,7 @@ class QradarConnector(BaseConnector):
             event_start_time = None
             if self._is_on_poll and not self._is_manual_poll:
                 if self._state.get('last_ingested_events_data', {}).get(str(param.get('offense_id', ''))):
-                    event_start_time = int(self._state['last_ingested_events_data'].get(str(param['offense_id'])))
+                    event_start_time = int(self._state['last_ingested_events_data'].get(str(param.get('offense_id'))))
 
             if not event_start_time:
                 event_days = num_days
@@ -2083,11 +2159,11 @@ class QradarConnector(BaseConnector):
         if self._is_on_poll and not self._is_manual_poll and events_list:
             events_list.sort(key=lambda x: x['starttime'])
             if not self._state.get('last_ingested_events_data'):
-                offense_dict = {str(param['offense_id']): events_list[-1]['starttime']}
+                offense_dict = {str(param.get('offense_id')): events_list[-1]['starttime']}
                 self._state.update({'last_ingested_events_data': offense_dict})
             else:
                 last_ingested_events_data_dict = self._state.get('last_ingested_events_data')
-                last_ingested_events_data_dict[str(param['offense_id'])] = events_list[-1]['starttime']
+                last_ingested_events_data_dict[str(param.get('offense_id'))] = events_list[-1]['starttime']
                 self._state['last_ingested_events_data'] = last_ingested_events_data_dict
         # Set the summary
         action_result.update_summary({QRADAR_JSON_TOTAL_EVENTS: action_result.get_data_size()})
@@ -2447,7 +2523,7 @@ class QradarConnector(BaseConnector):
 
         # Validate 'tenant_id' action parameter
         tenant_id = param.get('tenant_id', None)
-        ret_val, _ = self._validate_integer(action_result, tenant_id, QRADAR_TENANT_ID_KEY)
+        ret_val, _ = self._validate_integer(action_result, tenant_id, QRADAR_TENANT_ID_KEY, True)
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
