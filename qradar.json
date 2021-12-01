@@ -15,6 +15,7 @@
     "product_name": "QRadar",
     "product_version_regex": ".*",
     "min_phantom_version": "4.9.39220",
+    "fips_compliant": true,
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
