@@ -1596,7 +1596,7 @@ class QradarConnector(BaseConnector):
         if phantom.is_fail(action_result.get_status()):
             self.debug_print("call_api for ariel query failed: ", action_result.get_status())
             return action_result.set_status(phantom.APP_ERROR, "Error occurred while fetching events for the offense ID: {}. Response code: {}. Response text: {}".format(
-                                                offense_id, response.status_code, response_text))
+                                                offense_id, None if response is None else response.status_code, response_text))
 
         self.debug_print("Response Code", response.status_code)
         self.debug_print("Response Text", response_text)
