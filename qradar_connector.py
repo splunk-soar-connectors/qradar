@@ -226,9 +226,9 @@ class QradarConnector(BaseConnector):
             # 1. Testing the basic auth workflow as here
             if 'Authorization' in headers:
                 try:
-                    r = request_func(
+                    r = request_func(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
                         url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params
-                    )  # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+                    )
                     if r.status_code != 200:
                         result.set_status(phantom.APP_ERROR, QRADAR_BASIC_AUTH_ERROR_MESSAGE)
                         return r
@@ -250,9 +250,9 @@ class QradarConnector(BaseConnector):
 
                 # Testing the auth token workflow
                 try:
-                    r = request_func(
+                    r = request_func(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
                         url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params
-                    )  # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+                    )
                     if r.status_code != 200:
                         result.set_status(phantom.APP_ERROR, QRADAR_AUTH_TOKEN_ERROR_MESSAGE)
                         return r
@@ -263,9 +263,9 @@ class QradarConnector(BaseConnector):
                     return r
         else:
             try:
-                r = request_func(
+                r = request_func(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
                     url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params
-                )  # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+                )
             except Exception as e:
                 error_msg = self._get_error_message_from_exception(e)
                 result.set_status(phantom.APP_ERROR, '{}. {}'.format(QRADAR_ERR_REST_API_CALL_FAILED, error_msg))
@@ -2999,9 +2999,9 @@ if __name__ == '__main__':
             headers['Referer'] = login_url
 
             print("Logging into Platform to get the session id")
-            r2 = requests.post(
+            r2 = requests.post(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
                 login_url, verify=verify, data=data, headers=headers
-            )  # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+            )
             session_id = r2.cookies['sessionid']
         except Exception as e:
             print("Unable to get session id from the platfrom. Error: " + str(e))
