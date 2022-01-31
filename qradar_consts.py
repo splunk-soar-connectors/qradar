@@ -49,10 +49,14 @@ TENANT_NOT_FOUND_4_8 = "Tenant {tid} was not found or is not enabled"
 TENANT_NOT_FOUND_4_5 = 'Tenant "{tid}" was not found or is not enabled'
 QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the offense closing reasons details"
 QRADAR_ERR_DATETIME_PARSE = "Error occurred while parsing start_time and end_time."
-QRADAR_ERR_DATETIME_PARSE += " Please check the 'start_time' and 'end_time' action parameters or the 'Alternative initial ingestion time' asset configuration parameter."
-QRADAR_ERR_INVALID_CREDENTIAL_CONFIG = "Invalid or incomplete credential configuration. Either an auth_key or both username & password should be specified."
-QRADAR_ERR_INCOMPLETE_CREDENTIAL_CONFIG = "Missing value for username or password configuration parameters. Please provide both the username and password values or none of them."
-QRADAR_ERR_INVALID_TIME = "Please provide a valid python parsable Datetime (dateutil module) string or {num_type} integer epoch (milliseconds) value"
+QRADAR_ERR_DATETIME_PARSE += (" Please check the 'start_time' and 'end_time' action parameters"
+"or the 'Alternative initial ingestion time' asset configuration parameter.")
+QRADAR_ERR_INVALID_CREDENTIAL_CONFIG = ("Invalid or incomplete credential configuration. "
+"Either an auth_key or both username & password should be specified.")
+QRADAR_ERR_INCOMPLETE_CREDENTIAL_CONFIG = ("Missing value for username or password configuration parameters. "
+"Please provide both the username and password values or none of them.")
+QRADAR_ERR_INVALID_TIME = ("Please provide a valid python parsable Datetime (dateutil module) "
+"string or {num_type} integer epoch (milliseconds) value")
 QRADAR_ERR_INVALID_TIME += " or 'yesterday' in '{field_name}' {field_location}"
 QRADAR_ERR_REST_API_CALL_FAILED = "Rest API call failed"
 QRADAR_ERR_REST_API_CALL_FAILED_RESPONSE_NONE = "Rest API call failed, HTTP response was 'None'"
@@ -84,11 +88,12 @@ QRADAR_MSG_GOT_N_OBJS = "Got {num_of_objs} {obj_type}"
 
 # This is what a event query looks like
 # The select clause with all the required data
-QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, AccountDomain, destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid), UTF8(payload) as Payload' # noqa
+QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, \'Account Domain\', destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid), UTF8(payload) as Payload' # noqa
 # From clause
 QRADAR_AQL_EVENT_FROM = " from events"
 
-QRADAR_AQL_FLOW_SELECT = 'select {fields}, ProtocolName(protocolid), ApplicationName(applicationid), QidName(qid), CategoryName(category)'
+QRADAR_AQL_FLOW_SELECT = ("select {fields}, ProtocolName(protocolid), ApplicationName(applicationid), "
+"QidName(qid), CategoryName(category)")
 QRADAR_AQL_FLOW_FROM = " from flows"
 
 # Next come the offense id, count and range parts
@@ -112,7 +117,8 @@ QRADAR_AUTH_TOKEN_ERROR_MESSAGE = "Please provide correct authorization token in
 QRADAR_ERR_INVALID_PARAM = "Please provide non-zero positive integer in {param}"
 QRADAR_ERR_MSG_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters."
 QRADAR_ERR_CODE_UNAVAILABLE = "Error code unavailable"
-QRADAR_UNICODE_DAMMIT_TYPE_ERROR_MESSAGE = "Error occurred while connecting to the QRadar server. Please check the asset configuration and|or the action parameters."
+QRADAR_UNICODE_DAMMIT_TYPE_ERROR_MESSAGE = ("Error occurred while connecting to the QRadar server. "
+"Please check the asset configuration and|or the action parameters.")
 QRADAR_EXCEPTION_ERROR_MESSAGE = "{msg}. Error Code: {error_code}. Error Message: {error_msg}"
 
 # Integer Validation Keys
