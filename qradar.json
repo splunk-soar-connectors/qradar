@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "2.1.5",
+    "app_version": "2.2.0",
     "latest_tested_versions": [
         "On-premise v7.3.1"
     ],
@@ -14,12 +14,12 @@
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "4.9.39220",
+    "min_phantom_version": "5.0.0",
     "fips_compliant": true,
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
-    "license": "Copyright (c) 2016-2021 Splunk Inc.",
+    "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "app_config_render": "default",
     "configuration": {
         "device": {
