@@ -92,8 +92,7 @@ QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, \'
 # From clause
 QRADAR_AQL_EVENT_FROM = " from events"
 
-QRADAR_AQL_FLOW_SELECT = ("select {fields}, ProtocolName(protocolid), ApplicationName(applicationid), "
-"QidName(qid), CategoryName(category)")
+QRADAR_AQL_FLOW_SELECT = 'select "Action", "Application Determination Algorithm", "Content Subject", "Content Type", "DNS Response", "File Entropy", "File Hash", "File Name", "File Size", "Flow Direction Algorithm", "Google Search Terms", "Originating User", "Password", "Recipient Users", "Request URL", "Search Arguments", "Suspect Content Descriptions", "applicationid", "category", "credibility", "destinationasn", "destinationbytes", "destinationdscp", "destinationflags", "destinationifindex", "destinationip", "destinationpackets", "destinationpayload", "destinationport", "destinationprecedence", "destinationv6", "domainid", "firstpackettime", "flowbias", "flowdirection", "flowid", "flowinterface", "flowinterfaceid", "flowsource", "flowtype", "fullmatchlist", "geographic", "hasdestinationpayload", "hasoffense", "hassourcepayload", "hastlv", "icmpcode", "icmptype", "intervalid", "isduplicate", "lastpackettime", "partialmatchlist", "partialormatchlist", "processorid", "protocolid", "qid", "relevance", "retentionbucket", "severity", "sourceasn", "sourcebytes", "sourcedscp", "sourceflags", "sourceifindex", "sourceip", "sourcepackets", "sourcepayload", "sourceport", "sourceprecedence", "sourcev6", "starttime", "tlvs", "viewobjectpair", ProtocolName(protocolid), ApplicationName(applicationid), QidName(qid), CategoryName(category)' # noqa
 QRADAR_AQL_FLOW_FROM = " from flows"
 
 # Next come the offense id, count and range parts

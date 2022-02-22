@@ -2289,30 +2289,6 @@ class QradarConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, QRADAR_SUCC_RUN_QUERY)
 
-    def _get_flow_columns_chunk(self, flow_columns_processed, action_result):
-
-        columns_chunk_list = list()
-        temp_list = list()
-        length = 0
-
-        total_fields = len(flow_columns_processed) - 1
-
-        for i, field in enumerate(flow_columns_processed):
-            length = length + len(field)
-
-            if length > QRADAR_DEFAULT_QUERY_CHUNK_SIZE:
-                columns_chunk_list.append(temp_list)
-                temp_list = list()
-                temp_list.append(field)
-                length = len(field)
-            else:
-                temp_list.append(field)
-
-            if i == total_fields:
-                columns_chunk_list.append(temp_list)
-
-        return columns_chunk_list
-
     def _get_flows(self, param):  # noqa: C901
 
         # Create a action result
@@ -2352,53 +2328,6 @@ class QradarConnector(BaseConnector):
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
-
-        # First get all the possible columns for an flow
-        response = self._call_api('ariel/databases/flows', 'get', self)
-
-        if phantom.is_fail(self.get_status()):
-            self.debug_print("call_api failed: ", self.get_status())
-            return self.get_status()
-
-        # default the self status to failure, so that post processing of action results
-        # is carried out properly
-        self.set_status(phantom.APP_ERROR)
-
-        self.debug_print("Response Code", response.status_code)
-
-        if response.status_code != 200:
-            if 'html' in response.headers.get('Content-Type', ''):
-                return self._process_html_response(response, action_result)
-            # Error condition
-            if 'json' in response.headers.get('Content-Type', ''):
-                status_message = self._get_json_error_message(response, action_result)
-            else:
-                response_text = self._handle_py_ver_compat_for_input_str(response.text)
-                status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_GET_FLOWS_COLUMNS_API_FAILED, response.status_code,
-                                                                                  response_text if response_text else "Unknown error occurred.")
-            return action_result.set_status(phantom.APP_ERROR, status_message)
-
-        try:
-            event_columns_json = response.json()
-        except:
-            # Many times when QRadar crashes, it gives back the status code as 200, but the response
-            # in an html saying that an application error occurred. Bail out when this happens
-            # The debug_print of response should help in debugging this
-            response_text = self._handle_py_ver_compat_for_input_str(response.text)
-            self.debug_print("response", response_text if response_text else "Unknown error occurred.")
-            return action_result.set_status(phantom.APP_ERROR, QRADAR_ERR_GOT_INVALID_RESPONSE)
-
-        flow_columns_json = event_columns_json
-
-        flow_columns_processed = list()
-        try:
-            for x in [y.get('name') for y in flow_columns_json['columns']]:
-                flow_columns_processed.append('"{}"'.format(x))
-        except:
-            return action_result.set_status(phantom.APP_ERROR, "Unexpected response retrieved while fetching "
-                                            "all the possible columns for an flow")
-
-        flow_columns_chunks = self._get_flow_columns_chunk(flow_columns_processed, action_result)
 
         # Generate the fix part of the query
         # default the where clause to empty
@@ -2479,14 +2408,7 @@ class QradarConnector(BaseConnector):
         where_clause += " START '{0}'".format(self._get_tz_str_from_epoch('start_time_msecs', start_time_msecs, action_result))
         where_clause += " STOP '{0}'".format(self._get_tz_str_from_epoch('end_time_msecs', end_time_msecs, action_result))
 
-        mixed_columns = []
-        for i in flow_columns_chunks:
-            mixed_columns.extend(i)
-        flow_columns = ','.join(mixed_columns)
-
-        self.debug_print("flow_columns", flow_columns)
-
-        ariel_query = QRADAR_AQL_FLOW_SELECT.format(fields=flow_columns) + QRADAR_AQL_FLOW_FROM
+        ariel_query = QRADAR_AQL_FLOW_SELECT + QRADAR_AQL_FLOW_FROM
         ariel_query = self._handle_py_ver_compat_for_input_str(ariel_query)
         where_clause = self._handle_py_ver_compat_for_input_str(where_clause)
 
