@@ -459,6 +459,11 @@ explanation in Overview, and some individuals Apps have their sections.
         fetching all the flows.
     -   **Fields Filter -** This field expects a filter string in the valid AQL query syntax.
     -   **Offense ID -** This field expects a unique offense ID to fetch the flows for.
+    -   **NOTE -** Flows can contain a variety of fields depending on the QRadar version used.
+        However, in this app, the 'get flows' action returns the selected fields having quality data
+        which are present in most of the QRadar versions. If the user wants to fetch the fields not
+        returned by the 'get flows' action, then the 'run query' action of the app can be used with a
+        customized query.
 
 
 
