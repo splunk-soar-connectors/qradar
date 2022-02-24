@@ -226,7 +226,7 @@ class QradarConnector(BaseConnector):
             # 1. Testing the basic auth workflow as here
             if 'Authorization' in headers:
                 try:
-                    r = request_func(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+                    r = request_func(
                         url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params
                     )
                     if r.status_code != 200:
@@ -250,7 +250,7 @@ class QradarConnector(BaseConnector):
 
                 # Testing the auth token workflow
                 try:
-                    r = request_func(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+                    r = request_func(
                         url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params
                     )
                     if r.status_code != 200:
@@ -263,7 +263,7 @@ class QradarConnector(BaseConnector):
                     return r
         else:
             try:
-                r = request_func(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+                r = request_func(
                     url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params
                 )
             except Exception as e:
@@ -2908,7 +2908,7 @@ if __name__ == '__main__':
         try:
             login_url = BaseConnector._get_phantom_base_url() + "login"
             print("Accessing the Login page")
-            r = requests.get(login_url, verify=verify)  # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
+            r = requests.get(login_url, verify=verify, timeout=DEFAULT_REQUEST_TIMEOUT)
             csrftoken = r.cookies['csrftoken']
 
             data = dict()
@@ -2921,8 +2921,8 @@ if __name__ == '__main__':
             headers['Referer'] = login_url
 
             print("Logging into Platform to get the session id")
-            r2 = requests.post(                           # nosemgrep: python.requests.best-practice.use-timeout.use-timeout
-                login_url, verify=verify, data=data, headers=headers
+            r2 = requests.post(
+                login_url, verify=verify, data=data, headers=headers, timeout=DEFAULT_REQUEST_TIMEOUT
             )
             session_id = r2.cookies['sessionid']
         except Exception as e:

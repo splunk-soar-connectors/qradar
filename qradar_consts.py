@@ -135,3 +135,4 @@ QRADAR_START_TIME = "Please provide valid non-zero epoch value (milliseconds) in
 QRADAR_MAX_EVENTS_PER_OFFENSE = "'max_events_per_offense' configuration parameter"
 QRADAR_OFFENSE_INGEST_START_TIME = "'offense_ingest_start_time' configuration parameter"
 QRADAR_EVENT_INGEST_END_TIME = "'event_ingest_end_time' configuration parameter"
+DEFAULT_REQUEST_TIMEOUT = 30  # in seconds
