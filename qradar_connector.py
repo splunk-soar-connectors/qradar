@@ -1448,7 +1448,7 @@ class QradarConnector(BaseConnector):
         action_result.set_status(phantom.APP_SUCCESS, '{0}Total Offenses: {1}'.format(offenses_status_msg, len(offenses)))
         return action_result.get_status()
 
-    def _list_offense_closing_reasons(self, param):
+    def _handle_list_closing_reasons(self, param):
 
         action_result = self.add_action_result(ActionResult(dict(param)))
 
@@ -2513,7 +2513,7 @@ class QradarConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully assigned user to offense")
 
-    def _get_offense_details(self, param):
+    def _handle_offense_details(self, param):
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         # Get the list of offense ids
@@ -2593,7 +2593,7 @@ class QradarConnector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
-    def _post_add_to_reference_set(self, param):
+    def _handle_add_to_reference_set(self, param):
 
         # Get the list of offense ids
         reference_set_name = self._handle_py_ver_compat_for_input_str(param[QRADAR_JSON_REFSET_NAME])
@@ -2654,7 +2654,7 @@ class QradarConnector(BaseConnector):
 
         return action_result.get_status()
 
-    def _post_close_offense(self, param):
+    def _handle_close_offense(self, param):
 
         # Create a action result
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -2832,7 +2832,7 @@ class QradarConnector(BaseConnector):
         if action == self.ACTION_ID_LIST_OFFENSES:
             result = self._list_offenses(param)
         elif action == self.ACTION_ID_LIST_CLOSING_REASONS:
-            result = self._list_offense_closing_reasons(param)
+            result = self._handle_list_closing_reasons(param)
         elif action == self.ACTION_ID_GET_EVENTS:
             result = self._get_events(param)
         elif action == self.ACTION_ID_GET_FLOWS:
@@ -2840,11 +2840,11 @@ class QradarConnector(BaseConnector):
         elif action == self.ACTION_ID_RUN_QUERY:
             result = self._run_query(param)
         elif action == self.ACTION_ID_OFFENSE_DETAILS:
-            result = self._get_offense_details(param)
+            result = self._handle_offense_details(param)
         elif action == self.ACTION_ID_CLOSE_OFFENSE:
-            result = self._post_close_offense(param)
+            result = self._handle_close_offense(param)
         elif action == self.ACTION_ID_ADD_TO_REF_SET:
-            result = self._post_add_to_reference_set(param)
+            result = self._handle_add_to_reference_set(param)
         elif action == self.ACTION_ID_ADD_NOTE:
             result = self._handle_add_note(param)
         elif action == phantom.ACTION_ID_INGEST_ON_POLL:
