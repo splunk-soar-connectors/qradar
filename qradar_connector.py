@@ -2818,6 +2818,7 @@ class QradarConnector(BaseConnector):
             })
         except Exception as e:
             error_msg = self._get_error_message_from_exception(e)
+            self.debug_print('Provided time is invalid. Error: {}'.format(error_msg))
             return action_result.set_status(phantom.APP_ERROR, 'Provided time is invalid. Error: {}'.format(error_msg))
 
         self.save_state(self._state)
