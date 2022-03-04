@@ -300,7 +300,7 @@
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "contains": [
                         "qradar offense closing reason id"
                     ],
@@ -357,6 +357,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.first_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1641969874000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.flow_count",
                     "data_type": "numeric",
                     "column_name": "Flow Count",
@@ -398,6 +405,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1646299854000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_updated_time",
                     "data_type": "numeric",
                     "column_name": "Last Updated Time",
@@ -411,6 +425,34 @@
                     "data_type": "numeric",
                     "example_values": [
                         0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        64
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIM Audit-2 :: qradar743"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        105
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIMAudit"
                     ]
                 },
                 {
@@ -798,6 +840,13 @@
                     "data_type": "numeric",
                     "example_values": [
                         1559891174855
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.Account Domain",
+                    "data_type": "string",
+                    "example_value": [
+                        "Account Domain"
                     ]
                 },
                 {
@@ -1235,12 +1284,60 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.AWS Account ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.AWS Action",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.AWS Log Status",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Accumulated Destination Bytes",
+                    "data_type": "numeric",
+                    "example_value": [
+                        8536
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.Accumulated Destination Packets",
+                    "data_type": "numeric",
+                    "example_value": [
+                        14
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.Accumulated Source Bytes",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1588
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.Accumulated Source Packets",
+                    "data_type": "numeric",
+                    "example_value": [
+                        12
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.Action",
                     "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Application Determination Algorithm",
                     "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.Authentication Mechanism",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Content Flow Direction",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Content Subject",
@@ -1251,11 +1348,131 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Customer VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.DNS Domain Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.DNS Flags",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.DNS Query ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.DNS Raw Answer",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.DNS Request Type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.DNS Response Code",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Destination MAC Address",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Deviation Description",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Deviation Flags (group 1)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Deviation Flags (group 2)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Deviation Flags (group 3)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Deviation Flags (group 4)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Customer DEI",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Customer DEI (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Customer Priority",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Customer Priority (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Customer VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Customer VLAN ID (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q DEI",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q DEI (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Priority",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q Priority (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Dot1q VLAN ID (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Enterprise VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Expected Frequency per 1M Flows",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.FTP Command",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.FTP Pass",
                     "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.FTP RETR File",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.FTP Reply Code",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.FTP Response",
                     "data_type": "string"
                 },
                 {
@@ -1279,8 +1496,31 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Firewall Event",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Firewall Event (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Firewall Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Flow Aggregation Count",
+                    "data_type": "numeric",
+                    "example_value": [
+                        4
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.Flow Direction Algorithm",
                     "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.Frequency Weighted Deviation Score",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.Google Search Terms",
@@ -1296,6 +1536,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.HTTP Host",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.HTTP Method",
                     "data_type": "string"
                 },
                 {
@@ -1327,6 +1571,234 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Interface Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Interface Name (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Kerberos Cipher Suite",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Kerberos Client Principal Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Kerberos Issued Ticket Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Kerberos Presented Ticket Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Kerberos Realm",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Kerberos Server Principal Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Last Proxy Basis",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Last Proxy IPv4",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Last Proxy IPv6",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MD5 File Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 1 (Top Label)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 1 (Top Label) (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 10",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 10 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 2",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 2 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 3",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 3 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 4",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 4 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 5",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 5 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 6",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 6 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 7",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 7 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 8",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 8 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 9",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label 9 (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label Stack Depth",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label Stack Depth (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label Stack Length",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label Stack Length (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label Stack Section",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Label Stack Section (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Payload Length",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Payload Length (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Payload Packet Section",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Payload Packet Section (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label Exp",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label Exp (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label IPv4 Address",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label IPv4 Address (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label IPv6 Address",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label IPv6 Address (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label Prefix Length",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label Prefix Length (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label TTL",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label TTL (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label Type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS Top Label Type (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS VPN Route Distinguisher",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.MPLS VPN Route Distinguisher (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Network Threat Analytics Model UUID",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.Originating User",
                     "data_type": "string"
                 },
@@ -1335,7 +1807,95 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Post Destination MAC Address",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post Dot1q Customer VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post Dot1q Customer VLAN ID (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post Dot1q VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post Dot1q VLAN ID (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post MPLS Top Label Exp",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post MPLS Top Label Exp (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post Source MAC Address",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Post VLAN ID (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Primary Deviation Score",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Protocol Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Protocol Version",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Pseudo Wire Control Word",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Pseudo Wire Control Word (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Pseudo Wire Type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Pseudo Wire Type (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.RDP Encryption Level",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.RDP Encryption Method",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Region",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.Request URL",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.SHA1 File Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.SHA256 File Hash",
                     "data_type": "string"
                 },
                 {
@@ -1355,11 +1915,151 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.SSL/TLS Cipher Suite",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.SSL/TLS Compression Method",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.SSL/TLS Session ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.SSL/TLS Version",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.Search Arguments",
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Section Exported Octets",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Section Exported Octets (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Section Offset",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Section Offset (reverse)",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Source MAC Address",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.TFTP Mode",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.TFTP Status",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.TLS Application Layer Protocol",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.TLS JA3 Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.TLS JA3S Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.TLS Server Name Indication",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Total Deviation Score",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.VLAN ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.VLAN ID (reverse)",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.VLAN Tag",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.VXLAN Network Identifier",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.Vendor Flow ID",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Fingerprint Hash",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Issuer Common Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Issuer Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Not-After Validity Timestamp",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Not-Before Validity Timestamp",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Public Key",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Public Key Algorithm",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Public Key Size",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Serial Number",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Signature",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Signature Algorithm",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Subject Common Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Subject Name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate To-Be-Signed Signature Algorithm",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.X509 Certificate Version",
                     "data_type": "string"
                 },
                 {
@@ -1415,6 +2115,13 @@
                 {
                     "data_path": "action_result.data.*.destinationflags",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.destinationhost",
+                    "data_type": "string",
+                    "example_value": [
+                        "13.107.42.14"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationifindex",
@@ -1473,6 +2180,13 @@
                 {
                     "data_path": "action_result.data.*.domainid",
                     "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.endtime",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1644981394728
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.firstpackettime",
@@ -1650,6 +2364,13 @@
                 {
                     "data_path": "action_result.data.*.sourceflags",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.sourcehost",
+                    "data_type": "string",
+                    "example_value": [
+                        "10.1.17.43"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourceifindex",
@@ -1910,6 +2631,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.first_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1644578552000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.flow_count",
                     "data_type": "numeric",
                     "column_name": "Flow Count",
@@ -1951,6 +2679,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1644925083000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_updated_time",
                     "data_type": "numeric",
                     "column_name": "Last Updated Time",
@@ -1964,6 +2699,34 @@
                     "data_type": "numeric",
                     "example_values": [
                         0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        64
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIM Audit-2 :: qradar743"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        105
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIMAudit"
                     ]
                 },
                 {
@@ -2261,6 +3024,27 @@
                     "data_type": "numeric"
                 },
                 {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.1157",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570561200000
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.1398",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570561200000
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.188",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570589580000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.19",
                     "data_type": "numeric"
                 },
@@ -2283,6 +3067,34 @@
                 {
                     "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.24",
                     "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.386",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570589580000
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.471",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570561200000
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.50",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570589580000
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.700",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1570589580000
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.74",
@@ -2550,6 +3362,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.events.*.eventdirection",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.eventid",
                     "data_type": "string"
                 },
                 {
@@ -2831,6 +3647,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.collection_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        24
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.creation_time",
                     "data_type": "numeric",
                     "example_values": [
@@ -2856,6 +3679,13 @@
                     ],
                     "column_order": 3,
                     "column_name": "Name"
+                },
+                {
+                    "data_path": "action_result.data.*.namespace",
+                    "data_type": "string",
+                    "example_value": [
+                        "SHARED"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.number_of_elements",
@@ -3076,6 +3906,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.first_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1641969844000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.flow_count",
                     "data_type": "numeric",
                     "column_name": "Flow Count",
@@ -3117,6 +3954,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1645871544000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_updated_time",
                     "data_type": "numeric",
                     "column_name": "Last Updated Time",
@@ -3130,6 +3974,34 @@
                     "data_type": "numeric",
                     "example_values": [
                         0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        63
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.name",
+                    "data_type": "string",
+                    "example_value": [
+                        "Custom Rule Engine-8 :: qradar743"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        18
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_name",
+                    "data_type": "string",
+                    "example_value": [
+                        "EventCRE"
                     ]
                 },
                 {
