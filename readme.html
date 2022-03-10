@@ -13,23 +13,12 @@ either express or implied. See the License for the specific language governing p
 and limitations under the License.
 -->
 
-<p>This App is an Ingestion source. In the Phantom documentation, in the <a href="../admin/">Administration Manual</a> under the <a href="../admin/sources">Data Sources</a> section, you will find an explanation of how Ingest Apps works and how information is extracted from the ingested data. There is a general explanation in Overview, and some individuals Apps have their sections.</p>
+<p>This App is an Ingestion source. In the Phantom documentation, in the <a href="https://docs.splunk.com/Documentation/SOARonprem/5.2.1/Admin/Intro">Administration Manual</a> under the <a href="https://docs.splunk.com/Documentation/SOARonprem/5.2.1/Admin/FirstTimeLoginOnboarding#Configure_a_data_source">Data Sources</a> section, you will find an explanation of how Ingest Apps works and how information is extracted from the ingested data. There is a general explanation in Overview, and some individuals Apps have their sections.</p>
 
 <p><b>QRadar Instance Minimum Version Compatibility</b>
 	<ul>
-		<li>With this version of the QRadar app on Phantom, we declare support for the QRadar instances which are on and above the v7.3.1. This app has been tested and certified on the v7.3.1 version of the QRadar.</li>
+		<li>This app has been tested and certified on the v7.3.1 and v7.4.3 versions of the QRadar.</li>
 		<li>The expectations of the actions with this version of the app have not been changed majorly. It is recommended to read the documentation for the app and each action first to understand the functioning of the actions of all the asset configuration and the action parameters.</li>
-	</ul>
-</p>
-
-<p><b>Playbook Backward Compatibility</b>
-	<ul>
-		<li>The existing action parameters have been modified in the actions given below. Hence, it is requested to the end-user to please update their existing playbooks by re-inserting the corresponding action blocks or by providing appropriate values to these action parameters to ensure the correct functioning of the playbooks created on the earlier versions of the app.</li>
-		<ul>
-			<li>Alt Manage Ingestion - The new drop-down values in the [operation] parameter have been added and the existing ones are modified.</li>
-			<li>Get Flows - This action was not working correctly and we have updated the logic for this action's functionality.</li>
-			<li>Offense Details - The action parameter for [interval_days] has been removed as it was not getting used in the action.</li>
-		</ul>
 	</ul>
 </p>
 
