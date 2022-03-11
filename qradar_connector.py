@@ -515,7 +515,7 @@ class QradarConnector(BaseConnector):
         timez = pytz.timezone(self._timezone)
         tzinfos = default_timezones.timezones()
         dt = dateutil.parser.parse(datestring.upper(), tzinfos=tzinfos)
-        dt_tz_asset = dt.replace(tzinfo=timez)
+        dt_tz_asset = timez.localize(dt)
         dt_tz_local = dt_tz_asset.astimezone(dateutil.tz.tzlocal())
         return int(time.mktime(dt_tz_local.timetuple()))
 
