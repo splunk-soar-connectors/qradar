@@ -1327,6 +1327,15 @@ class QradarConnector(BaseConnector):
             self.save_progress('Back-dating the offense start time by {} minutes'.format(self._offense_ingest_start_time))
             self.save_progress('The modified start_time is: {}'.format(start_time_msecs))
 
+        # Backdate the offense ingestion start time by offense_ingest_start_time configuration parameter
+        # for default ingestion algorithm
+
+        if self._is_on_poll and self._offense_ingest_start_time > 0:
+            self.save_progress('Original start time is: {}'.format(start_time_msecs))
+            start_time_msecs = start_time_msecs - self._offense_ingest_start_time * 60 * 1000
+            self.save_progress('Back-dating the offense start time by {} minutes'.format(self._offense_ingest_start_time))
+            self.save_progress('The modified start_time is: {}'.format(start_time_msecs))
+
         # 5. Create the param dictionary for the range
         filter_string += '(({2} >= {0} and {2} <= {1}) or ({3} >= {0} and {3} <= {1}))'.format(
             start_time_msecs, end_time_msecs, 'start_time', 'last_updated_time')
