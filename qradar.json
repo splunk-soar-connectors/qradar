@@ -2382,62 +2382,6 @@
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.74",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624549163772
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.75",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624551469014
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.76",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625030465146
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.77",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625030465146
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.78",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624878129775
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.79",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624897327378
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.80",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625086860295
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.82",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625572320174
-                    ]
-                },
-                {
                     "data_path": "action_result.data.*.last_saved_offense_ingest_time",
                     "data_type": "string",
                     "example_values": [
