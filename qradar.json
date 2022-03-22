@@ -5,20 +5,22 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "2.1.3",
+    "app_version": "2.2.0",
     "latest_tested_versions": [
-        "On-premise v7.3.1"
+        "On-premise v7.3.1",
+        "On-premise v7.4.3"
     ],
-    "utctime_updated": "2021-08-06T11:29:56.000000Z",
+    "utctime_updated": "2022-01-07T21:35:57.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "4.9.39220",
+    "min_phantom_version": "5.1.0",
+    "fips_compliant": true,
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
-    "license": "Copyright (c) 2016-2021 Splunk Inc.",
+    "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "app_config_render": "default",
     "configuration": {
         "device": {
@@ -278,7 +280,7 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.categories",
+                    "data_path": "action_result.data.*.categories.*",
                     "data_type": "string",
                     "example_values": [
                         "License Status"
@@ -299,7 +301,7 @@
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "contains": [
                         "qradar offense closing reason id"
                     ],
@@ -329,7 +331,7 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.destination_networks",
+                    "data_path": "action_result.data.*.destination_networks.*",
                     "data_type": "string",
                     "example_values": [
                         "other"
@@ -353,6 +355,13 @@
                     "column_order": 6,
                     "example_values": [
                         28603163
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.first_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1641969874000
                     ]
                 },
                 {
@@ -397,6 +406,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1646299854000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_updated_time",
                     "data_type": "numeric",
                     "column_name": "Last Updated Time",
@@ -406,10 +422,45 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.local_destination_address_ids.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        115
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.local_destination_count",
                     "data_type": "numeric",
                     "example_values": [
                         0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        64
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIM Audit-2 :: qradar743"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        105
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIMAudit"
                     ]
                 },
                 {
@@ -491,6 +542,13 @@
                     "column_order": 12,
                     "example_values": [
                         6
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.source_address_ids.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        115
                     ]
                 },
                 {
@@ -797,6 +855,13 @@
                     "data_type": "numeric",
                     "example_values": [
                         1559891174855
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.Account Domain",
+                    "data_type": "string",
+                    "example_value": [
+                        "Account Domain"
                     ]
                 },
                 {
@@ -1239,7 +1304,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.Application Determination Algorithm",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        4
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.Content Subject",
@@ -1250,15 +1318,7 @@
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.FTP Pass",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.FTP RETR File",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.FTP User",
+                    "data_path": "action_result.data.*.DNS Response.*",
                     "data_type": "string"
                 },
                 {
@@ -1279,50 +1339,13 @@
                 },
                 {
                     "data_path": "action_result.data.*.Flow Direction Algorithm",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        5
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.Google Search Terms",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Content-Type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP GET Request",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Host",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Referer",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Referrer",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Response Code",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Server",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP User Agent",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP User-Agent",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.HTTP Version",
                     "data_type": "string"
                 },
                 {
@@ -1334,23 +1357,11 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.Recipient Users.*",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.Request URL",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.SMTP From",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.SMTP HELO",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.SMTP Hello",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.SMTP To",
                     "data_type": "string"
                 },
                 {
@@ -1358,7 +1369,7 @@
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.VLAN Tag",
+                    "data_path": "action_result.data.*.Suspect Content Descriptions.*",
                     "data_type": "string"
                 },
                 {
@@ -1409,7 +1420,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.destinationdscp",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationflags",
@@ -1442,7 +1456,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.destinationpayload",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "YvKBgwABAAAAAQAAB3BoYW50b20LbG9jYWxkb21haW4HcGhhbnRvbQJ1cwAAAQABwCAABgABAAAC+gAmAmRjwCAKaG9zdG1hc3RlcsAgAAhilQAAA4QAAAJYAAFRgAAADhA="
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationport",
@@ -1458,7 +1475,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.destinationprecedence",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.destinationv6",
@@ -1471,7 +1491,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.domainid",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.firstpackettime",
@@ -1484,7 +1507,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.flowbias",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "other"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.flowdirection",
@@ -1495,7 +1521,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.flowid",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        "12770979771642251000"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.flowinterface",
@@ -1514,7 +1543,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.flowtype",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.fullmatchlist",
@@ -1529,7 +1561,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.hasdestinationpayload",
-                    "data_type": "boolean"
+                    "data_type": "boolean",
+                    "example_values": [
+                        true
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.hasoffense",
@@ -1547,15 +1582,18 @@
                 },
                 {
                     "data_path": "action_result.data.*.hastlv",
-                    "data_type": "boolean"
+                    "data_type": "boolean",
+                    "example_values": [
+                        false
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.icmpcode",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.icmptype",
-                    "data_type": "string"
+                    "data_type": "numeric"
                 },
                 {
                     "data_path": "action_result.data.*.intervalid",
@@ -1566,7 +1604,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.isduplicate",
-                    "data_type": "boolean"
+                    "data_type": "boolean",
+                    "example_values": [
+                        false
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.lastpackettime",
@@ -1582,6 +1623,13 @@
                     "data_type": "string"
                 },
                 {
+                    "data_path": "action_result.data.*.partialormatchlist.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        100013
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.processorid",
                     "data_type": "numeric",
                     "example_values": [
@@ -1590,7 +1638,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.protocolid",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        17
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.protocolname_protocolid",
@@ -1616,11 +1667,17 @@
                 },
                 {
                     "data_path": "action_result.data.*.relevance",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        10
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.retentionbucket",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "test"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.severity",
@@ -1644,7 +1701,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.sourcedscp",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourceflags",
@@ -1677,7 +1737,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.sourcepayload",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "example_values": [
+                        "YvIBAAABAAAAAAAAB3BoYW50b20LbG9jYWxkb21haW4HcGhhbnRvbQJ1cwAAAQAB"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourceport",
@@ -1690,7 +1753,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.sourceprecedence",
-                    "data_type": "numeric"
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.sourcev6",
@@ -1710,7 +1776,14 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.viewobjectpair",
+                    "data_path": "action_result.data.*.tlvs.*",
+                    "data_type": "string",
+                    "example_values": [
+                        "Flow Aggregation Count:2"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.viewobjectpair.*",
                     "data_type": "string"
                 },
                 {
@@ -1822,7 +1895,7 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.categories",
+                    "data_path": "action_result.data.*.categories.*",
                     "data_type": "string",
                     "example_values": [
                         "Error"
@@ -1846,14 +1919,14 @@
                 },
                 {
                     "data_path": "action_result.data.*.closing_reason_id",
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "contains": [
                         "qradar offense closing reason id"
                     ],
                     "column_name": "Offense Closing Reason ID",
                     "column_order": 11,
                     "example_values": [
-                        "3"
+                        3
                     ]
                 },
                 {
@@ -1882,7 +1955,7 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.destination_networks",
+                    "data_path": "action_result.data.*.destination_networks.*",
                     "data_type": "string",
                     "example_values": [
                         "other"
@@ -1906,6 +1979,13 @@
                     "column_order": 6,
                     "example_values": [
                         1035
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.first_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1644578552000
                     ]
                 },
                 {
@@ -1950,6 +2030,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1644925083000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_updated_time",
                     "data_type": "numeric",
                     "column_name": "Last Updated Time",
@@ -1959,10 +2046,45 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.local_destination_address_ids.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        115
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.local_destination_count",
                     "data_type": "numeric",
                     "example_values": [
                         0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        64
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIM Audit-2 :: qradar743"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        105
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_name",
+                    "data_type": "string",
+                    "example_value": [
+                        "SIMAudit"
                     ]
                 },
                 {
@@ -2044,6 +2166,13 @@
                     "column_order": 12,
                     "example_values": [
                         7
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.source_address_ids.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        115
                     ]
                 },
                 {
@@ -2193,7 +2322,7 @@
                     "description": "Datetime string to be stored against the ingestion data in the state file"
                 },
                 "offense_id": {
-                    "data_type": "string",
+                    "data_type": "numeric",
                     "order": 2,
                     "description": "Offense ID against which to store the 'datetime' parameter value",
                     "contains": [
@@ -2249,95 +2378,8 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.1",
-                    "data_type": "numeric",
-                    "example_values": [
-                        1575021925702
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.10",
+                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.*",
                     "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.19",
-                    "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.20",
-                    "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.21",
-                    "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.22",
-                    "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.23",
-                    "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.24",
-                    "data_type": "numeric"
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.74",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624549163772
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.75",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624551469014
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.76",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625030465146
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.77",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625030465146
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.78",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624878129775
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.79",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1624897327378
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.80",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625086860295
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.last_ingested_events_ingest_time_as_epoch.82",
-                    "data_type": "numeric",
-                    "example_value": [
-                        1625572320174
-                    ]
                 },
                 {
                     "data_path": "action_result.data.*.last_saved_offense_ingest_time",
@@ -2549,6 +2591,10 @@
                 },
                 {
                     "data_path": "action_result.data.*.events.*.eventdirection",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.events.*.eventid",
                     "data_type": "string"
                 },
                 {
@@ -2830,6 +2876,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.collection_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        24
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.creation_time",
                     "data_type": "numeric",
                     "example_values": [
@@ -2855,6 +2908,13 @@
                     ],
                     "column_order": 3,
                     "column_name": "Name"
+                },
+                {
+                    "data_path": "action_result.data.*.namespace",
+                    "data_type": "string",
+                    "example_value": [
+                        "SHARED"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.number_of_elements",
@@ -2988,7 +3048,7 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.categories",
+                    "data_path": "action_result.data.*.categories.*",
                     "data_type": "string",
                     "example_values": [
                         "Error"
@@ -3028,7 +3088,7 @@
                     "column_name": "Closing User",
                     "column_order": 10,
                     "example_values": [
-                        "API_token: Phantom"
+                        "root"
                     ]
                 },
                 {
@@ -3048,7 +3108,7 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.destination_networks",
+                    "data_path": "action_result.data.*.destination_networks.*",
                     "data_type": "string",
                     "example_values": [
                         "other"
@@ -3072,6 +3132,13 @@
                     "column_order": 6,
                     "example_values": [
                         2660
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.first_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1641969844000
                     ]
                 },
                 {
@@ -3116,6 +3183,13 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.last_persisted_time",
+                    "data_type": "numeric",
+                    "example_value": [
+                        1645871544000
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.last_updated_time",
                     "data_type": "numeric",
                     "column_name": "Last Updated Time",
@@ -3125,10 +3199,45 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.local_destination_address_ids.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        115
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.local_destination_count",
                     "data_type": "numeric",
                     "example_values": [
                         0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        63
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.name",
+                    "data_type": "string",
+                    "example_value": [
+                        "Custom Rule Engine-8 :: qradar743"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_id",
+                    "data_type": "numeric",
+                    "example_value": [
+                        18
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.log_sources.*.type_name",
+                    "data_type": "string",
+                    "example_value": [
+                        "EventCRE"
                     ]
                 },
                 {
@@ -3210,6 +3319,13 @@
                     "column_order": 12,
                     "example_values": [
                         7
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.source_address_ids.*",
+                    "data_type": "numeric",
+                    "example_values": [
+                        115
                     ]
                 },
                 {
@@ -3362,7 +3478,7 @@
                     "data_path": "action_result.parameter.note_text",
                     "data_type": "string",
                     "example_values": [
-                        "Note Added By Phantom"
+                        "Note Added By Root"
                     ]
                 },
                 {
@@ -3916,5 +4032,101 @@
             "output": [],
             "versions": "EQ(*)"
         }
-    ]
+    ],
+    "pip_dependencies": {
+        "wheel": [
+            {
+                "module": "beautifulsoup4",
+                "input_file": "wheels/py3/beautifulsoup4-4.9.1-py3-none-any.whl"
+            },
+            {
+                "module": "certifi",
+                "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+            },
+            {
+                "module": "chardet",
+                "input_file": "wheels/shared/chardet-3.0.4-py2.py3-none-any.whl"
+            },
+            {
+                "module": "idna",
+                "input_file": "wheels/shared/idna-2.10-py2.py3-none-any.whl"
+            },
+            {
+                "module": "python_dateutil",
+                "input_file": "wheels/shared/python_dateutil-2.8.1-py2.py3-none-any.whl"
+            },
+            {
+                "module": "pytz",
+                "input_file": "wheels/shared/pytz-2021.1-py2.py3-none-any.whl"
+            },
+            {
+                "module": "requests",
+                "input_file": "wheels/shared/requests-2.25.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "simplejson",
+                "input_file": "wheels/py36/simplejson-3.17.2-cp36-cp36m-manylinux2010_x86_64.manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            },
+            {
+                "module": "six",
+                "input_file": "wheels/shared/six-1.16.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "soupsieve",
+                "input_file": "wheels/py3/soupsieve-2.3.1-py3-none-any.whl"
+            },
+            {
+                "module": "urllib3",
+                "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+            }
+        ]
+    },
+    "pip39_dependencies": {
+        "wheel": [
+            {
+                "module": "beautifulsoup4",
+                "input_file": "wheels/py3/beautifulsoup4-4.9.1-py3-none-any.whl"
+            },
+            {
+                "module": "certifi",
+                "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+            },
+            {
+                "module": "chardet",
+                "input_file": "wheels/shared/chardet-3.0.4-py2.py3-none-any.whl"
+            },
+            {
+                "module": "idna",
+                "input_file": "wheels/shared/idna-2.10-py2.py3-none-any.whl"
+            },
+            {
+                "module": "python_dateutil",
+                "input_file": "wheels/shared/python_dateutil-2.8.1-py2.py3-none-any.whl"
+            },
+            {
+                "module": "pytz",
+                "input_file": "wheels/shared/pytz-2021.1-py2.py3-none-any.whl"
+            },
+            {
+                "module": "requests",
+                "input_file": "wheels/shared/requests-2.25.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "simplejson",
+                "input_file": "wheels/py39/simplejson-3.17.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            },
+            {
+                "module": "six",
+                "input_file": "wheels/shared/six-1.16.0-py2.py3-none-any.whl"
+            },
+            {
+                "module": "soupsieve",
+                "input_file": "wheels/py3/soupsieve-2.3.1-py3-none-any.whl"
+            },
+            {
+                "module": "urllib3",
+                "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+            }
+        ]
+    }
 }
