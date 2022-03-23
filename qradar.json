@@ -5,12 +5,12 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "2.2.1",
+    "app_version": "2.2.0",
     "latest_tested_versions": [
         "On-premise v7.3.1",
         "On-premise v7.4.3"
     ],
-    "utctime_updated": "2022-03-23T10:00:47.000000Z",
+    "utctime_updated": "2022-01-07T21:35:57.000000Z",
     "package_name": "phantom_qradar",
     "product_vendor": "IBM",
     "product_name": "QRadar",
