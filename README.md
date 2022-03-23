@@ -2,7 +2,7 @@
 # QRadar
 
 Publisher: Splunk  
-Connector Version: 2\.2\.0  
+Connector Version: 2\.2\.1  
 Product Vendor: IBM  
 Product Name: QRadar  
 Product Version Supported (regex): "\.\*"  
