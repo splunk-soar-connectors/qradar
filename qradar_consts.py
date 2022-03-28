@@ -51,6 +51,7 @@ QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the off
 QRADAR_ERR_DATETIME_PARSE = "Error occurred while parsing start_time and end_time."
 QRADAR_ERR_DATETIME_PARSE += (" Please check the 'start_time' and 'end_time' action parameters"
 "or the 'Alternative initial ingestion time' asset configuration parameter.")
+QRADAR_ERR_INVALID_JSON = "Unable to parse response as a valid JSON"
 QRADAR_ERR_INVALID_CREDENTIAL_CONFIG = ("Invalid or incomplete credential configuration. "
 "Either an auth_key or both username & password should be specified.")
 QRADAR_ERR_INCOMPLETE_CREDENTIAL_CONFIG = ("Missing value for username or password configuration parameters. "
@@ -108,6 +109,7 @@ QRADAR_DEFAULT_EVENT_COUNT = 100
 QRADAR_DEFAULT_FLOW_COUNT = 100
 QRADAR_DEFAULT_OFFENSE_COUNT = 100
 QRADAR_DEFAULT_QUERY_CHUNK_SIZE = 1000
+QRADAR_DEFAULT_ARTIFACT_CHUNK_SIZE = 1000
 QRADAR_LIMIT_REGEX_MATCH_PATTERN = r' limit (\d+)'
 QRADAR_CEF_VALUE_MAP_INT_PATTERN = r'numeric\((\d+(\.\d+)?)\)'
 

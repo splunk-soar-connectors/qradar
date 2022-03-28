@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "2.2.1",
+    "app_version": "2.3.0",
     "latest_tested_versions": [
         "On-premise v7.3.1",
         "On-premise v7.4.3"
@@ -20,7 +20,7 @@
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
-    "license": "Copyright (c) 2016-2022 Splunk Inc.",
+    "copyright": "Copyright (c) 2016-2022 Splunk Inc.",
     "app_config_render": "default",
     "configuration": {
         "device": {
