@@ -903,7 +903,7 @@ class QradarConnector(BaseConnector):
         for i in range(0, len(self._artifacts_list), QRADAR_DEFAULT_ARTIFACT_CHUNK_SIZE):
             j = i + QRADAR_DEFAULT_ARTIFACT_CHUNK_SIZE
             if j > len(self._artifacts_list):
-                j = len(self._artifacts_list) - i
+                j = len(self._artifacts_list)
 
             self.send_progress("Ingesting {}-{} artifacts, Status: In-progress".format(i + 1, j))
 
