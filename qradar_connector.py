@@ -1397,15 +1397,16 @@ class QradarConnector(BaseConnector):
 
             self.debug_print("Response Code", response.status_code)
 
-            if response.status_code != 200:
-                if 'html' in response.headers.get('Content-Type', ''):
-                    return self._process_html_response(response, action_result)
+            if response.status_code != 200 and 'html' in response.headers.get('Content-Type', ''):
+                return self._process_html_response(response, action_result)
+
+            if not (200 <= response.status_code <= 399):
                 # Error condition
                 if 'json' in response.headers.get('Content-Type', ''):
                     status_message = self._get_json_error_message(response, action_result)
                 else:
-                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(QRADAR_ERR_LIST_OFFENSES_API_FAILED,
-                                                                                      response.status_code, response.reason)
+                    status_message = '{0}. HTTP status_code: {1}, reason: {2}'.format(
+                        QRADAR_ERR_LIST_OFFENSES_API_FAILED, response.status_code, response.reason)
                 return action_result.set_status(phantom.APP_ERROR, status_message)
 
             try:
