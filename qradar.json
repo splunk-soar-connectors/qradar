@@ -15,12 +15,12 @@
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "5.1.0",
+    "min_phantom_version": "5.2.0",
     "fips_compliant": true,
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
-    "copyright": "Copyright (c) 2016-2022 Splunk Inc.",
+    "license": "Copyright (c) 2016-2022 Splunk Inc.",
     "app_config_render": "default",
     "configuration": {
         "device": {
