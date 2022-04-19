@@ -78,6 +78,8 @@ QRADAR_ERR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
 QRADAR_ERR_ADD_NOTE_API_FAILED = "Failed to added note to offense"
 QRADAR_SUCC_RUN_QUERY = "Successfully ran query"
+QRADAR_STATE_FILE_CORRUPT_ERR = "Error occurred while loading the state file due to its unexpected format. " \
+                                "Resetting the state file with the default format. Please try again."
 
 QRADAR_PROG_EXECUTING_ENDPOINT = "Executing {method} on {endpoint}"
 QRADAR_PROG_QUERY_STATUS = "Query {percent}% complete"

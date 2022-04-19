@@ -315,6 +315,11 @@ class QradarConnector(BaseConnector):
 
         self._config = self.get_config()
         self._state = self.load_state()
+        if not isinstance(self._state, dict):
+            self.debug_print("Resetting the state file with the default format")
+            self._state = {"app_version": self.get_app_json().get("app_version")}
+            return self.set_status(phantom.APP_ERROR, QRADAR_STATE_FILE_CORRUPT_ERR)
+
         self._is_on_poll = False
         self._is_manual_poll = False
         self._events_starttime_list = list()
@@ -911,7 +916,9 @@ class QradarConnector(BaseConnector):
             if phantom.is_fail(ret_val):
                 self.save_progress('Error occurred while artifact creation for the offense ID: {0}. Error: {1}'.format(
                     offense_id, create_artifact_msg))
-                return phantom.APP_ERROR, create_artifact_msg
+                self.send_progress("Ingesting {}-{} artifacts, Status: Failed".format(i + 1, j))
+                self.save_progress(" ")
+                continue
 
             self.send_progress("Ingesting {}-{} artifacts, Status: Complete".format(i + 1, j))
             self.save_progress(" ")
