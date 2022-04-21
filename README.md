@@ -2,11 +2,11 @@
 # QRadar
 
 Publisher: Splunk  
-Connector Version: 2\.2\.1  
+Connector Version: 2\.3\.0  
 Product Vendor: IBM  
 Product Name: QRadar  
 Product Version Supported (regex): "\.\*"  
-Minimum Product Version: 5\.1\.0  
+Minimum Product Version: 5\.2\.0  
 
 This app supports generic, investigative, and ingestion actions on an IBM QRadar device
 
