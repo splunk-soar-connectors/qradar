@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "2.2.1",
+    "app_version": "2.3.0",
     "latest_tested_versions": [
         "On-premise v7.3.1",
         "On-premise v7.4.3"
