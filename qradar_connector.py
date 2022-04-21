@@ -433,6 +433,8 @@ class QradarConnector(BaseConnector):
         get_ph_severity = lambda x: phantom.SEVERITY_LOW if x <= 3 else (
             phantom.SEVERITY_MEDIUM if x <= 7 else phantom.SEVERITY_HIGH)
 
+        # Keep run_automation true for every artifact, it will trigger the automation once.
+        # From Splunk SOAR version 5.0.0 behavior is changed, and automation will only trigger once for whole batch.
         artifact = {
             'label': 'event',
             'cef': cef,
@@ -888,6 +890,12 @@ class QradarConnector(BaseConnector):
         :return: status(success/failure), message
         """
 
+        # This method will be called in the loop, add offense artifact only if it is not created earlier.
+        # At least one artifact in the list indicates that the offense artifact is already created.
+        if self._artifacts_list:
+            self.debug_print('_artifacts_list is already populated with offense artifact')
+            return
+
         artifact = {
             'name': 'Offense Artifact',
             'container_id': container_id,
@@ -896,13 +904,15 @@ class QradarConnector(BaseConnector):
             'label': 'offense',
             'run_automation': True
         }
-
-        # This method will be called in the loop, add offense artifact only if it is not created earlier.
-        # At least one artifact in the list indicates that the offense artifact is already created.
-        if not self._artifacts_list:
-            self._artifacts_list.append(artifact)
+        self._artifacts_list.append(artifact)
 
     def _ingest_collected_artifacts(self, offense_id):
+        """ This function is used to create artifacts in given container using collected list of artifacts.
+        This function will ingest artifacts in the batch of 1000 artifacts, and will trigger automation for every batch.
+
+        :param offense_id: ID of the offense for saving status messages
+        :return: status, message
+        """
 
         self.save_progress("Started artifacts creation for the collected events and offenses for offense id - {}".format(offense_id))
         for i in range(0, len(self._artifacts_list), QRADAR_DEFAULT_ARTIFACT_CHUNK_SIZE):
