@@ -51,6 +51,7 @@ QRADAR_ERR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the off
 QRADAR_ERR_DATETIME_PARSE = "Error occurred while parsing start_time and end_time."
 QRADAR_ERR_DATETIME_PARSE += (" Please check the 'start_time' and 'end_time' action parameters"
 "or the 'Alternative initial ingestion time' asset configuration parameter.")
+QRADAR_ERR_INVALID_JSON = "Unable to parse response as a valid JSON"
 QRADAR_ERR_INVALID_CREDENTIAL_CONFIG = ("Invalid or incomplete credential configuration. "
 "Either an auth_key or both username & password should be specified.")
 QRADAR_ERR_INCOMPLETE_CREDENTIAL_CONFIG = ("Missing value for username or password configuration parameters. "
@@ -77,6 +78,8 @@ QRADAR_ERR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
 QRADAR_ERR_ADD_NOTE_API_FAILED = "Failed to added note to offense"
 QRADAR_SUCC_RUN_QUERY = "Successfully ran query"
+QRADAR_STATE_FILE_CORRUPT_ERR = "Error occurred while loading the state file due to its unexpected format. " \
+                                "Resetting the state file with the default format. Please try again."
 
 QRADAR_PROG_EXECUTING_ENDPOINT = "Executing {method} on {endpoint}"
 QRADAR_PROG_QUERY_STATUS = "Query {percent}% complete"
@@ -108,6 +111,7 @@ QRADAR_DEFAULT_EVENT_COUNT = 100
 QRADAR_DEFAULT_FLOW_COUNT = 100
 QRADAR_DEFAULT_OFFENSE_COUNT = 100
 QRADAR_DEFAULT_QUERY_CHUNK_SIZE = 1000
+QRADAR_DEFAULT_ARTIFACT_CHUNK_SIZE = 1000
 QRADAR_LIMIT_REGEX_MATCH_PATTERN = r' limit (\d+)'
 QRADAR_CEF_VALUE_MAP_INT_PATTERN = r'numeric\((\d+(\.\d+)?)\)'
 

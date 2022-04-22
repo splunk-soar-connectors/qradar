@@ -5,7 +5,7 @@
     "type": "siem",
     "publisher": "Splunk",
     "main_module": "qradar_connector.py",
-    "app_version": "2.2.1",
+    "app_version": "2.3.0",
     "latest_tested_versions": [
         "On-premise v7.3.1",
         "On-premise v7.4.3"
@@ -15,7 +15,7 @@
     "product_vendor": "IBM",
     "product_name": "QRadar",
     "product_version_regex": ".*",
-    "min_phantom_version": "5.1.0",
+    "min_phantom_version": "5.2.0",
     "fips_compliant": true,
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
@@ -4077,7 +4077,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.9-py2.py3-none-any.whl"
             }
         ]
     },
@@ -4125,7 +4125,7 @@
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+                "input_file": "wheels/shared/urllib3-1.26.9-py2.py3-none-any.whl"
             }
         ]
     }
