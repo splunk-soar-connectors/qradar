@@ -101,8 +101,8 @@ sections.
             `            {                        "signature_id": "qid",                        "name": "qidname_qid",                        "severity": "severity",                        "applicationProtocol": "Application",                        "destinationMacAddress": "destinationmac",                        "destinationNtDomain": "AccountDomain",                        "destinationPort": "destinationport",                        "destinationAddress": "destinationaddress",                        "endTime": "endtime",                        "fileHash": "File Hash",                        "fileId": "File ID",                        "filePath": "File Path",                        "fileName": "Filename",                        "bytesIn": "BytesReceived",                        "message": "Message",                        "bytesOut": "BytesSent",                        "transportProtocol": "protocolname_protocolid",                        "sourceMacAddress": "sourcemac",                        "sourcePort": "sourceport",                        "sourceAddress": "sourceaddress",                        "startTime": "starttime",                        "payload": "Payload"                        }           `
     -   **cef_value_map -** JSON formatted string representation of a dictionary used to map CEF
         field values to new values. Similar to cef_event_map, replace the value of any CEF field
-        with another value. For example, to replace the value of cef.requestURL of \\"nourl\\", with
-        null value, provide { \\"nourl\\": null }. If the user wants to replace a numeric
+        with another value. For example, to replace the value of cef.requestURL of "nourl", with
+        null value, provide { "nourl": null }. If the user wants to replace a numeric
         (integer\|float) value with some other value, due to the SDK issue, the user has to provide
         the key-value map in this format. e.g. if user wants to replace value 4 with 10 and 5.3 with
         6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}  
