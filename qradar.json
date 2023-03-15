@@ -1951,7 +1951,7 @@
                     "column_name": "Description",
                     "column_order": 4,
                     "example_values": [
-                        "Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks\n"
+                        "Anomaly: Access to Test or Test Defined Address. Preceded by Communication with Known Watched Networks."
                     ]
                 },
                 {
@@ -2230,7 +2230,7 @@
                     "data_path": "action_result.summary.name",
                     "data_type": "string",
                     "example_values": [
-                        "Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks"
+                        "Anomaly: Access to Test or Test Defined Address. Preceded by Communication with Known Watched Networks."
                     ]
                 },
                 {
