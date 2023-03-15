@@ -1208,9 +1208,7 @@ action\_result\.data\.\*\.close\_time | numeric |  |   1559905203000
 action\_result\.data\.\*\.closing\_reason\_id | numeric |  `qradar offense closing reason id`  |   1 
 action\_result\.data\.\*\.closing\_user | string |  |   root 
 action\_result\.data\.\*\.credibility | numeric |  |   4 
-action\_result\.data\.\*\.description | string |  |   Anomaly\: Access to Test or Test Defined Address
- preceded by Communication with Known Watched Networks
- 
+action\_result\.data\.\*\.description | string |  |   Anomaly\: Access to Test or Test Defined Address\.Preceded by Communication with Known Watched Networks\. 
 action\_result\.data\.\*\.destination\_networks\.\* | string |  |   other 
 action\_result\.data\.\*\.device\_count | numeric |  |   3 
 action\_result\.data\.\*\.domain\_id | numeric |  |  
@@ -1246,14 +1244,12 @@ action\_result\.data\.\*\.start\_time | numeric |  |   1554413327061
 action\_result\.data\.\*\.status | string |  |   CLOSED 
 action\_result\.data\.\*\.username\_count | numeric |  `user name`  |   0 
 action\_result\.summary\.flow\_count | numeric |  |   0 
-action\_result\.summary\.name | string |  |   Anomaly\: Access to Test or Test Defined Address
- preceded by Communication with Known Watched Networks 
+action\_result\.summary\.name | string |  |   Anomaly\: Access to Test or Test Defined Address\.Preceded by Communication with Known Watched Networks\. 
 action\_result\.summary\.source | string |  `ip`  |   122\.122\.122\.122 
 action\_result\.summary\.start\_time | string |  |   2019\-04\-04 21\:28\:47 UTC 
 action\_result\.summary\.status | string |  |   CLOSED 
 action\_result\.summary\.update\_time | string |  |   2019\-05\-14 10\:23\:03 UTC 
-action\_result\.message | string |  |   Status\: CLOSED, Source\: 122\.122\.122\.122, Update time\: 2019\-05\-14 10\:23\:03 UTC, Name\: Anomaly\: Access to Test or Test Defined Address
- preceded by Communication with Known Watched Networks, Flow count\: 0, Start time\: 2019\-04\-04 21\:28\:47 UTC 
+action\_result\.message | string |  |   Status\: CLOSED, Source\: 122\.122\.122\.122, Update time\: 2019\-05\-14 10\:23\:03 UTC, Name\: Anomaly\: Access to Test or Test Defined Address\.Preceded by Communication with Known Watched Networks, Flow count\: 0, Start time\: 2019\-04\-04 21\:28\:47 UTC 
 summary\.total\_objects | numeric |  |   1 
 summary\.total\_objects\_successful | numeric |  |   1   
 
