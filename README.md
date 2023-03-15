@@ -710,8 +710,7 @@ action_result.data.\*.close_time | string |  |
 action_result.data.\*.closing_reason_id | numeric |  `qradar offense closing reason id`  |  
 action_result.data.\*.closing_user | string |  |  
 action_result.data.\*.credibility | numeric |  |   4 
-action_result.data.\*.description | string |  |   Local Malware Events
- 
+action_result.data.\*.description | string |  |   Local Malware Events 
 action_result.data.\*.destination_networks.\* | string |  |   other 
 action_result.data.\*.device_count | numeric |  |   3 
 action_result.data.\*.domain_id | numeric |  |  
