@@ -3104,7 +3104,7 @@
                     "column_name": "Description",
                     "column_order": 4,
                     "example_values": [
-                        "Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks\n"
+                        "Anomaly: Access to Test or Test Defined Address.Preceded by Communication with Known Watched Networks."
                     ]
                 },
                 {
@@ -3383,7 +3383,7 @@
                     "data_path": "action_result.summary.name",
                     "data_type": "string",
                     "example_values": [
-                        "Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks"
+                        "Anomaly: Access to Test or Test Defined Address.Preceded by Communication with Known Watched Networks."
                     ]
                 },
                 {
@@ -3421,7 +3421,7 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "Status: CLOSED, Source: 122.122.122.122, Update time: 2019-05-14 10:23:03 UTC, Name: Anomaly: Access to Test or Test Defined Address\n preceded by Communication with Known Watched Networks, Flow count: 0, Start time: 2019-04-04 21:28:47 UTC"
+                        "Status: CLOSED, Source: 122.122.122.122, Update time: 2019-05-14 10:23:03 UTC, Name: Anomaly: Access to Test or Test Defined Address.Preceded by Communication with Known Watched Networks, Flow count: 0, Start time: 2019-04-04 21:28:47 UTC"
                     ]
                 },
                 {
