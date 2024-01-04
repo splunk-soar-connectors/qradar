@@ -1319,8 +1319,10 @@ class QradarConnector(BaseConnector):
                     start_time_msecs = int(self._state['last_saved_ingest_time'])
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
-            return action_result.set_status(phantom.APP_ERROR, "Error occurred while formation "
-                                                               "of 'start_time_msecs' for fetching the offenses. Error: {}".format(error_message))
+            return action_result.set_status(
+                phantom.APP_ERROR,
+                "Error occurred while formation of 'start_time_msecs' for fetching the offenses. Error: {}".format(error_message)
+            )
 
         if end_time_msecs < start_time_msecs:
             return action_result.set_status(phantom.APP_ERROR, QRADAR_ERROR_INVALID_TIME_RANGE)
