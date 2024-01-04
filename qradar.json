@@ -20,7 +20,7 @@
     "python_version": "3",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
-    "license": "Copyright (c) 2016-2022 Splunk Inc.",
+    "license": "Copyright (c) 2016-2024 Splunk Inc.",
     "app_config_render": "default",
     "configuration": {
         "device": {

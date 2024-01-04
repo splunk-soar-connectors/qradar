@@ -1,6 +1,6 @@
 # File: qradar_consts.py
 #
-# Copyright (c) 2016-2022 Splunk Inc.
+# Copyright (c) 2016-2024 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ QRADAR_ERR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
 QRADAR_ERR_ADD_NOTE_API_FAILED = "Failed to added note to offense"
 QRADAR_SUCC_RUN_QUERY = "Successfully ran query"
-QRADAR_STATE_FILE_CORRUPT_ERR = "Error occurred while loading the state file due to its unexpected format. " \
+QRADAR_STATE_FILE_CORRUPT_ERROR = "Error occurred while loading the state file due to its unexpected format. " \
                                 "Resetting the state file with the default format. Please try again."
 
 QRADAR_PROG_EXECUTING_ENDPOINT = "Executing {method} on {endpoint}"
@@ -86,8 +86,8 @@ QRADAR_PROG_QUERY_STATUS = "Query {percent}% complete"
 QRADAR_PROG_GOT_X_OFFENSES = "Got {total_offenses} offenses for the given time range"
 QRADAR_PROG_GOT_X_RULES = "Got {total_rules} rules"
 QRADAR_USING_BASE_URL = "Using base url {base_url}"
-QRADAR_MSG_CHECK_CREDENTIALS = "Neiter the auth key or the username/password worked. Please check you credentials"
-QRADAR_MSG_GOT_N_OBJS = "Got {num_of_objs} {obj_type}"
+QRADAR_MESSAGE_CHECK_CREDENTIALS = "Neither the auth key or the username/password worked. Please check you credentials"
+QRADAR_MESSAGE_GOT_N_OBJS = "Got {num_of_objs} {obj_type}"
 
 # This is what a event query looks like
 # The select clause with all the required data
