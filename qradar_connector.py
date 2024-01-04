@@ -123,7 +123,7 @@ class QradarConnector(BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, QRADAR_VALIDATE_INTEGER.format(param=key)), None
 
             if parameter < 0:
-                return action_result.set_status(phantom.APP_ERROR, QRADAR_VALIDATE_INTEGER_NEGETIVE_ERR.format(param=key)), None
+                return action_result.set_status(phantom.APP_ERROR, QRADAR_VALIDATE_INTEGER_NEGETIVE_ERROR.format(param=key)), None
             if not allow_zero and parameter == 0:
                 return action_result.set_status(phantom.APP_ERROR, QRADAR_ERROR_INVALID_PARAM.format(param=key)), None
 
