@@ -1,6 +1,6 @@
 # File: qradar_consts.py
 #
-# Copyright (c) 2016-2024 Splunk Inc.
+# Copyright (c) 2016-2025 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,15 +49,19 @@ TENANT_NOT_FOUND_4_8 = "Tenant {tid} was not found or is not enabled"
 TENANT_NOT_FOUND_4_5 = 'Tenant "{tid}" was not found or is not enabled'
 QRADAR_ERROR_LIST_OFFENSE_CLOSING_REASONS = "Error occurred while fetching the offense closing reasons details"
 QRADAR_ERROR_DATETIME_PARSE = "Error occurred while parsing start_time and end_time."
-QRADAR_ERROR_DATETIME_PARSE += (" Please check the 'start_time' and 'end_time' action parameters"
-"or the 'Alternative initial ingestion time' asset configuration parameter.")
+QRADAR_ERROR_DATETIME_PARSE += (
+    " Please check the 'start_time' and 'end_time' action parametersor the 'Alternative initial ingestion time' asset configuration parameter."
+)
 QRADAR_ERROR_INVALID_JSON = "Unable to parse response as a valid JSON"
-QRADAR_ERROR_INVALID_CREDENTIAL_CONFIG = ("Invalid or incomplete credential configuration. "
-"Either an auth_key or both username & password should be specified.")
-QRADAR_ERROR_INCOMPLETE_CREDENTIAL_CONFIG = ("Missing value for username or password configuration parameters. "
-"Please provide both the username and password values or none of them.")
-QRADAR_ERROR_INVALID_TIME = ("Please provide a valid python parsable Datetime (dateutil module) "
-"string or {num_type} integer epoch (milliseconds) value")
+QRADAR_ERROR_INVALID_CREDENTIAL_CONFIG = (
+    "Invalid or incomplete credential configuration. Either an auth_key or both username & password should be specified."
+)
+QRADAR_ERROR_INCOMPLETE_CREDENTIAL_CONFIG = (
+    "Missing value for username or password configuration parameters. Please provide both the username and password values or none of them."
+)
+QRADAR_ERROR_INVALID_TIME = (
+    "Please provide a valid python parsable Datetime (dateutil module) string or {num_type} integer epoch (milliseconds) value"
+)
 QRADAR_ERROR_INVALID_TIME += " or 'yesterday' in '{field_name}' {field_location}"
 QRADAR_ERROR_REST_API_CALL_FAILED = "Rest API call failed"
 QRADAR_ERROR_REST_API_CALL_FAILED_RESPONSE_NONE = "Rest API call failed, HTTP response was 'None'"
@@ -78,8 +82,10 @@ QRADAR_ERROR_GOT_INVALID_RESPONSE = "Got Invalid response from the device."
 QRADAR_CONNECTION_FAILED = "Connection failed"
 QRADAR_ERROR_ADD_NOTE_API_FAILED = "Failed to added note to offense"
 QRADAR_SUCC_RUN_QUERY = "Successfully ran query"
-QRADAR_STATE_FILE_CORRUPT_ERROR = "Error occurred while loading the state file due to its unexpected format. " \
-                                "Resetting the state file with the default format. Please try again."
+QRADAR_STATE_FILE_CORRUPT_ERROR = (
+    "Error occurred while loading the state file due to its unexpected format. "
+    "Resetting the state file with the default format. Please try again."
+)
 
 QRADAR_PROG_EXECUTING_ENDPOINT = "Executing {method} on {endpoint}"
 QRADAR_PROG_QUERY_STATUS = "Query {percent}% complete"
@@ -91,12 +97,12 @@ QRADAR_MESSAGE_GOT_N_OBJS = "Got {num_of_objs} {obj_type}"
 
 # This is what a event query looks like
 # The select clause with all the required data
-QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, \'Account Domain\', destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid), UTF8(payload) as Payload' # noqa
+QRADAR_AQL_EVENT_SELECT = 'select qid, severity, Application, destinationmac, \'Account Domain\', destinationport, destinationip, "Destination Host Name", destinationaddress, endtime, "File Hash", "File ID", "File Path", Filename, BytesReceived, Message, BytesSent, sourceip, "Source Host Name", sourcemac, sourceport, eventcount, sourceaddress, starttime, username, Bytes, EventID, eventdirection, "Installer Filename", ProtocolName(protocolid), QidName(qid), CategoryName(category), logsourceid, relevance, HostName(logsourceid), LogSourceName(logsourceid), LogSourceGroupName(logsourceid), UTF8(payload) as Payload'
 # From clause
 QRADAR_AQL_EVENT_FROM = " from events"
 
 # The select clause with all the required data for flows
-QRADAR_AQL_FLOW_SELECT = 'select "Action", "Application Determination Algorithm", "Content Subject", "Content Type", "DNS Response", "File Entropy", "File Hash", "File Name", "File Size", "Flow Direction Algorithm", "Google Search Terms", "Originating User", "Password", "Recipient Users", "Request URL", "Search Arguments", "Suspect Content Descriptions", "applicationid", "category", "credibility", "destinationasn", "destinationbytes", "destinationdscp", "destinationflags", "destinationifindex", "destinationip", "destinationpackets", "destinationpayload", "destinationport", "destinationprecedence", "destinationv6", "domainid", "firstpackettime", "flowbias", "flowdirection", "flowid", "flowinterface", "flowinterfaceid", "flowsource", "flowtype", "fullmatchlist", "geographic", "hasdestinationpayload", "hasoffense", "hassourcepayload", "hastlv", "icmpcode", "icmptype", "intervalid", "isduplicate", "lastpackettime", "partialmatchlist", "partialormatchlist", "processorid", "protocolid", "qid", "relevance", "retentionbucket", "severity", "sourceasn", "sourcebytes", "sourcedscp", "sourceflags", "sourceifindex", "sourceip", "sourcepackets", "sourcepayload", "sourceport", "sourceprecedence", "sourcev6", "starttime", "tlvs", "viewobjectpair", ProtocolName(protocolid), ApplicationName(applicationid), QidName(qid), CategoryName(category)' # noqa
+QRADAR_AQL_FLOW_SELECT = 'select "Action", "Application Determination Algorithm", "Content Subject", "Content Type", "DNS Response", "File Entropy", "File Hash", "File Name", "File Size", "Flow Direction Algorithm", "Google Search Terms", "Originating User", "Password", "Recipient Users", "Request URL", "Search Arguments", "Suspect Content Descriptions", "applicationid", "category", "credibility", "destinationasn", "destinationbytes", "destinationdscp", "destinationflags", "destinationifindex", "destinationip", "destinationpackets", "destinationpayload", "destinationport", "destinationprecedence", "destinationv6", "domainid", "firstpackettime", "flowbias", "flowdirection", "flowid", "flowinterface", "flowinterfaceid", "flowsource", "flowtype", "fullmatchlist", "geographic", "hasdestinationpayload", "hasoffense", "hassourcepayload", "hastlv", "icmpcode", "icmptype", "intervalid", "isduplicate", "lastpackettime", "partialmatchlist", "partialormatchlist", "processorid", "protocolid", "qid", "relevance", "retentionbucket", "severity", "sourceasn", "sourcebytes", "sourcedscp", "sourceflags", "sourceifindex", "sourceip", "sourcepackets", "sourcepayload", "sourceport", "sourceprecedence", "sourcev6", "starttime", "tlvs", "viewobjectpair", ProtocolName(protocolid), ApplicationName(applicationid), QidName(qid), CategoryName(category)'
 # From clause for flows
 QRADAR_AQL_FLOW_FROM = " from flows"
 
@@ -112,8 +118,8 @@ QRADAR_DEFAULT_FLOW_COUNT = 100
 QRADAR_DEFAULT_OFFENSE_COUNT = 100
 QRADAR_DEFAULT_QUERY_CHUNK_SIZE = 1000
 QRADAR_DEFAULT_ARTIFACT_CHUNK_SIZE = 1000
-QRADAR_LIMIT_REGEX_MATCH_PATTERN = r' limit (\d+)'
-QRADAR_CEF_VALUE_MAP_INT_PATTERN = r'numeric\((\d+(\.\d+)?)\)'
+QRADAR_LIMIT_REGEX_MATCH_PATTERN = r" limit (\d+)"
+QRADAR_CEF_VALUE_MAP_INT_PATTERN = r"numeric\((\d+(\.\d+)?)\)"
 
 # This value is set by trial and error by quering qradar
 QRADAR_QUERY_HIGH_RANGE = 1000
@@ -122,8 +128,9 @@ QRADAR_AUTH_TOKEN_ERROR_MESSAGE = "Please provide correct authorization token in
 QRADAR_ERROR_INVALID_PARAM = "Please provide non-zero positive integer in {param}"
 QRADAR_ERROR_MESSAGE_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters."
 QRADAR_ERROR_CODE_UNAVAILABLE = "Error code unavailable"
-QRADAR_UNICODE_DAMMIT_TYPE_ERROR_MESSAGE = ("Error occurred while connecting to the QRadar server. "
-"Please check the asset configuration and|or the action parameters.")
+QRADAR_UNICODE_DAMMIT_TYPE_ERROR_MESSAGE = (
+    "Error occurred while connecting to the QRadar server. Please check the asset configuration and|or the action parameters."
+)
 QRADAR_EXCEPTION_ERROR_MESSAGE = "{msg}. Error Code: {error_code}. Error Message: {error_msg}"
 
 # Integer Validation Keys
