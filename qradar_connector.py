@@ -2491,6 +2491,8 @@ class QradarConnector(BaseConnector):
             return action_result.set_status(phantom.APP_SUCCESS, "No flows found")
 
         for data in self._all_flows_data:
+            if data.get("Password"):
+                data["Password"] = "[REDACTED]"
             action_result.add_data(data)
 
         action_result.update_summary({QRADAR_JSON_TOTAL_FLOWS: action_result.get_data_size()})

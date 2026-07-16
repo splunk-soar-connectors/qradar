@@ -1357,10 +1357,6 @@
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.Password",
-                    "data_type": "string"
-                },
-                {
                     "data_path": "action_result.data.*.Recipient Users.*",
                     "data_type": "string"
                 },

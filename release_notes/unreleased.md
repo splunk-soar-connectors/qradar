@@ -6,3 +6,4 @@
 * Stop rule pagination on a short page and cap unbounded rule listings.
 * Cap unbounded offense pagination during ingestion and offense-detail retrieval.
 * Apply a finite default bound to Ariel result fetching when no valid limit is available.
+* Redact captured passwords before QRadar flow records enter action results.
