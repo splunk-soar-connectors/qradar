@@ -1,6 +1,6 @@
 # File: default_timezones.py
 #
-# Copyright (c) 2016-2025 Splunk Inc.
+# Copyright (c) 2016-2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ https://github.com/prefrontal/dateutil-parser-timezones
 
 MIT License
 
-Copyright (c) 2016-2025 Craig Bennett
+Copyright (c) 2016-2026 Craig Bennett
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,6 +1,6 @@
 # File: qradar_connector.py
 #
-# Copyright (c) 2016-2025 Splunk Inc.
+# Copyright (c) 2016-2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import re
 import sys
 import time
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 import dateutil.parser
 import dateutil.tz
@@ -741,7 +742,7 @@ class QradarConnector(BaseConnector):
         offenses = list()
 
         # create the filter to apply to query
-        ret_val, start_time, _, reqfilter, offenses_ids_list = self._createfilter(param, action_result)
+        ret_val, start_time, _, reqfilter, _offenses_ids_list = self._createfilter(param, action_result)
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -826,6 +827,10 @@ class QradarConnector(BaseConnector):
             # stop if we exhausted the list of possible offenses
             if len(new_offenses) < QRADAR_QUERY_HIGH_RANGE:
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=len(new_offenses))
+                break
+
+            if not count and len(offenses) >= QRADAR_QUERY_MAX_TOTAL_OFFENSES:
+                self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_OFFENSES} offenses; stopping pagination")
                 break
 
         self.save_progress(f"Total offenses discovered: {len(offenses)}")
@@ -1092,6 +1097,14 @@ class QradarConnector(BaseConnector):
         action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len_offenses})
 
         add_offense_id_to_name = self._config.get("add_offense_id_to_name", False)
+        failed_ingest_floor = None
+
+        def track_failed_offense(failed_offense, floor):
+            try:
+                timestamp = min(int(failed_offense["start_time"]), int(failed_offense["last_updated_time"]))
+            except Exception:
+                return floor
+            return timestamp if floor is None else min(floor, timestamp)
 
         for i, offense in enumerate(offenses):
             # Clear the events list per an offense and artifact list
@@ -1151,9 +1164,11 @@ class QradarConnector(BaseConnector):
                 ):
                     self.save_progress("Aborting the polling process")
                     return action_result.set_status(phantom.APP_ERROR, error_message)
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
                 continue
 
             if not container_id:
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
                 continue
 
             if message == "Duplicate container found":
@@ -1254,15 +1269,23 @@ class QradarConnector(BaseConnector):
                 self.debug_print(f"Failed to get events for the offense ID: {offense_id}. Error message: {event_action_result.get_message()}")
                 self.save_progress(f"Failed to get events for the offense ID: {offense_id}. Error message: {event_action_result.get_message()}")
                 action_result.append_to_message(QRADAR_ERROR_GET_EVENTS_FAILED.format(offense_id=offense_id))
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
                 continue
 
             artifacts_creation_status, artifacts_creation_msg = self._ingest_collected_artifacts(offense_id)
             if phantom.is_fail(artifacts_creation_status):
                 self.debug_print("Logging the artifact creation failure for the current offense and continuing with the next offense")
                 self.debug_print(f"Error while creating artifacts for the Container ID {container_id}. Error: {artifacts_creation_msg}")
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
 
         # if we are polling, save the last ingested time
         if self._is_on_poll and not self._is_manual_poll:
+            if failed_ingest_floor is not None:
+                try:
+                    self._new_last_ingest_time = min(int(self._new_last_ingest_time), failed_ingest_floor)
+                except Exception:
+                    self._new_last_ingest_time = failed_ingest_floor
+                self.save_progress(f"Holding last_saved_ingest_time at {self._new_last_ingest_time} after an ingestion failure")
             self._state["last_saved_ingest_time"] = self._new_last_ingest_time
             try:
                 self.save_progress(
@@ -1507,6 +1530,10 @@ class QradarConnector(BaseConnector):
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=total_offenses)
                 break
 
+            if not count and total_offenses >= QRADAR_QUERY_MAX_TOTAL_OFFENSES:
+                self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_OFFENSES} offenses; stopping pagination")
+                break
+
         # Parse the output, which is an array of offenses
         # Update the summary
         if total_offenses == 0 and offense_ids != "None":
@@ -1684,7 +1711,8 @@ class QradarConnector(BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, status_message)
 
             try:
-                rules += list_rules_response.json()
+                rules_chunk = list_rules_response.json()
+                rules += rules_chunk
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
                 self.debug_print(QRADAR_ERROR_INVALID_JSON, error_message)
@@ -1692,8 +1720,12 @@ class QradarConnector(BaseConnector):
 
             total_rules = len(rules)
 
-            if len(rules) < QRADAR_QUERY_HIGH_RANGE:
+            if len(rules_chunk) < QRADAR_QUERY_HIGH_RANGE:
                 self.save_progress(QRADAR_PROG_GOT_X_RULES, total_offenses=total_rules)
+                break
+
+            if not count and total_rules >= QRADAR_QUERY_MAX_TOTAL_RULES:
+                self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_RULES} rules; stopping pagination")
                 break
 
         for rule in rules:
@@ -1835,6 +1867,9 @@ class QradarConnector(BaseConnector):
             i = 0
             headers = dict()
             to_stop_fetch = 0
+            if not count or count < 1:
+                self.debug_print(f"No positive result bound was provided; defaulting to {QRADAR_QUERY_HIGH_RANGE}")
+                count = QRADAR_QUERY_HIGH_RANGE
             while True:
                 self.save_progress(f"Current iteration: {i + 1}")
                 # Define the range for fetching the items from the search in the QRadar instance
@@ -2228,7 +2263,7 @@ class QradarConnector(BaseConnector):
             extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
 
             if extracted_limit_list:
-                final_count = int(extracted_limit_list[0])
+                final_count = int(extracted_limit_list[-1])
         except Exception:
             self.debug_print(f"Error occurred while extracting the LIMIT value from the ariel query string: {ariel_query}")
             self.debug_print(
@@ -2283,7 +2318,7 @@ class QradarConnector(BaseConnector):
             extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, query, re.IGNORECASE)
 
             if extracted_limit_list:
-                final_count = int(extracted_limit_list[0])
+                final_count = int(extracted_limit_list[-1])
         except Exception:
             self.debug_print(f"Error occurred while extracting the LIMIT value from the ariel query string: {query}")
             self.debug_print("Fetching all results by default due to failure in fetching the value of the LIMIT value from the query string")
@@ -2452,7 +2487,7 @@ class QradarConnector(BaseConnector):
             extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
 
             if extracted_limit_list:
-                final_count = int(extracted_limit_list[0])
+                final_count = int(extracted_limit_list[-1])
         except Exception:
             self.debug_print(f"Error occurred while extracting the LIMIT value from the ariel query string: {ariel_query}")
             self.debug_print("Fetching entire data due to failure in fetching the value of the LIMIT value from the query string")
@@ -2474,6 +2509,8 @@ class QradarConnector(BaseConnector):
             return action_result.set_status(phantom.APP_SUCCESS, "No flows found")
 
         for data in self._all_flows_data:
+            if data.get("Password"):
+                data["Password"] = "[REDACTED]"
             action_result.add_data(data)
 
         action_result.update_summary({QRADAR_JSON_TOTAL_FLOWS: action_result.get_data_size()})
@@ -2641,7 +2678,8 @@ class QradarConnector(BaseConnector):
         # value to insert into ref set
         params["value"] = reference_set_value
 
-        response = self._call_api(f"reference_data/sets/{reference_set_name}", "post", action_result, params=params)
+        encoded_reference_set_name = quote(reference_set_name, safe="")
+        response = self._call_api(f"reference_data/sets/{encoded_reference_set_name}", "post", action_result, params=params)
 
         if phantom.is_fail(action_result.get_status()):
             self.debug_print("call_api failed: ", action_result.get_status())

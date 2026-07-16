@@ -830,7 +830,6 @@ action_result.data.\*.File Size | string | | |
 action_result.data.\*.Flow Direction Algorithm | numeric | | 5 |
 action_result.data.\*.Google Search Terms | string | | |
 action_result.data.\*.Originating User | string | | |
-action_result.data.\*.Password | string | | |
 action_result.data.\*.Recipient Users.\* | string | | |
 action_result.data.\*.Request URL | string | | |
 action_result.data.\*.Search Arguments | string | | |
@@ -1363,7 +1362,7 @@ ______________________________________________________________________
 
 Auto-generated Splunk SOAR Connector documentation.
 
-Copyright 2025 Splunk Inc.
+Copyright 2026 Splunk Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

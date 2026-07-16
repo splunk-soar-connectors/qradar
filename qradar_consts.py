@@ -1,6 +1,6 @@
 # File: qradar_consts.py
 #
-# Copyright (c) 2016-2025 Splunk Inc.
+# Copyright (c) 2016-2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -123,6 +123,8 @@ QRADAR_CEF_VALUE_MAP_INT_PATTERN = r"numeric\((\d+(\.\d+)?)\)"
 
 # This value is set by trial and error by quering qradar
 QRADAR_QUERY_HIGH_RANGE = 1000
+QRADAR_QUERY_MAX_TOTAL_RULES = 100000
+QRADAR_QUERY_MAX_TOTAL_OFFENSES = 100000
 QRADAR_BASIC_AUTH_ERROR_MESSAGE = "Please provide correct username and password in the asset configuration parameters"
 QRADAR_AUTH_TOKEN_ERROR_MESSAGE = "Please provide correct authorization token in the asset configuration parameters"
 QRADAR_ERROR_INVALID_PARAM = "Please provide non-zero positive integer in {param}"

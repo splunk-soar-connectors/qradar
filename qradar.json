@@ -20,7 +20,7 @@
     "python_version": "3.9, 3.13",
     "logo": "logo_ibmqradar.svg",
     "logo_dark": "logo_ibmqradar_dark.svg",
-    "license": "Copyright (c) 2016-2025 Splunk Inc.",
+    "license": "Copyright (c) 2016-2026 Splunk Inc.",
     "app_config_render": "default",
     "configuration": {
         "device": {
@@ -44,7 +44,7 @@
             "data_type": "boolean",
             "description": "Verify server certificate",
             "order": 1,
-            "default": false
+            "default": true
         },
         "username": {
             "data_type": "string",
@@ -1354,10 +1354,6 @@
                 },
                 {
                     "data_path": "action_result.data.*.Originating User",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.Password",
                     "data_type": "string"
                 },
                 {
