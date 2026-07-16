@@ -830,7 +830,6 @@ action_result.data.\*.File Size | string | | |
 action_result.data.\*.Flow Direction Algorithm | numeric | | 5 |
 action_result.data.\*.Google Search Terms | string | | |
 action_result.data.\*.Originating User | string | | |
-action_result.data.\*.Password | string | | |
 action_result.data.\*.Recipient Users.\* | string | | |
 action_result.data.\*.Request URL | string | | |
 action_result.data.\*.Search Arguments | string | | |
