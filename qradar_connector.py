@@ -829,6 +829,10 @@ class QradarConnector(BaseConnector):
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=len(new_offenses))
                 break
 
+            if not count and len(offenses) >= QRADAR_QUERY_MAX_TOTAL_OFFENSES:
+                self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_OFFENSES} offenses; stopping pagination")
+                break
+
         self.save_progress(f"Total offenses discovered: {len(offenses)}")
 
         if len(offenses) > 0:
@@ -1506,6 +1510,10 @@ class QradarConnector(BaseConnector):
 
             if len(response.json()) < QRADAR_QUERY_HIGH_RANGE:
                 self.save_progress(QRADAR_PROG_GOT_X_OFFENSES, total_offenses=total_offenses)
+                break
+
+            if not count and total_offenses >= QRADAR_QUERY_MAX_TOTAL_OFFENSES:
+                self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_OFFENSES} offenses; stopping pagination")
                 break
 
         # Parse the output, which is an array of offenses
