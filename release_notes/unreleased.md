@@ -7,3 +7,4 @@
 * Cap unbounded offense pagination during ingestion and offense-detail retrieval.
 * Apply a finite default bound to Ariel result fetching when no valid limit is available.
 * Redact captured passwords before QRadar flow records enter action results.
+* Hold polling checkpoints at failed offenses so later runs can retry their ingestion.

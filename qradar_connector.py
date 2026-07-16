@@ -1097,6 +1097,14 @@ class QradarConnector(BaseConnector):
         action_result.update_summary({QRADAR_JSON_TOTAL_OFFENSES: len_offenses})
 
         add_offense_id_to_name = self._config.get("add_offense_id_to_name", False)
+        failed_ingest_floor = None
+
+        def track_failed_offense(failed_offense, floor):
+            try:
+                timestamp = min(int(failed_offense["start_time"]), int(failed_offense["last_updated_time"]))
+            except Exception:
+                return floor
+            return timestamp if floor is None else min(floor, timestamp)
 
         for i, offense in enumerate(offenses):
             # Clear the events list per an offense and artifact list
@@ -1156,9 +1164,11 @@ class QradarConnector(BaseConnector):
                 ):
                     self.save_progress("Aborting the polling process")
                     return action_result.set_status(phantom.APP_ERROR, error_message)
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
                 continue
 
             if not container_id:
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
                 continue
 
             if message == "Duplicate container found":
@@ -1259,15 +1269,23 @@ class QradarConnector(BaseConnector):
                 self.debug_print(f"Failed to get events for the offense ID: {offense_id}. Error message: {event_action_result.get_message()}")
                 self.save_progress(f"Failed to get events for the offense ID: {offense_id}. Error message: {event_action_result.get_message()}")
                 action_result.append_to_message(QRADAR_ERROR_GET_EVENTS_FAILED.format(offense_id=offense_id))
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
                 continue
 
             artifacts_creation_status, artifacts_creation_msg = self._ingest_collected_artifacts(offense_id)
             if phantom.is_fail(artifacts_creation_status):
                 self.debug_print("Logging the artifact creation failure for the current offense and continuing with the next offense")
                 self.debug_print(f"Error while creating artifacts for the Container ID {container_id}. Error: {artifacts_creation_msg}")
+                failed_ingest_floor = track_failed_offense(offense, failed_ingest_floor)
 
         # if we are polling, save the last ingested time
         if self._is_on_poll and not self._is_manual_poll:
+            if failed_ingest_floor is not None:
+                try:
+                    self._new_last_ingest_time = min(int(self._new_last_ingest_time), failed_ingest_floor)
+                except Exception:
+                    self._new_last_ingest_time = failed_ingest_floor
+                self.save_progress(f"Holding last_saved_ingest_time at {self._new_last_ingest_time} after an ingestion failure")
             self._state["last_saved_ingest_time"] = self._new_last_ingest_time
             try:
                 self.save_progress(
