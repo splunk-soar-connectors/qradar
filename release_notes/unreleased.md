@@ -1,10 +1,1 @@
 **Unreleased**
-
-* Encode reference-set names as single QRadar API path segments.
-* Verify QRadar server certificates by default while retaining the explicit asset opt-out.
-* Escape QRadar widget values before embedding them in JavaScript context-menu handlers.
-* Stop rule pagination on a short page and cap unbounded rule listings.
-* Cap unbounded offense pagination during ingestion and offense-detail retrieval.
-* Apply a finite default bound to Ariel result fetching when no valid limit is available.
-* Redact captured passwords before QRadar flow records enter action results.
-* Hold polling checkpoints at failed offenses so later runs can retry their ingestion.
