@@ -1,6 +1,6 @@
 # File: qradar_connector.py
 #
-# Copyright (c) 2016-2025 Splunk Inc.
+# Copyright (c) 2016-2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -741,7 +741,7 @@ class QradarConnector(BaseConnector):
         offenses = list()
 
         # create the filter to apply to query
-        ret_val, start_time, _, reqfilter, offenses_ids_list = self._createfilter(param, action_result)
+        ret_val, start_time, _, reqfilter, _offenses_ids_list = self._createfilter(param, action_result)
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
