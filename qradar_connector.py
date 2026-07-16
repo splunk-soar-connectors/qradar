@@ -1685,7 +1685,8 @@ class QradarConnector(BaseConnector):
                 return action_result.set_status(phantom.APP_ERROR, status_message)
 
             try:
-                rules += list_rules_response.json()
+                rules_chunk = list_rules_response.json()
+                rules += rules_chunk
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
                 self.debug_print(QRADAR_ERROR_INVALID_JSON, error_message)
@@ -1693,8 +1694,12 @@ class QradarConnector(BaseConnector):
 
             total_rules = len(rules)
 
-            if len(rules) < QRADAR_QUERY_HIGH_RANGE:
+            if len(rules_chunk) < QRADAR_QUERY_HIGH_RANGE:
                 self.save_progress(QRADAR_PROG_GOT_X_RULES, total_offenses=total_rules)
+                break
+
+            if not count and total_rules >= QRADAR_QUERY_MAX_TOTAL_RULES:
+                self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_RULES} rules; stopping pagination")
                 break
 
         for rule in rules:
