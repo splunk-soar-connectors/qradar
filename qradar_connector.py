@@ -20,6 +20,7 @@ import re
 import sys
 import time
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 import dateutil.parser
 import dateutil.tz
@@ -2641,7 +2642,8 @@ class QradarConnector(BaseConnector):
         # value to insert into ref set
         params["value"] = reference_set_value
 
-        response = self._call_api(f"reference_data/sets/{reference_set_name}", "post", action_result, params=params)
+        encoded_reference_set_name = quote(reference_set_name, safe="")
+        response = self._call_api(f"reference_data/sets/{encoded_reference_set_name}", "post", action_result, params=params)
 
         if phantom.is_fail(action_result.get_status()):
             self.debug_print("call_api failed: ", action_result.get_status())

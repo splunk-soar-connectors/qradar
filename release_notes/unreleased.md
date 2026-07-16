@@ -1,3 +1,3 @@
 **Unreleased**
 
-* Chore: refresh repository checks before connector updates.
+* Encode reference-set names as single QRadar API path segments.
