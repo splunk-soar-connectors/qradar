@@ -1849,6 +1849,9 @@ class QradarConnector(BaseConnector):
             i = 0
             headers = dict()
             to_stop_fetch = 0
+            if not count or count < 1:
+                self.debug_print(f"No positive result bound was provided; defaulting to {QRADAR_QUERY_HIGH_RANGE}")
+                count = QRADAR_QUERY_HIGH_RANGE
             while True:
                 self.save_progress(f"Current iteration: {i + 1}")
                 # Define the range for fetching the items from the search in the QRadar instance
@@ -2242,7 +2245,7 @@ class QradarConnector(BaseConnector):
             extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
 
             if extracted_limit_list:
-                final_count = int(extracted_limit_list[0])
+                final_count = int(extracted_limit_list[-1])
         except Exception:
             self.debug_print(f"Error occurred while extracting the LIMIT value from the ariel query string: {ariel_query}")
             self.debug_print(
@@ -2297,7 +2300,7 @@ class QradarConnector(BaseConnector):
             extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, query, re.IGNORECASE)
 
             if extracted_limit_list:
-                final_count = int(extracted_limit_list[0])
+                final_count = int(extracted_limit_list[-1])
         except Exception:
             self.debug_print(f"Error occurred while extracting the LIMIT value from the ariel query string: {query}")
             self.debug_print("Fetching all results by default due to failure in fetching the value of the LIMIT value from the query string")
@@ -2466,7 +2469,7 @@ class QradarConnector(BaseConnector):
             extracted_limit_list = re.findall(QRADAR_LIMIT_REGEX_MATCH_PATTERN, ariel_query, re.IGNORECASE)
 
             if extracted_limit_list:
-                final_count = int(extracted_limit_list[0])
+                final_count = int(extracted_limit_list[-1])
         except Exception:
             self.debug_print(f"Error occurred while extracting the LIMIT value from the ariel query string: {ariel_query}")
             self.debug_print("Fetching entire data due to failure in fetching the value of the LIMIT value from the query string")
