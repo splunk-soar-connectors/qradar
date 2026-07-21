@@ -1,4 +1,1 @@
 **Unreleased**
-
-* Render QRadar offense summary timestamps in UTC.
-* Remove Unicode format-control characters from ingested QRadar values.
