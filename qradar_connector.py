@@ -19,6 +19,7 @@ import calendar
 import re
 import sys
 import time
+import unicodedata
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
@@ -407,6 +408,16 @@ class QradarConnector(BaseConnector):
         # Hence, fixing it using an already existing method.
         # datetime.fromtimestamp(long(epoch_milli) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         return self._datetime(epoch_milli).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+    def _sanitize_ingested_value(self, value):
+        if isinstance(value, str):
+            value = value.strip(" \r\n").replace("\u0000", "")
+            return "".join(character for character in value if unicodedata.category(character) != "Cf")
+        if isinstance(value, dict):
+            return {key: self._sanitize_ingested_value(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._sanitize_ingested_value(item) for item in value]
+        return value
 
     def _get_artifact(self, event, container_id):
         cef = phantom.get_cef_data(event, self._cef_event_map)
@@ -1119,9 +1130,7 @@ class QradarConnector(BaseConnector):
             # Replace the 'null' string to None if any
             offense = dict([(x[0], None if x[1] == "null" else x[1]) for x in list(offense.items())])
 
-            # Strip \r, \n and space from the values, QRadar does that for the description field at least
-            v_strip = lambda v: v.strip(" \r\n").replace("\u0000", "") if isinstance(v, str) else v
-            offense = dict([(k, v_strip(v)) for k, v in list(offense.items())])
+            offense = self._sanitize_ingested_value(offense)
 
             # Don't want dumping non None
             self.debug_print("Offense", phantom.remove_none_values(offense))
@@ -2011,14 +2020,10 @@ class QradarConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _create_events_artifacts(self, events, offense_id):
-        # To strip \r, \n and space from the values
-        v_strip = lambda v: v.strip(" \r\n").replace("\u0000", "") if isinstance(v, str) else v
-
         self._create_offense_artifacts(self._offense_details, self._container_id, offense_id)
 
         for event in events:
-            # strip \r, \n and space from the values, QRadar does that for the description field at least
-            event = dict([(k, v_strip(v)) for k, v in list(event.items())])
+            event = self._sanitize_ingested_value(event)
 
             artifact = self._get_artifact(event, self._container_id)
 
