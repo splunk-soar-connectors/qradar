@@ -1,3 +1,3 @@
 **Unreleased**
 
-* Refresh development tooling before QRadar remediation.
+* Render QRadar offense summary timestamps in UTC.

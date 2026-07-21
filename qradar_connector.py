@@ -2644,7 +2644,7 @@ class QradarConnector(BaseConnector):
 
         action_result.add_data(response_json)
 
-        time_str = lambda x: datetime.fromtimestamp(int(x) / 1000.0).strftime("%Y-%m-%d %H:%M:%S UTC")
+        time_str = lambda x: self._datetime(int(x)).strftime("%Y-%m-%d %H:%M:%S UTC")
 
         try:
             # Create a summary
@@ -2789,7 +2789,7 @@ class QradarConnector(BaseConnector):
 
         action_result.add_data(response_json)
 
-        time_str = lambda x: datetime.fromtimestamp(int(x) / 1000.0).strftime("%Y-%m-%d %H:%M:%S UTC")
+        time_str = lambda x: self._datetime(int(x)).strftime("%Y-%m-%d %H:%M:%S UTC")
 
         try:
             # Create a summary
