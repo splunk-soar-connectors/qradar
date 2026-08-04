@@ -2786,7 +2786,7 @@ class QradarConnector(BaseConnector):
                 )
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
-        self.debug_print("content-type", response.headers["content-type"])
+        self.debug_print("content-type", response.headers.get("content-type", ""))
 
         # Parse the output, which is details of an offense
         try:
@@ -2861,7 +2861,7 @@ class QradarConnector(BaseConnector):
                 )
             return action_result.set_status(phantom.APP_ERROR, status_message)
 
-        self.debug_print("content-type", response.headers["content-type"])
+        self.debug_print("content-type", response.headers.get("content-type", ""))
 
         # Parse the output, which is details of an offense
         try:
