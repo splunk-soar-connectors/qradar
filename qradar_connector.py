@@ -611,7 +611,9 @@ class QradarConnector(BaseConnector):
         reqfilter = None
 
         # first determine if there are any offenses requested, if so, no need to limit time range
-        offense_ids_list = str(phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID, phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, "")))
+        offense_ids_value = phantom.get_value(param, phantom.APP_JSON_CONTAINER_ID, phantom.get_value(param, QRADAR_JSON_OFFENSE_ID, ""))
+        offense_ids_supplied = offense_ids_value is not None and str(offense_ids_value).strip().casefold() not in {"", "none"}
+        offense_ids_list = str(offense_ids_value) if offense_ids_supplied else ""
 
         # clean up the string and parse into list, assume whitespace and commas as separators
         if offense_ids_list:
@@ -627,6 +629,15 @@ class QradarConnector(BaseConnector):
                     self.debug_print(f"In Alternate Ingestion workflow for fetching offenses, the provided offense: {x} is not valid")
 
             offense_ids_list = interim_offense_ids_list
+
+            if not offense_ids_list:
+                return (
+                    action_result.set_status(phantom.APP_ERROR, "Please provide valid offense ID|s"),
+                    None,
+                    None,
+                    None,
+                    None,
+                )
 
         if len(offense_ids_list) > 0:
             reqfilter = "({})".format(" or ".join(["id=" + str(x) for x in offense_ids_list]))
