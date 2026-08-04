@@ -2337,10 +2337,12 @@ class QradarConnector(BaseConnector):
         # 6. We are removing this because it was causing only 1000 events to be fetched and no more than that.
         # This led into data loss while ingesting a data set which had more than 1000 events in a single offense
 
+        order_direction = "asc" if self._is_on_poll and not self._is_manual_poll else "desc"
+
         if param.get("total_events_count"):
-            where_clause += " order by STARTTIME desc limit {}".format(int(param.get("total_events_count")))
+            where_clause += " order by STARTTIME {} limit {}".format(order_direction, int(param.get("total_events_count")))
         else:
-            where_clause += f" order by STARTTIME desc limit {count}"
+            where_clause += f" order by STARTTIME {order_direction} limit {count}"
 
         # From testing queries, it was noticed that the START and STOP are required else the default
         # result returned by the REST API is of 60 seconds or so. Also, the time format needs to be in
@@ -2377,9 +2379,11 @@ class QradarConnector(BaseConnector):
             where_clause += f" starttime >= {event_start_time} and starttime <= {end_time_msecs} "
 
             if param.get("total_events_count"):
-                where_clause += "ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(int(param.get("total_events_count")), event_days)
+                where_clause += "ORDER BY starttime {} LIMIT {} LAST {} DAYS".format(
+                    order_direction, int(param.get("total_events_count")), event_days
+                )
             else:
-                where_clause += f"ORDER BY starttime DESC LIMIT {count} LAST {event_days} DAYS"
+                where_clause += f"ORDER BY starttime {order_direction} LIMIT {count} LAST {event_days} DAYS"
 
         if self._use_alt_ariel_query and where_clause.startswith("ORDER BY"):
             ariel_query = f"{ariel_query} {where_clause}"

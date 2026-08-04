@@ -11,3 +11,4 @@
 * Preserve explicit requested and checkpointed event time bounds in alternate Ariel queries.
 * Process capped alternate-ingestion offense batches oldest first during scheduled polling.
 * Fail closed when an explicitly supplied alternate-ingestion offense ID list contains no valid IDs.
+* Process capped event queries oldest first during scheduled polling so checkpoints do not skip unfetched events.
