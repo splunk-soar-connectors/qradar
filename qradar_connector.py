@@ -157,7 +157,7 @@ class QradarConnector(BaseConnector):
         if len(message) > 500:
             message = "Error while connecting to a server"
 
-        return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
+        return action_result.set_status(phantom.APP_ERROR, message)
 
     def _get_json_error_message(self, response, action_result):
         """This function is used to process json error response.
