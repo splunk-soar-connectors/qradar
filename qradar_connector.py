@@ -2351,18 +2351,15 @@ class QradarConnector(BaseConnector):
                     where_clause += " and"
                 where_clause += f" InOffense({offense_id}) "
 
-            event_start_time = None
-            if self._is_on_poll and not self._is_manual_poll:
-                if self._state.get("last_ingested_events_data", {}).get(str(param.get("offense_id", ""))):
-                    event_start_time = int(self._state["last_ingested_events_data"].get(str(param.get("offense_id"))))
+            event_start_time = start_time_msecs
+            now = self._utcnow()
+            start = self._datetime(event_start_time)
+            diff = now - start
+            event_days = max(1, abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days))
 
-            if not event_start_time:
-                event_days = num_days
-            else:
-                now = self._utcnow()
-                start = self._datetime(event_start_time)
-                diff = now - start
-                event_days = abs(diff.days) + 1 if diff.seconds != 0 else abs(diff.days)
+            if len(where_clause):
+                where_clause += " and"
+            where_clause += f" starttime >= {event_start_time} and starttime <= {end_time_msecs} "
 
             if param.get("total_events_count"):
                 where_clause += "ORDER BY starttime DESC LIMIT {} LAST {} DAYS".format(int(param.get("total_events_count")), event_days)

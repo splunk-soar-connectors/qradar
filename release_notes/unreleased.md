@@ -8,3 +8,4 @@
 * Return a clean action error when QRadar sends a non-object JSON error response.
 * Stop Ariel result pagination when an additional page makes no forward progress.
 * Reject non-object Ariel search creation and status responses with a clean action error.
+* Preserve explicit requested and checkpointed event time bounds in alternate Ariel queries.
