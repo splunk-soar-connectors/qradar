@@ -1976,6 +1976,7 @@ class QradarConnector(BaseConnector):
             i = 0
             headers = dict()
             to_stop_fetch = 0
+            previous_events_count = 0
             if not count or count < 1:
                 self.debug_print(f"No positive result bound was provided; defaulting to {QRADAR_QUERY_HIGH_RANGE}")
                 count = QRADAR_QUERY_HIGH_RANGE
@@ -1997,6 +1998,11 @@ class QradarConnector(BaseConnector):
                     current_events_count = len(action_result.get_data())
 
                 to_stop_fetch = current_events_count % QRADAR_QUERY_HIGH_RANGE
+
+                if i > 0 and current_events_count == previous_events_count:
+                    self.save_progress("Stopping Ariel pagination because the result count did not advance")
+                    break
+                previous_events_count = current_events_count
 
                 if current_events_count == 0 or to_stop_fetch != 0 or (count and current_events_count >= count):
                     break

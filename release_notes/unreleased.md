@@ -6,3 +6,4 @@
 * Allow successful reference-set and close-offense responses to omit the optional Content-Type header.
 * Bound QRadar API requests with the connector's existing 30-second network timeout.
 * Return a clean action error when QRadar sends a non-object JSON error response.
+* Stop Ariel result pagination when an additional page makes no forward progress.
