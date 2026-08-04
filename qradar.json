@@ -147,7 +147,7 @@
                 "oldest first",
                 "latest first"
             ],
-            "description": "Alternative ingestion order for offenses"
+            "description": "Alternative ingestion order for offenses; scheduled polling uses oldest first to preserve capped results"
         },
         "events_ingest_start_time": {
             "data_type": "numeric",

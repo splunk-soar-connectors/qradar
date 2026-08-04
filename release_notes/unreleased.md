@@ -9,3 +9,4 @@
 * Stop Ariel result pagination when an additional page makes no forward progress.
 * Reject non-object Ariel search creation and status responses with a clean action error.
 * Preserve explicit requested and checkpointed event time bounds in alternate Ariel queries.
+* Process capped alternate-ingestion offense batches oldest first during scheduled polling.

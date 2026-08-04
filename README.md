@@ -150,7 +150,8 @@ sections.
     the parameter [alternative_ingest_algorithm] is set to true then, the offenses will be
     fetched according to [alt_ingest_order] and [alt_time_field] parameters. This
     configuration parameter is used in the List Offenses, Offense Details as well as in the On
-    Poll action.
+    Poll action. Scheduled On Poll runs always fetch oldest first so a bounded result set cannot
+    advance the ingestion checkpoint past offenses that were not fetched.
 
   - **events_ingest_start_time -** This parameter is optional and the default value is 60. This
     parameter defines the relative number of minutes (in milliseconds) to back-date the
@@ -564,7 +565,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **alternative_ingest_algorithm** | optional | boolean | Alternative ingest algorithm for offenses |
 **alt_time_field** | optional | string | Alternative ingestion time field |
 **alt_initial_ingest_time** | optional | string | Alternative initial ingestion time |
-**alt_ingestion_order** | optional | string | Alternative ingestion order for offenses |
+**alt_ingestion_order** | optional | string | Alternative ingestion order for offenses; scheduled polling uses oldest first to preserve capped results |
 **events_ingest_start_time** | optional | numeric | Events ingestion initial time (relative to offense start time, default is 60 min) |
 **offense_ingest_start_time** | optional | numeric | Offense ingestion initial time (relative to offense start time, default is 0 min) |
 **event_ingest_end_time** | optional | numeric | Events ingestion end time (relative to event ingestion start time, default is 0 min) |

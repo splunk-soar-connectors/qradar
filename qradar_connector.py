@@ -856,6 +856,10 @@ class QradarConnector(BaseConnector):
         if ingestion_order != "latest first" and ingestion_order != "oldest first":
             ingestion_order = "latest first"
 
+        if self._is_on_poll and not self._is_manual_poll and ingestion_order == "latest first":
+            self.save_progress("Scheduled polling uses oldest-first offense ingestion to preserve capped results")
+            ingestion_order = "oldest first"
+
         # Define the sorting field on the basis of the 'ingestion_order'
         if ingestion_order == "oldest first":
             self.save_progress("Ingesting the oldest first")
