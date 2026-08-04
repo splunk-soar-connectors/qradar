@@ -217,7 +217,13 @@ class QradarConnector(BaseConnector):
             # 1. Testing the basic auth workflow as here
             if "Authorization" in headers:
                 try:
-                    r = request_func(url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params)
+                    r = request_func(
+                        url,
+                        headers=headers,
+                        verify=config[phantom.APP_JSON_VERIFY],
+                        params=params,
+                        timeout=DEFAULT_REQUEST_TIMEOUT,
+                    )
                     if r.status_code != 200:
                         result.set_status(phantom.APP_ERROR, QRADAR_BASIC_AUTH_ERROR_MESSAGE)
                         return r
@@ -240,7 +246,13 @@ class QradarConnector(BaseConnector):
 
                 # Testing the auth token workflow
                 try:
-                    r = request_func(url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params)
+                    r = request_func(
+                        url,
+                        headers=headers,
+                        verify=config[phantom.APP_JSON_VERIFY],
+                        params=params,
+                        timeout=DEFAULT_REQUEST_TIMEOUT,
+                    )
                     if r.status_code != 200:
                         result.set_status(phantom.APP_ERROR, QRADAR_AUTH_TOKEN_ERROR_MESSAGE)
                         return r
@@ -252,7 +264,13 @@ class QradarConnector(BaseConnector):
                     return r
         else:
             try:
-                r = request_func(url, headers=headers, verify=config[phantom.APP_JSON_VERIFY], params=params)
+                r = request_func(
+                    url,
+                    headers=headers,
+                    verify=config[phantom.APP_JSON_VERIFY],
+                    params=params,
+                    timeout=DEFAULT_REQUEST_TIMEOUT,
+                )
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
                 result.set_status(phantom.APP_ERROR, f"{QRADAR_ERROR_REST_API_CALL_FAILED}. {error_message}")
