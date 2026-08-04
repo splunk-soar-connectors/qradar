@@ -1892,6 +1892,9 @@ class QradarConnector(BaseConnector):
         except Exception:
             return action_result.get_status(phantom.APP_ERROR, QRADAR_ERROR_INVALID_JSON)
 
+        if not isinstance(response_json, dict):
+            return action_result.set_status(phantom.APP_ERROR, QRADAR_ERROR_INVALID_JSON)
+
         # Now get the search id
         search_id = response_json.get("search_id")
 
@@ -1943,6 +1946,9 @@ class QradarConnector(BaseConnector):
             try:
                 response_json = response.json()
             except Exception:
+                return action_result.set_status(phantom.APP_ERROR, QRADAR_ERROR_INVALID_JSON)
+
+            if not isinstance(response_json, dict):
                 return action_result.set_status(phantom.APP_ERROR, QRADAR_ERROR_INVALID_JSON)
 
             if "status" not in response_json:
