@@ -174,6 +174,9 @@ class QradarConnector(BaseConnector):
             error_message = self._get_error_message_from_exception(e)
             return RetVal(action_result.set_status(phantom.APP_ERROR, f"Unable to parse JSON response. Error: {error_message}"), None)
 
+        if not isinstance(resp_json, dict):
+            return f"Unexpected JSON error response from server. Status Code: {response.status_code}"
+
         error_code = resp_json.get("code", "Not Found")
         error_message = resp_json.get("message", "Not Found")
         error_description = resp_json.get("description", "Not Found")
