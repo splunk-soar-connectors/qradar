@@ -400,6 +400,24 @@ class QradarConnector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
+    def _normalize_ingest_checkpoint(self, value, upper_bound):
+        try:
+            checkpoint = int(value)
+            upper_bound = int(upper_bound)
+        except Exception:
+            self.debug_print(f"Ignoring malformed ingestion checkpoint: {value}")
+            return None
+
+        if checkpoint < 0:
+            self.debug_print(f"Ignoring negative ingestion checkpoint: {checkpoint}")
+            return None
+
+        if checkpoint > upper_bound:
+            self.debug_print(f"Clamping future ingestion checkpoint {checkpoint} to {upper_bound}")
+            return upper_bound
+
+        return checkpoint
+
     def _get_str_from_epoch(self, epoch_milli):
         # Previous line of code was as provided below which was wrong because
         # it generated the datetime based on the local Phantom timezone,
@@ -566,8 +584,14 @@ class QradarConnector(BaseConnector):
             # 4. if nothing configured assume 24 hours ago
 
             try:
+                saved_checkpoint = None
                 if self._is_on_poll and not self._is_manual_poll:
-                    start_time = self._state.get("last_saved_ingest_time", self._config.get("alt_initial_ingest_time", "yesterday"))
+                    raw_checkpoint = self._state.get("last_saved_ingest_time")
+                    if raw_checkpoint is not None:
+                        saved_checkpoint = self._normalize_ingest_checkpoint(raw_checkpoint, int(time.time()) * 1000)
+                    start_time = saved_checkpoint
+                    if start_time is None:
+                        start_time = self._config.get("alt_initial_ingest_time", "yesterday")
                 else:
                     start_time = param.get("start_time", self._config.get("alt_initial_ingest_time", "yesterday"))
 
@@ -694,6 +718,9 @@ class QradarConnector(BaseConnector):
                             None,
                             None,
                         )
+
+                if saved_checkpoint is not None:
+                    start_time = self._normalize_ingest_checkpoint(start_time, end_time)
             except Exception:
                 action_result.set_status(phantom.APP_ERROR, QRADAR_ERROR_DATETIME_PARSE)
                 return phantom.APP_ERROR, None, None, None, None
@@ -1295,16 +1322,19 @@ class QradarConnector(BaseConnector):
                 except Exception:
                     self._new_last_ingest_time = failed_ingest_floor
                 self.save_progress(f"Holding last_saved_ingest_time at {self._new_last_ingest_time} after an ingestion failure")
-            self._state["last_saved_ingest_time"] = self._new_last_ingest_time
-            try:
-                self.save_progress(
-                    "Setting last_saved_ingest_time to: {} {}".format(
-                        self._state["last_saved_ingest_time"], self._utcctime(self._state["last_saved_ingest_time"])
+            poll_end = param.get(phantom.APP_JSON_END_TIME, int(time.time()) * 1000)
+            checkpoint = self._normalize_ingest_checkpoint(self._new_last_ingest_time, poll_end)
+            if checkpoint is not None:
+                self._state["last_saved_ingest_time"] = checkpoint
+                try:
+                    self.save_progress(
+                        "Setting last_saved_ingest_time to: {} {}".format(
+                            self._state["last_saved_ingest_time"], self._utcctime(self._state["last_saved_ingest_time"])
+                        )
                     )
-                )
-            except Exception as e:
-                error_message = self._get_error_message_from_exception(e)
-                self.debug_print(f"Error occurred: {error_message}")
+                except Exception as e:
+                    error_message = self._get_error_message_from_exception(e)
+                    self.debug_print(f"Error occurred: {error_message}")
             self.save_state(self._state)
 
         self.send_progress(" ")
@@ -1404,8 +1434,11 @@ class QradarConnector(BaseConnector):
         try:
             start_time_msecs = int(param.get(phantom.APP_JSON_START_TIME, end_time_msecs - (QRADAR_MILLISECONDS_IN_A_DAY * num_days)))
             if self._is_on_poll and not self._is_manual_poll:
-                if self._state.get("last_saved_ingest_time", {}):
-                    start_time_msecs = int(self._state["last_saved_ingest_time"])
+                saved_checkpoint = self._state.get("last_saved_ingest_time")
+                if saved_checkpoint is not None:
+                    normalized_checkpoint = self._normalize_ingest_checkpoint(saved_checkpoint, end_time_msecs)
+                    if normalized_checkpoint is not None:
+                        start_time_msecs = normalized_checkpoint
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
             return action_result.set_status(
