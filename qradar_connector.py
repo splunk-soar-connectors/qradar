@@ -437,6 +437,40 @@ class QradarConnector(BaseConnector):
             return [self._sanitize_ingested_value(item) for item in value]
         return value
 
+    def _normalize_offense_records(self, offenses, action_result):
+        normalized = []
+        skipped = 0
+
+        for offense in offenses:
+            if not isinstance(offense, dict) or offense.get("description") is None:
+                skipped += 1
+                continue
+
+            if any(isinstance(offense.get(key), bool) for key in ("id", "start_time", "severity")):
+                skipped += 1
+                continue
+
+            try:
+                offense = dict(offense)
+                offense["id"] = int(offense["id"])
+                offense["start_time"] = int(offense["start_time"])
+                offense["severity"] = float(offense["severity"])
+            except (KeyError, TypeError, ValueError, OverflowError):
+                skipped += 1
+                continue
+
+            if offense["id"] < 0 or offense["start_time"] < 0:
+                skipped += 1
+                continue
+
+            normalized.append(offense)
+
+        if skipped:
+            self.debug_print(f"Skipped {skipped} malformed offense record(s)")
+            action_result.append_to_message(f"Skipped {skipped} malformed offense record(s).")
+
+        return normalized
+
     def _get_artifact(self, event, container_id):
         cef = phantom.get_cef_data(event, self._cef_event_map)
 
@@ -873,21 +907,23 @@ class QradarConnector(BaseConnector):
 
         self.save_progress(f"Total offenses discovered: {len(offenses)}")
 
+        offenses = self._normalize_offense_records(offenses, action_result)
+
         if len(offenses) > 0:
             self.save_progress(f"Ingesting {len(offenses)} offenses")
 
             # Save the last ingest time for the offense
             if self._is_on_poll and not self._is_manual_poll:
-                if ingestion_order == "latest first":
-                    if self._time_field == "either":
-                        self._new_last_ingest_time = max(offenses[0]["start_time"], offenses[0]["last_updated_time"])
-                    else:
-                        self._new_last_ingest_time = offenses[0][self._time_field]
-                else:
-                    if self._time_field == "either":
-                        self._new_last_ingest_time = max(offenses[-1]["start_time"], offenses[-1]["last_updated_time"])
-                    else:
-                        self._new_last_ingest_time = offenses[-1][self._time_field]
+                checkpoint_candidates = offenses if ingestion_order == "latest first" else reversed(offenses)
+                checkpoint_fields = ("start_time", "last_updated_time") if self._time_field == "either" else (self._time_field,)
+                for offense in checkpoint_candidates:
+                    try:
+                        timestamps = [int(offense[field]) for field in checkpoint_fields]
+                    except (KeyError, TypeError, ValueError, OverflowError):
+                        continue
+                    if all(timestamp >= 0 for timestamp in timestamps):
+                        self._new_last_ingest_time = max(timestamps)
+                        break
 
             # Removing the reverse logic as now the offenses are sorted in the API call itself
             # based on the provision provided in the API for the QRadar instances that we have decided
@@ -1576,6 +1612,9 @@ class QradarConnector(BaseConnector):
                 self.save_progress(f"Reached the maximum of {QRADAR_QUERY_MAX_TOTAL_OFFENSES} offenses; stopping pagination")
                 break
 
+        offenses = self._normalize_offense_records(offenses, action_result)
+        total_offenses = len(offenses)
+
         # Parse the output, which is an array of offenses
         # Update the summary
         if total_offenses == 0 and offense_ids != "None":
@@ -1595,11 +1634,18 @@ class QradarConnector(BaseConnector):
         # This new_last_ingest_time variable will be used only in the On_Poll action to store it in the last_saved_ingest_time of the state file
 
         if self._is_on_poll and not self._is_manual_poll and offenses:
-            offenses.sort(key=lambda x: x["start_time"])
-            recent_start_time = offenses[-1]["start_time"]
-            offenses.sort(key=lambda x: x["last_updated_time"])
-            recent_last_updated_time = offenses[-1]["last_updated_time"]
-            self._new_last_ingest_time = max(recent_start_time, recent_last_updated_time)
+            valid_times = []
+            for offense in offenses:
+                for key in ("start_time", "last_updated_time"):
+                    try:
+                        timestamp = int(offense[key])
+                    except (KeyError, TypeError, ValueError, OverflowError):
+                        continue
+                    if timestamp >= 0:
+                        valid_times.append(timestamp)
+
+            if valid_times:
+                self._new_last_ingest_time = max(valid_times)
 
         action_result.set_status(phantom.APP_SUCCESS, f"{offenses_status_msg}Total Offenses: {len(offenses)}")
         return action_result.get_status()
